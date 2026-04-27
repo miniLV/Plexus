@@ -1,5 +1,9 @@
 "use client";
 
+import { StatusDot } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ExternalLink, Loader2, Mail, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 type Status = {
@@ -57,77 +61,114 @@ export function TeamPanel({ status: initial }: { status: Status }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded border border-plexus-border bg-plexus-panel p-5">
+      {/* Beta callout */}
+      <Card className="border-l-[3px] border-l-plexus-accent p-5">
+        <div className="flex items-start gap-3">
+          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-plexus-accent" strokeWidth={1.5} />
+          <div>
+            <div className="text-sm font-semibold text-plexus-text">
+              Team workflow is shipping in 1.1
+            </div>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-plexus-text-3">
+              The 1.0 release ships with a stable single-machine sync. Team subscription, PR
+              proposals, and conflict resolution are landing in the 1.1 beta. The skeleton below is
+              wired up — you can already attach a repo, but expect rough edges.
+            </p>
+            <a
+              className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-plexus-accent hover:underline"
+              href="https://github.com/miniLV/Plexus/discussions"
+            >
+              Join the 1.1 beta waitlist
+              <ExternalLink className="h-3 w-3" strokeWidth={1.5} />
+            </a>
+          </div>
+        </div>
+      </Card>
+
+      {/* Subscription */}
+      <Card className="p-5">
         {status.subscribed ? (
           <>
-            <div className="text-sm text-plexus-mute">Subscribed to</div>
-            <div className="mt-1 font-mono text-plexus-text">{status.repoUrl}</div>
-            <div className="mt-3 text-sm">
+            <div className="plexus-eyebrow">Subscribed to</div>
+            <div className="mt-1 font-mono text-sm text-plexus-text">{status.repoUrl}</div>
+            <div className="mt-3 flex items-center gap-2 text-sm">
               {status.hasUpstreamUpdate ? (
-                <span className="text-plexus-warn">⟳ {status.behind} update(s) available</span>
+                <>
+                  <StatusDot tone="warn" />
+                  <span className="text-plexus-warn">
+                    {status.behind} update{status.behind === 1 ? "" : "s"} available
+                  </span>
+                </>
               ) : (
-                <span className="text-plexus-ok">● Up-to-date</span>
+                <>
+                  <StatusDot tone="ok" />
+                  <span className="text-plexus-ok">Up-to-date</span>
+                </>
               )}
             </div>
             <div className="mt-4 flex gap-2">
-              <button
-                onClick={pull}
-                disabled={busy}
-                className="rounded bg-plexus-accent px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {busy ? "Pulling..." : "Pull updates"}
-              </button>
-              <button
-                onClick={refresh}
-                disabled={busy}
-                className="rounded border border-plexus-border px-3 py-1.5 text-sm hover:bg-plexus-bg"
-              >
+              <Button variant="primary" size="sm" onClick={pull} disabled={busy}>
+                {busy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} />
+                )}
+                {busy ? "Pulling…" : "Pull updates"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={refresh} disabled={busy}>
                 Refresh
-              </button>
+              </Button>
             </div>
           </>
         ) : (
           <>
-            <div className="text-sm text-plexus-mute">No team subscription yet.</div>
+            <div className="plexus-eyebrow">No team subscription yet</div>
+            <p className="mt-1 max-w-xl text-xs text-plexus-text-3">
+              Paste a public GitHub URL with a <code className="font-mono">team-plexus-config</code>{" "}
+              layout. Plexus clones it into{" "}
+              <code className="font-mono">~/.config/plexus/team/</code> and merges it under your
+              personal layer at sync time.
+            </p>
             <div className="mt-3 flex gap-2">
               <input
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://github.com/your-org/team-plexus-config.git"
-                className="flex-1 rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm"
+                className="h-9 flex-1 rounded border border-plexus-border bg-plexus-bg px-3 text-sm placeholder:text-plexus-text-mute focus:border-plexus-accent focus:outline-none"
               />
-              <button
-                onClick={join}
-                disabled={busy || !url}
-                className="rounded bg-plexus-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {busy ? "Joining..." : "Join"}
-              </button>
+              <Button variant="primary" onClick={join} disabled={busy || !url}>
+                {busy ? "Joining…" : "Join"}
+              </Button>
             </div>
           </>
         )}
-        {msg && <div className="mt-3 text-xs text-plexus-mute">{msg}</div>}
-      </div>
+        {msg && <div className="mt-3 text-xs text-plexus-text-3">{msg}</div>}
+      </Card>
 
-      <div className="rounded border border-plexus-border bg-plexus-panel p-5">
-        <div className="text-sm font-medium">Propose to team</div>
-        <p className="mt-1 text-xs text-plexus-mute">
+      {/* Propose to team */}
+      <Card className="p-5">
+        <div className="text-sm font-semibold text-plexus-text">Propose to team</div>
+        <p className="mt-1 text-xs leading-relaxed text-plexus-text-3">
           To share a personal MCP server or skill with the rest of the team, push it to the team
-          repo via a pull request. The MVP keeps this manual; a one-click PR helper is on the
-          roadmap.
+          repo via a pull request. The 1.0 release keeps this manual; a one-click PR helper is on
+          the 1.1 roadmap.
         </p>
-        <ol className="mt-3 list-decimal pl-5 text-xs text-plexus-mute">
+        <ol className="mt-3 list-decimal space-y-1 pl-5 text-xs text-plexus-text-3">
           <li>Fork or branch the team repo (the URL above).</li>
           <li>
-            Copy the file from <code className="font-mono">~/.config/plexus/personal/</code> into
-            the same path under the team repo.
+            Copy the file from{" "}
+            <code className="rounded bg-plexus-surface-2 px-1 py-0.5 font-mono text-[11px]">
+              ~/.config/plexus/personal/
+            </code>{" "}
+            into the same path under the team repo.
           </li>
           <li>Open a pull request — your team lead reviews and merges.</li>
           <li>
-            Run <code className="font-mono">Pull updates</code> here to receive the merged version.
+            Run <code className="font-mono text-plexus-text">Pull updates</code> here to receive the
+            merged version.
           </li>
         </ol>
-      </div>
+      </Card>
     </div>
   );
 }

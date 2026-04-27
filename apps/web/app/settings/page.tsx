@@ -7,12 +7,13 @@ export default async function SettingsPage() {
   const config = await readConfig();
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-plexus-mute">
-          Plexus is local-only. Nothing leaves this machine.
+      <header>
+        <h1 className="plexus-display mb-2">Settings</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">
+          Plexus is local-only. Nothing leaves this machine — no telemetry, no remote logging.
+          Configure which agents take part in sync and how Plexus mirrors files.
         </p>
-      </div>
+      </header>
       <SettingsPanel config={config} agents={[...ALL_AGENTS]} displayNames={AGENT_DISPLAY_NAMES} />
     </div>
   );
