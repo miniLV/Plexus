@@ -3,7 +3,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, ChevronRight, FileText, Loader2, Pencil, X } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronRight,
+  FileText,
+  Loader2,
+  Pencil,
+  ShieldAlert,
+  Sparkles,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -97,11 +106,30 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
               )}
             </div>
             <div className="mt-3 flex gap-2">
-              <FileViewerButton
-                agentId={data.id}
-                filePath={f.status.path}
-                allowCreate={!f.status.exists}
-              />
+              {f.status.exists ? (
+                <>
+                  <FileViewerButton
+                    agentId={data.id}
+                    filePath={f.status.path}
+                    mode="view"
+                    label="View"
+                  />
+                  <FileViewerButton
+                    agentId={data.id}
+                    filePath={f.status.path}
+                    mode="edit"
+                    label="Edit"
+                  />
+                </>
+              ) : (
+                <FileViewerButton
+                  agentId={data.id}
+                  filePath={f.status.path}
+                  mode="edit"
+                  label="Create"
+                  allowCreate
+                />
+              )}
             </div>
           </Card>
         ))}
@@ -167,6 +195,7 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
                     <FileViewerButton
                       agentId={data.id}
                       filePath={`${s.path}/SKILL.md`}
+                      mode="view"
                       label="View"
                     />
                   )}
@@ -233,7 +262,12 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
                 </Link>
               </Button>
               {data.mcpFile.exists && (
-                <FileViewerButton agentId={data.id} filePath={data.mcpFile.path} readOnly />
+                <FileViewerButton
+                  agentId={data.id}
+                  filePath={data.mcpFile.path}
+                  mode="view"
+                  label="View raw"
+                />
               )}
             </div>
           </Card>
@@ -247,15 +281,17 @@ function FileViewerButton({
   agentId,
   filePath,
   label,
-  readOnly,
+  mode,
   allowCreate,
 }: {
   agentId: string;
   filePath: string;
   label?: string;
-  readOnly?: boolean;
+  mode: "view" | "edit";
   allowCreate?: boolean;
 }) {
+  const isEdit = mode === "edit";
+  const [confirming, setConfirming] = useState(false);
   const [open, setOpen] = useState(false);
   const [content, setContent] = useState<string>("");
   const [loaded, setLoaded] = useState(false);
@@ -291,25 +327,107 @@ function FileViewerButton({
       if (!data.ok) setMsg(`Save failed: ${data.message}`);
       else {
         setMsg(data.backup ? `Saved. Backup: ${data.backup}` : "Saved.");
-        setTimeout(() => setOpen(false), 600);
+        setTimeout(() => setOpen(false), 700);
       }
     } finally {
       setBusy(false);
     }
   }
 
-  const buttonLabel = label ?? (readOnly ? "View" : "View / Edit");
+  function handleTriggerClick() {
+    if (isEdit) {
+      setConfirming(true);
+    } else {
+      setOpen(true);
+    }
+  }
+
+  function confirmAndOpen() {
+    setConfirming(false);
+    setOpen(true);
+  }
+
+  const buttonLabel = label ?? (isEdit ? "Edit" : "View");
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        {readOnly ? (
-          <FileText className="h-3.5 w-3.5" strokeWidth={1.5} />
-        ) : (
+      <Button variant={isEdit ? "secondary" : "ghost"} size="sm" onClick={handleTriggerClick}>
+        {isEdit ? (
           <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+        ) : (
+          <FileText className="h-3.5 w-3.5" strokeWidth={1.5} />
         )}
         {buttonLabel}
       </Button>
+
+      {/* Pre-edit confirmation dialog ─── */}
+      {confirming && (
+        <button
+          type="button"
+          aria-label="Close confirmation"
+          className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-black/70 p-6"
+          onClick={() => setConfirming(false)}
+        >
+          <div
+            className="w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
+              <div className="mt-0.5 rounded-md bg-amber-500/10 p-2 text-amber-400">
+                <ShieldAlert className="h-4 w-4" strokeWidth={1.5} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-plexus-text">
+                  {allowCreate
+                    ? "About to create a live agent file"
+                    : "About to edit a live agent file"}
+                </div>
+                <code className="mt-1 block break-all font-mono text-xs text-plexus-text-3">
+                  {filePath}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Cancel"
+                onClick={() => setConfirming(false)}
+                className="text-plexus-text-3 hover:text-plexus-text"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="space-y-3 px-5 py-4 text-sm text-plexus-text-2">
+              <p>Changes save directly to the file the agent reads — there is no staging step.</p>
+              <div className="flex items-start gap-2 rounded-md border border-plexus-border bg-plexus-surface-2/60 px-3 py-2 text-xs">
+                <Sparkles
+                  className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-plexus-accent"
+                  strokeWidth={1.5}
+                />
+                <span>
+                  Plexus will <span className="text-plexus-text">automatically snapshot</span> the
+                  current contents before the first save. If anything goes wrong, restore it from
+                  the{" "}
+                  <Link href="/backups" className="text-plexus-accent hover:underline">
+                    Backups
+                  </Link>{" "}
+                  page.
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border bg-plexus-surface-2/40 px-5 py-3">
+              <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={confirmAndOpen}>
+                <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {allowCreate ? "Create file" : "Yes, edit"}
+              </Button>
+            </div>
+          </div>
+        </button>
+      )}
+
+      {/* Editor / viewer modal ─────────── */}
       {open && (
         <button
           type="button"
@@ -323,7 +441,14 @@ function FileViewerButton({
             onKeyDown={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-plexus-border px-5 py-3">
-              <code className="font-mono text-xs text-plexus-text-3">{filePath}</code>
+              <div className="flex items-center gap-2">
+                {isEdit ? (
+                  <Badge variant="divergent">editing</Badge>
+                ) : (
+                  <Badge variant="synced">read only</Badge>
+                )}
+                <code className="font-mono text-xs text-plexus-text-3">{filePath}</code>
+              </div>
               <button
                 type="button"
                 aria-label="Close"
@@ -333,6 +458,18 @@ function FileViewerButton({
                 <X className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
+            {isEdit && (
+              <div className="flex items-center gap-2 border-b border-plexus-border bg-amber-500/5 px-5 py-2 text-xs text-amber-400/90">
+                <Sparkles className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={1.5} />
+                <span>
+                  Auto-backup runs before save. Restore from{" "}
+                  <Link href="/backups" className="underline">
+                    /backups
+                  </Link>{" "}
+                  any time.
+                </span>
+              </div>
+            )}
             {msg && (
               <div className="border-b border-plexus-border bg-plexus-surface-2 px-5 py-2 text-xs text-plexus-text-2">
                 {msg}
@@ -341,17 +478,17 @@ function FileViewerButton({
             <textarea
               className="flex-1 resize-none bg-plexus-bg p-4 font-mono text-xs text-plexus-text outline-none"
               value={content}
-              readOnly={readOnly}
+              readOnly={!isEdit}
               onChange={(e) => setContent(e.target.value)}
             />
             <div className="flex items-center justify-end gap-2 border-t border-plexus-border px-5 py-3">
               <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 Close
               </Button>
-              {!readOnly && (
+              {isEdit && (
                 <Button variant="primary" size="sm" onClick={save} disabled={busy}>
                   {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />}
-                  {busy ? "Saving…" : "Save (auto-backup)"}
+                  {busy ? "Saving…" : "Save"}
                 </Button>
               )}
             </div>
