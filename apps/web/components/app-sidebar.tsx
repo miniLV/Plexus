@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PLEXUS_VERSION } from "@/lib/version";
 import {
+  Bug,
   History,
   LayoutGrid,
   type LucideIcon,
@@ -42,6 +43,7 @@ const NAV: NavGroup[] = [
     group: "Configuration",
     items: [
       { href: "/backups", label: "Backups", icon: History },
+      { href: "/debug", label: "Debug", icon: Bug },
       { href: "/team", label: "Team", icon: Users, beta: true },
       { href: "/settings", label: "Settings", icon: Settings },
     ],

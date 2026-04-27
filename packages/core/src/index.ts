@@ -7,3 +7,4 @@ export * from "./import/index.js";
 export * from "./spread/index.js";
 export * from "./effective/index.js";
 export * from "./backup/index.js";
+export * from "./debug/index.js";
