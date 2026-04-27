@@ -34,6 +34,18 @@ export interface AgentCapabilities {
   mcpPath: string;
   /** Where the skills directory lives. */
   skillsDir: string;
+  /**
+   * How exclusively does Plexus own the MCP file?
+   *  - "exclusive": the file's only purpose is mcp config (e.g. ~/.cursor/mcp.json,
+   *    ~/.factory/mcp.json). Plexus generates a canonical cache file and
+   *    symlinks the agent's path to that cache. One source of truth.
+   *  - "shared": the file holds many other unrelated keys (e.g.
+   *    ~/.claude.json with auth/history/settings, or ~/.codex/config.toml with
+   *    [profile]/[auth]/[mcp_servers]). Plexus does partial-write — only its
+   *    own section is rewritten, every other key is preserved verbatim.
+   * Defaults to "shared" when omitted.
+   */
+  mcpFileMode?: "exclusive" | "shared";
 }
 
 export interface MCPServerDef {

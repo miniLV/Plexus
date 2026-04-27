@@ -15,6 +15,10 @@ export const PLEXUS_PATHS = {
   config: path.join(PLEXUS_ROOT, "config.yaml"),
   mcpDirRel: "mcp",
   skillsDirRel: "skills",
+  /** Plexus-owned canonical generated MCP files, symlinked from agent paths. */
+  mcpCache: path.join(PLEXUS_ROOT, ".cache", "mcp"),
+  /** Timestamped snapshots of agent native configs taken before each sync. */
+  backups: path.join(PLEXUS_ROOT, "backups"),
 };
 
 /** Per-agent native config locations. */
@@ -26,11 +30,11 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     // Claude Code stores user-scope MCPs in `~/.claude.json` (alongside many
     // other client state keys). NOT to be confused with Claude *Desktop*
     // which uses `~/Library/Application Support/Claude/claude_desktop_config.json`.
-    //
-    // Project-scope MCPs (`<repo>/.mcp.json`) are intentionally not handled
-    // by Plexus today; see README "Known limitations" for the planned design.
     mcpPath: path.join(home, ".claude.json"),
     skillsDir: path.join(home, ".claude", "skills"),
+    // ~/.claude.json carries auth, history, settings, etc. — never replace
+    // the whole file; only rewrite the mcpServers section.
+    mcpFileMode: "shared",
   },
   cursor: {
     mcp: true,
@@ -39,6 +43,9 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     mcpPath: path.join(home, ".cursor", "mcp.json"),
     // Cursor doesn't have a true "skill" concept yet; we publish to commands.
     skillsDir: path.join(home, ".cursor", "commands"),
+    // ~/.cursor/mcp.json is exclusively for MCP — safe to fully own via
+    // a symlink to the Plexus canonical cache.
+    mcpFileMode: "exclusive",
   },
   codex: {
     mcp: true,
@@ -46,6 +53,8 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     mcpFormat: "toml",
     mcpPath: path.join(home, ".codex", "config.toml"),
     skillsDir: path.join(home, ".codex", "prompts"),
+    // config.toml has [profile], [auth], [mcp_servers], ... — partial-write.
+    mcpFileMode: "shared",
   },
   "factory-droid": {
     mcp: true,
@@ -53,6 +62,8 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     mcpFormat: "json",
     mcpPath: path.join(home, ".factory", "mcp.json"),
     skillsDir: path.join(home, ".factory", "skills"),
+    // Plexus can fully own this file.
+    mcpFileMode: "exclusive",
   },
 };
 

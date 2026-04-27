@@ -94,3 +94,56 @@ export function emptyResult(agentId: AgentId): SyncResult {
     errors: [],
   };
 }
+
+/**
+ * Replace a regular file at `linkPath` with a symlink pointing at `target`.
+ * If symlink isn't supported (Windows without privilege), falls back to a copy.
+ *
+ * Caller is responsible for invoking the backup module BEFORE calling this —
+ * we do not silently overwrite without a snapshot existing somewhere.
+ */
+export async function placeFileSymlink(
+  target: string,
+  linkPath: string,
+  strategy: "symlink" | "copy",
+): Promise<"symlink" | "copy"> {
+  await ensureDir(path.dirname(linkPath));
+
+  let lst: Awaited<ReturnType<typeof fs.lstat>> | null = null;
+  try {
+    lst = await fs.lstat(linkPath);
+  } catch {
+    // not present yet — fine
+  }
+
+  if (lst) {
+    if (lst.isSymbolicLink()) {
+      try {
+        const current = await fs.readlink(linkPath);
+        const resolved = path.isAbsolute(current)
+          ? current
+          : path.resolve(path.dirname(linkPath), current);
+        if (resolved === path.resolve(target)) {
+          return "symlink"; // already correct
+        }
+      } catch {
+        // fall through
+      }
+      await fs.unlink(linkPath);
+    } else {
+      // Regular file — remove (caller already snapshotted).
+      await fs.unlink(linkPath);
+    }
+  }
+
+  if (strategy === "symlink") {
+    try {
+      await fs.symlink(target, linkPath, "file");
+      return "symlink";
+    } catch {
+      // fall through to copy
+    }
+  }
+  await fs.copyFile(target, linkPath);
+  return "copy";
+}

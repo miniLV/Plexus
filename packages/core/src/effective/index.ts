@@ -1,5 +1,6 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
+import { snapshotAgentConfigs } from "../backup/index.js";
 import { buildImportPreview } from "../import/from-agents.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
@@ -162,8 +163,12 @@ export async function getEffectiveSkills(): Promise<EffectiveSkillRow[]> {
 /**
  * Toggle whether `agent` should have `id` (an MCP server). Promotes a
  * native-only item into the personal layer if needed, updates enabledAgents,
- * and runs a single-agent sync so the change is visible in the agent's
- * native config immediately.
+ * and runs sync so the change is visible immediately.
+ *
+ * When promoting a native item to the personal layer for the first time, we
+ * sync EVERY native source agent too — that way the source agents stop
+ * carrying their own copies and start reading the canonical Plexus copy.
+ * For non-promote toggles we sync just the affected agent.
  */
 export async function toggleMcpAgent(opts: {
   id: string;
@@ -176,6 +181,7 @@ export async function toggleMcpAgent(opts: {
   const teamRow = team.find((m) => m.id === opts.id);
 
   let nextPersonal = [...personal];
+  let agentsToSync: AgentId[] = [opts.agent];
 
   if (personalIdx >= 0) {
     const row = { ...nextPersonal[personalIdx] };
@@ -188,13 +194,12 @@ export async function toggleMcpAgent(opts: {
     }
     nextPersonal[personalIdx] = row;
   } else if (teamRow) {
-    // Team layer is read-only; mirror into personal as override.
     const enabledAgents = opts.enabled
       ? Array.from(new Set([...teamRow.enabledAgents, opts.agent]))
       : teamRow.enabledAgents.filter((a) => a !== opts.agent);
     nextPersonal.push({ ...teamRow, layer: "personal", enabledAgents });
   } else {
-    // Native-only: pull from any agent's config and promote to personal.
+    // Promote: pull from any agent's native config and copy to personal.
     const nativePreview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
     const cand = nativePreview.mcp.find(
       (c) => c.kind === "new" && c.item.id === opts.id,
@@ -206,16 +211,26 @@ export async function toggleMcpAgent(opts: {
       ? Array.from(new Set([...cand.sourceAgents, opts.agent]))
       : cand.sourceAgents.filter((a) => a !== opts.agent);
     nextPersonal.push({ ...cand.item, layer: "personal", enabledAgents });
+    // Re-sync every native source so they pick up the canonical Plexus copy.
+    agentsToSync = Array.from(new Set([...cand.sourceAgents, opts.agent]));
   }
 
   await writeMCP("personal", nextPersonal);
 
-  // Sync to the affected agent only.
-  const syncResult = await syncSingleAgent(opts.agent);
-  return { ok: true, syncResult };
+  // One backup snapshot per toggle, even if we sync multiple agents.
+  const backup = await snapshotAgentConfigs({
+    reason: `toggleMcpAgent ${opts.id} ${opts.agent} ${opts.enabled}`,
+  }).catch(() => undefined);
+
+  const results: SyncResult[] = [];
+  for (const a of agentsToSync) {
+    const r = await syncSingleAgent(a);
+    if (r) results.push(r);
+  }
+  return { ok: true, syncResult: results[0], message: backup?.dir };
 }
 
-/** Same idea for skills. */
+/** Same idea for skills. Promote also re-syncs every native source. */
 export async function toggleSkillAgent(opts: {
   id: string;
   agent: AgentId;
@@ -225,6 +240,8 @@ export async function toggleSkillAgent(opts: {
   const team = await readSkills("team");
   const personalRow = personal.find((s) => s.id === opts.id);
   const teamRow = team.find((s) => s.id === opts.id);
+
+  let agentsToSync: AgentId[] = [opts.agent];
 
   if (personalRow) {
     const enabledAgents = opts.enabled
@@ -248,10 +265,19 @@ export async function toggleSkillAgent(opts: {
       ? Array.from(new Set([...cand.sourceAgents, opts.agent]))
       : cand.sourceAgents.filter((a) => a !== opts.agent);
     await writeSkill({ ...cand.item, layer: "personal", enabledAgents });
+    agentsToSync = Array.from(new Set([...cand.sourceAgents, opts.agent]));
   }
 
-  const syncResult = await syncSingleAgent(opts.agent);
-  return { ok: true, syncResult };
+  const backup = await snapshotAgentConfigs({
+    reason: `toggleSkillAgent ${opts.id} ${opts.agent} ${opts.enabled}`,
+  }).catch(() => undefined);
+
+  const results: SyncResult[] = [];
+  for (const a of agentsToSync) {
+    const r = await syncSingleAgent(a);
+    if (r) results.push(r);
+  }
+  return { ok: true, syncResult: results[0], message: backup?.dir };
 }
 
 async function syncSingleAgent(agentId: AgentId): Promise<SyncResult | undefined> {

@@ -1,5 +1,6 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
+import { snapshotAgentConfigs } from "../backup/index.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
 import { readConfig } from "../store/config.js";
@@ -14,11 +15,19 @@ import type { AgentId, SyncReport } from "../types.js";
 /**
  * Run a full sync: load merged MCP + skills, apply to every enabled
  * AND installed agent.
+ *
+ * Before any write, snapshot every agent's current MCP file under
+ * ~/.config/plexus/backups/<ts>/ so the user can recover from a bad change.
  */
-export async function runSync(only?: AgentId[]): Promise<SyncReport> {
+export async function runSync(only?: AgentId[]): Promise<SyncReport & { backup?: string }> {
   const startedAt = new Date().toISOString();
   const config = await readConfig();
   const detected = detectAgents();
+
+  // Snapshot before we touch anything.
+  const backup = await snapshotAgentConfigs({
+    reason: only ? `partial sync: ${only.join(",")}` : "full sync",
+  }).catch(() => undefined);
 
   const [teamMcp, personalMcp, teamSkills, personalSkills] = await Promise.all([
     readMCP("team"),
@@ -59,6 +68,7 @@ export async function runSync(only?: AgentId[]): Promise<SyncReport> {
     results,
     startedAt,
     finishedAt: new Date().toISOString(),
+    backup: backup?.dir,
   };
 }
 

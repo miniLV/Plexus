@@ -74,7 +74,13 @@ export const codexAdapter: AgentAdapter = {
       for (const id of disabledManagedSkillIds) {
         const dir = path.join(caps.skillsDir, id);
         try {
-          await fs.rm(dir, { recursive: true, force: true });
+          // Symlink-safe removal: lstat first, unlink for symlinks, rm for real dirs.
+          const lst = await fs.lstat(dir);
+          if (lst.isSymbolicLink()) {
+            await fs.unlink(dir);
+          } else {
+            await fs.rm(dir, { recursive: true, force: true });
+          }
         } catch {
           // best effort cleanup
         }
