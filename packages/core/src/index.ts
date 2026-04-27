@@ -4,3 +4,4 @@ export * from "./agents/index.js";
 export * from "./sync/index.js";
 export * from "./team/index.js";
 export * from "./import/index.js";
+export * from "./spread/index.js";

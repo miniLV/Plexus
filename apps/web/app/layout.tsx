@@ -12,6 +12,7 @@ const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/mcp", label: "MCP Servers" },
   { href: "/skills", label: "Skills" },
+  { href: "/spread", label: "Spread" },
   { href: "/team", label: "Team" },
   { href: "/settings", label: "Settings" },
 ];
