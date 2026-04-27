@@ -62,26 +62,45 @@ export default async function DashboardPage() {
           Detected Agents
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          {agents.map((a) => (
-            <div
-              key={a.id}
-              className="rounded border border-plexus-border bg-plexus-panel px-4 py-3"
-            >
-              <div className="flex items-center justify-between">
-                <div className="font-medium">{a.displayName}</div>
-                {a.installed ? (
+          {agents.map((a) =>
+            a.installed ? (
+              <Link
+                key={a.id}
+                href={`/agents/${a.id}`}
+                className="group rounded border border-plexus-border bg-plexus-panel px-4 py-3 transition hover:border-plexus-accent/60"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">
+                    {a.displayName}
+                    <span className="ml-2 text-plexus-mute opacity-0 transition group-hover:opacity-100">
+                      →
+                    </span>
+                  </div>
                   <span className="rounded bg-plexus-ok/15 px-2 py-0.5 text-xs text-plexus-ok">
                     installed
                   </span>
-                ) : (
+                </div>
+                <div className="mt-2 font-mono text-xs text-plexus-mute">
+                  {a.rootDir}
+                </div>
+              </Link>
+            ) : (
+              <div
+                key={a.id}
+                className="rounded border border-plexus-border bg-plexus-panel px-4 py-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-plexus-mute">{a.displayName}</div>
                   <span className="rounded bg-plexus-border px-2 py-0.5 text-xs text-plexus-mute">
                     missing
                   </span>
-                )}
+                </div>
+                <div className="mt-2 font-mono text-xs text-plexus-mute">
+                  {a.rootDir}
+                </div>
               </div>
-              <div className="mt-2 font-mono text-xs text-plexus-mute">{a.rootDir}</div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </section>
 

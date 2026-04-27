@@ -137,6 +137,48 @@ export async function listBackups(): Promise<BackupSnapshot[]> {
   }
 }
 
+/**
+ * Snapshot a single file (e.g. CLAUDE.md) before edit. Stored alongside the
+ * regular sync snapshots so the user has one consistent recovery surface.
+ */
+export async function snapshotSingleFile(
+  filePath: string,
+  reason?: string,
+): Promise<string | null> {
+  if (!(await pathExists(filePath))) return null;
+  const id = new Date().toISOString().replace(/[:.]/g, "-");
+  const dir = path.join(PLEXUS_PATHS.backups, id);
+  await ensureDir(dir);
+  if (reason) {
+    await fs.writeFile(path.join(dir, "_reason.txt"), reason, "utf8").catch(() => {});
+  }
+  const fname = path.basename(filePath);
+  const backupPath = path.join(dir, fname);
+  try {
+    const content = await fs.readFile(filePath);
+    await fs.writeFile(backupPath, content);
+    await fs.writeFile(
+      path.join(dir, "manifest.json"),
+      JSON.stringify(
+        {
+          id,
+          createdAt: new Date().toISOString(),
+          entries: [
+            { agent: null, backupPath, originalPath: filePath, wasSymlink: false },
+          ],
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+    await pruneOldBackups(KEEP);
+    return dir;
+  } catch {
+    return null;
+  }
+}
+
 /** Restore one snapshot by copying every backed-up file back over the original. */
 export async function restoreSnapshot(id: string): Promise<{
   restored: number;

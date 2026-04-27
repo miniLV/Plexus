@@ -274,13 +274,43 @@ export function McpEditor({
           ))}
         </tbody>
       </table>
-      <p className="text-xs text-plexus-mute">
-        <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">native</span>{" "}
-        items are still only in the agent's own config. Toggling promotes them into your personal Plexus store.
-        <br />
-        <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">team</span>{" "}
-        items live in your team's repo and are read-only here — propose changes via PR.
-      </p>
+      <div className="space-y-2 text-xs text-plexus-mute">
+        <div>
+          <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">
+            native
+          </span>{" "}
+          items are still only in the agent's own config. Toggling promotes them
+          into your personal Plexus store.{" "}
+          <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">
+            team
+          </span>{" "}
+          items live in the team repo and are read-only here.
+        </div>
+        <details>
+          <summary className="cursor-pointer text-plexus-text">
+            How does checking a box change the file system?
+          </summary>
+          <div className="mt-2 space-y-1 leading-relaxed">
+            <p>
+              <strong className="text-plexus-text">Cursor / Factory Droid</strong>:
+              their MCP file is a single symlink to{" "}
+              <code>~/.config/plexus/.cache/mcp/&lt;agent&gt;.json</code>.
+              Plexus regenerates that cache file from your store; the agent
+              transparently sees the new entries via the symlink.
+            </p>
+            <p>
+              <strong className="text-plexus-text">Claude Code / Codex</strong>:
+              their files carry many unrelated keys (auth/history/[profile]…), so
+              Plexus partial-writes only the <code>mcpServers</code> section. The
+              rest of the file is preserved byte-for-byte.
+            </p>
+            <p>
+              Every toggle takes a backup snapshot to{" "}
+              <code>~/.config/plexus/backups/&lt;timestamp&gt;/</code> first.
+            </p>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }

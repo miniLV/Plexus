@@ -262,13 +262,40 @@ export function SkillsEditor({
           ))}
         </tbody>
       </table>
-      <p className="text-xs text-plexus-mute">
-        <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">native</span>{" "}
-        skills are still only in the agent's own folder. Toggling promotes them into your personal Plexus store.
-        <br />
-        <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">team</span>{" "}
-        skills are read-only here — propose changes via PR to the team repo.
-      </p>
+      <div className="space-y-2 text-xs text-plexus-mute">
+        <div>
+          <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">
+            native
+          </span>{" "}
+          skills are still only in the agent's own folder. Toggling promotes them
+          into your personal Plexus store.{" "}
+          <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">
+            team
+          </span>{" "}
+          skills are read-only here — propose changes via PR.
+        </div>
+        <details>
+          <summary className="cursor-pointer text-plexus-text">
+            How does checking a box change the file system?
+          </summary>
+          <div className="mt-2 space-y-1 leading-relaxed">
+            <p>
+              The skill folder is written into{" "}
+              <code>~/.config/plexus/personal/skills/&lt;id&gt;/</code> (the
+              canonical Plexus copy). Each enabled agent gets a symlink from its
+              own skills directory to that folder, so all agents read the same
+              SKILL.md.
+            </p>
+            <p>
+              Toggling a skill off removes the symlink from that agent only; the
+              Plexus copy stays. Other agents still see it.
+            </p>
+            <p>
+              Every toggle takes a backup snapshot first.
+            </p>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }
