@@ -4,8 +4,8 @@ import {
   AGENT_PATHS,
   AGENT_ROOTS,
   ALL_AGENTS,
-} from "./paths.js";
-import type { AgentDescriptor } from "./types.js";
+} from "../store/paths.js";
+import type { AgentDescriptor } from "../types.js";
 
 /**
  * Detect which AI agents appear to be installed.

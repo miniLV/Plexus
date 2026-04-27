@@ -5,7 +5,7 @@ import type {
   MCPServerDef,
   SkillDef,
   SyncResult,
-} from "../types.js";
+} from "../../types.js";
 
 export interface ApplyContext {
   agentId: AgentId;

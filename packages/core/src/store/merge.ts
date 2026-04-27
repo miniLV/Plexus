@@ -1,4 +1,4 @@
-import type { MCPServerDef, SkillDef } from "./types.js";
+import type { MCPServerDef, SkillDef } from "../types.js";
 
 /**
  * Merge personal layer over team layer.

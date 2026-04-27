@@ -1,9 +1,5 @@
 export * from "./types.js";
-export * from "./paths.js";
-export * from "./detect.js";
-export * from "./store.js";
-export * from "./merge.js";
-export * from "./sync.js";
-export * from "./team.js";
-export { adapters } from "./adapters/index.js";
-export type { AgentAdapter, ApplyContext } from "./adapters/base.js";
+export * from "./store/index.js";
+export * from "./agents/index.js";
+export * from "./sync/index.js";
+export * from "./team/index.js";

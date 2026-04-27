@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import { promisify } from "node:util";
-import { PLEXUS_PATHS } from "./paths.js";
-import { readConfig, writeConfig } from "./store.js";
+import { PLEXUS_PATHS } from "../store/paths.js";
+import { readConfig, writeConfig } from "../store/config.js";
+import { pathExists } from "../store/fs-utils.js";
 
 const exec = promisify(execFile);
 
@@ -21,15 +22,6 @@ const exec = promisify(execFile);
  * dashboard will guide users through opening a PR via GitHub web UI.
  */
 
-async function pathExists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 async function isGitRepo(dir: string): Promise<boolean> {
   return pathExists(`${dir}/.git`);
 }
@@ -37,7 +29,6 @@ async function isGitRepo(dir: string): Promise<boolean> {
 export async function joinTeam(repoUrl: string): Promise<{ ok: boolean; message: string }> {
   const teamDir = PLEXUS_PATHS.team;
 
-  // If team dir exists and is a git repo with a different remote, refuse.
   if (await pathExists(teamDir)) {
     if (await isGitRepo(teamDir)) {
       try {
@@ -49,7 +40,6 @@ export async function joinTeam(repoUrl: string): Promise<{ ok: boolean; message:
             message: `Team layer already subscribed to ${current}. Run 'plexus leave' first.`,
           };
         }
-        // already correct remote: just pull
         await exec("git", ["-C", teamDir, "pull", "--ff-only"]);
         const cfg = await readConfig();
         cfg.teamRepo = repoUrl;
@@ -59,7 +49,6 @@ export async function joinTeam(repoUrl: string): Promise<{ ok: boolean; message:
         return { ok: false, message: `Git pull failed: ${(err as Error).message}` };
       }
     }
-    // Non-empty non-git directory; back it up.
     const backup = `${teamDir}.plexus-backup-${Date.now()}`;
     await fs.rename(teamDir, backup);
   }

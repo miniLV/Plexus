@@ -1,6 +1,6 @@
 import os from "node:os";
 import path from "node:path";
-import type { AgentCapabilities, AgentId } from "./types.js";
+import type { AgentCapabilities, AgentId } from "../types.js";
 
 const home = os.homedir();
 const platform = process.platform;

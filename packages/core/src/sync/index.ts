@@ -1,16 +1,15 @@
-import path from "node:path";
-import { adapters } from "./adapters/index.js";
-import { detectAgents } from "./detect.js";
-import { mergeMCP, mergeSkills } from "./merge.js";
-import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
+import { adapters } from "../agents/adapters/index.js";
+import { detectAgents } from "../agents/detect.js";
+import { mergeMCP, mergeSkills } from "../store/merge.js";
+import { ALL_AGENTS } from "../store/paths.js";
+import { readConfig } from "../store/config.js";
+import { readMCP, readAllMCP } from "../store/mcp.js";
 import {
-  readAllMCP,
   readAllSkills,
-  readConfig,
-  readMCP,
   readSkills,
-} from "./store.js";
-import type { AgentId, SyncReport } from "./types.js";
+  resolveSkillSourceDir,
+} from "../store/skills.js";
+import type { AgentId, SyncReport } from "../types.js";
 
 /**
  * Run a full sync: load merged MCP + skills, apply to every enabled
@@ -34,12 +33,7 @@ export async function runSync(only?: AgentId[]): Promise<SyncReport> {
   // Build a map of skillId -> on-disk source dir
   const skillSourcePaths = new Map<string, string>();
   for (const s of skills) {
-    const layerDir =
-      s.layer === "team" ? PLEXUS_PATHS.team : PLEXUS_PATHS.personal;
-    skillSourcePaths.set(
-      s.id,
-      path.join(layerDir, PLEXUS_PATHS.skillsDirRel, s.id),
-    );
+    skillSourcePaths.set(s.id, resolveSkillSourceDir(s.layer, s.id));
   }
 
   const targets: AgentId[] = (only && only.length > 0 ? only : ALL_AGENTS).filter(

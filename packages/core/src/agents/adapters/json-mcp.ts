@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { AGENT_PATHS } from "../paths.js";
-import type { AgentId, MCPServerDef, SyncResult } from "../types.js";
+import { AGENT_PATHS } from "../../store/paths.js";
+import type { AgentId, SyncResult } from "../../types.js";
 import {
   ApplyContext,
   AgentAdapter,

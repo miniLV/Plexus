@@ -1,7 +1,7 @@
-import type { AgentId } from "../types.js";
+import type { AgentId } from "../../types.js";
 import type { AgentAdapter } from "./base.js";
 import { codexAdapter } from "./codex.js";
-import { makeJsonMcpAdapter } from "./json-mcp-adapter.js";
+import { makeJsonMcpAdapter } from "./json-mcp.js";
 
 export const adapters: Record<AgentId, AgentAdapter> = {
   "claude-code": makeJsonMcpAdapter("claude-code"),
@@ -11,4 +11,4 @@ export const adapters: Record<AgentId, AgentAdapter> = {
 };
 
 export { codexAdapter, makeJsonMcpAdapter };
-export type { AgentAdapter };
+export type { AgentAdapter, ApplyContext } from "./base.js";

@@ -80,14 +80,25 @@ plexus status       show subscription / sync status
 
 ```
 plexus/
-├── apps/web/             # Next.js dashboard (local only)
-├── packages/core/        # detection · store · merge · sync · adapters
-├── packages/cli/         # `plexus` CLI entry
-└── examples/team-config-template/   # starter layout for a team repo
+├── apps/
+│   └── web/                     # Next.js dashboard (local only)
+├── packages/
+│   ├── core/
+│   │   └── src/
+│   │       ├── types.ts
+│   │       ├── store/           # ~/.config/plexus/ store: paths, config, mcp, skills, merge
+│   │       ├── agents/          # detection + per-agent adapters
+│   │       │   └── adapters/
+│   │       ├── sync/            # sync engine
+│   │       └── team/            # git-backed team layer
+│   └── cli/                     # `plexus` CLI entry
+└── examples/
+    └── team-config-template/    # starter layout for a team repo
 ```
 
-Per-agent integration lives under `packages/core/src/adapters/`. Adding a new
-agent means writing a new adapter (≤ 80 lines for the JSON-MCP flavor).
+Per-agent integration lives under `packages/core/src/agents/adapters/`. Adding
+a new agent means writing a new adapter (≤ 80 lines for the JSON-MCP flavor)
+and registering it in `agents/adapters/index.ts`.
 
 ## License
 
