@@ -1,6 +1,7 @@
 import { AgentDetail } from "@/components/agent-detail";
-import { inspectAgent } from "@plexus/core";
 import type { AgentId } from "@plexus/core";
+import { inspectAgent } from "@plexus/core";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -13,17 +14,20 @@ export default async function AgentPage({ params }: { params: { id: string } }) 
   const data = await inspectAgent(params.id as AgentId);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href="/" className="text-xs text-plexus-mute hover:text-plexus-text">
-          ← Dashboard
+    <div className="space-y-8">
+      <header>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-xs tracking-[0.02em] text-plexus-text-3 hover:text-plexus-text"
+        >
+          <ArrowLeft className="h-3 w-3" strokeWidth={1.5} /> Dashboard
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{data.displayName}</h1>
-        <p className="text-sm text-plexus-mute">
+        <h1 className="plexus-display mt-3 mb-2">{data.displayName}</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">
           Inspect this agent's files, see what Plexus owns vs what's still local-only, and edit the
           instruction files directly.
         </p>
-      </div>
+      </header>
       <AgentDetail data={data} />
     </div>
   );
