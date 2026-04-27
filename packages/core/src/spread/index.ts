@@ -56,12 +56,11 @@ async function effectiveMcpFor(
     if (m.enabledAgents.includes(agentId)) result.set(m.id, m);
   }
 
-  // Plus anything still in the agent's native config that we don't manage yet
-  const importPreview = await buildImportPreview({
-    existingPersonalMcpIds: [],
-    existingPersonalSkillIds: [],
-  });
+  // Plus anything still in the agent's native config that we don't manage yet.
+  // The "new" candidates from buildImportPreview cover this case (id not in store).
+  const importPreview = await buildImportPreview({ storeMcp: merged, storeSkills: [] });
   for (const cand of importPreview.mcp) {
+    if (cand.kind !== "new") continue;
     if (!cand.sourceAgents.includes(agentId)) continue;
     if (result.has(cand.item.id)) continue;
     result.set(cand.item.id, { ...cand.item, enabledAgents: [agentId] });
@@ -80,11 +79,9 @@ async function effectiveSkillsFor(
     if (s.enabledAgents.includes(agentId)) result.set(s.id, s);
   }
 
-  const importPreview = await buildImportPreview({
-    existingPersonalMcpIds: [],
-    existingPersonalSkillIds: [],
-  });
+  const importPreview = await buildImportPreview({ storeMcp: [], storeSkills: merged });
   for (const cand of importPreview.skills) {
+    if (cand.kind !== "new") continue;
     if (!cand.sourceAgents.includes(agentId)) continue;
     if (result.has(cand.item.id)) continue;
     result.set(cand.item.id, { ...cand.item, enabledAgents: [agentId] });

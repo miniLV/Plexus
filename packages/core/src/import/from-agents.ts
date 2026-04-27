@@ -14,40 +14,59 @@ import type {
 } from "../types.js";
 
 /**
- * Import existing on-disk configuration from each installed AI agent into a
- * single Plexus "personal" layer payload.
+ * Import existing on-disk configuration from each installed AI agent into
+ * the Plexus personal layer.
  *
- * - MCP servers from each agent are deduplicated by `id`. When the same id
- *   appears in multiple agents, the first occurrence wins for the
- *   `command/args/env` fields, and the union of source agents is recorded
- *   under `enabledAgents` (so the merged record reflects "this server is
- *   already published to Cursor and Codex" etc.).
- * - Skills are deduplicated by directory name (`<id>`). When the same id
- *   appears in multiple agents, the first one wins for body/frontmatter
- *   and the union of source agents is recorded under `enabledAgents`.
+ * Three outcomes per item id:
+ *  - `new`     id is not in the Plexus store at all → write a new entry
+ *              (enabledAgents = union of source agents that already have it).
+ *  - `extend`  id is already in the store, but at least one source agent that
+ *              currently has it natively is missing from `enabledAgents` →
+ *              add those agents to `enabledAgents` of the existing entry.
+ *  - `managed` id is in the store and every source agent already appears in
+ *              `enabledAgents` → nothing to do (silently skipped).
  *
- * Importing does NOT mutate the original files — it only reads them.
- * The caller decides whether to write the result into the personal layer.
+ * Importing never mutates the agents' native files. Only the Plexus personal
+ * layer is touched, and only by `applyImport`.
  */
 
-export interface ImportedItem<T> {
+export interface NewItem<T> {
+  kind: "new";
   item: T;
   sourceAgents: AgentId[];
 }
 
+export interface ExtendItem<T> {
+  kind: "extend";
+  /** The id of the existing store entry. */
+  id: string;
+  displayName: string;
+  /** Agents to add to the existing entry's enabledAgents. */
+  agentsToAdd: AgentId[];
+  /** Existing enabledAgents (for display). */
+  currentAgents: AgentId[];
+}
+
+export type MCPCandidate = NewItem<MCPServerDef> | ExtendItem<MCPServerDef>;
+export type SkillCandidate = NewItem<SkillDef> | ExtendItem<SkillDef>;
+
 export interface ImportPreview {
-  mcp: ImportedItem<MCPServerDef>[];
-  skills: ImportedItem<SkillDef>[];
-  /** Items skipped because the same id already exists in personal layer. */
-  skipped: {
-    mcp: string[];
-    skills: string[];
-  };
-  /** Per-agent counts found before dedup. */
+  mcp: MCPCandidate[];
+  skills: SkillCandidate[];
+  /** Per-agent counts of items found in the agent's native config. */
   perAgent: Record<AgentId, { mcp: number; skills: number }>;
 }
 
-async function readMcpFromAgent(agentId: AgentId): Promise<Array<{ id: string; command: string; args?: string[]; env?: Record<string, string> }>> {
+async function readMcpFromAgent(
+  agentId: AgentId,
+): Promise<
+  Array<{
+    id: string;
+    command: string;
+    args?: string[];
+    env?: Record<string, string>;
+  }>
+> {
   const caps = AGENT_PATHS[agentId];
   if (!(await pathExists(caps.mcpPath))) return [];
 
@@ -60,7 +79,10 @@ async function readMcpFromAgent(agentId: AgentId): Promise<Array<{ id: string; c
         id,
         command: String(cfg?.command ?? ""),
         args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
-        env: cfg?.env && typeof cfg.env === "object" ? cfg.env : undefined,
+        env:
+          cfg?.env && typeof cfg.env === "object"
+            ? (cfg.env as Record<string, string>)
+            : undefined,
       }));
     } else {
       const data = TOML.parse(raw) as { mcp_servers?: Record<string, any> };
@@ -69,7 +91,10 @@ async function readMcpFromAgent(agentId: AgentId): Promise<Array<{ id: string; c
         id,
         command: String(cfg?.command ?? ""),
         args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
-        env: cfg?.env && typeof cfg.env === "object" ? cfg.env : undefined,
+        env:
+          cfg?.env && typeof cfg.env === "object"
+            ? (cfg.env as Record<string, string>)
+            : undefined,
       }));
     }
   } catch {
@@ -106,10 +131,14 @@ async function readSkillsFromAgent(agentId: AgentId): Promise<SkillDef[]> {
   }
 }
 
-export async function buildImportPreview(opts: {
-  existingPersonalMcpIds: string[];
-  existingPersonalSkillIds: string[];
-}): Promise<ImportPreview> {
+export interface BuildImportPreviewArgs {
+  storeMcp: MCPServerDef[];
+  storeSkills: SkillDef[];
+}
+
+export async function buildImportPreview(
+  args: BuildImportPreviewArgs,
+): Promise<ImportPreview> {
   const perAgent: Record<AgentId, { mcp: number; skills: number }> = {
     "claude-code": { mcp: 0, skills: 0 },
     cursor: { mcp: 0, skills: 0 },
@@ -117,33 +146,30 @@ export async function buildImportPreview(opts: {
     "factory-droid": { mcp: 0, skills: 0 },
   };
 
-  const mcpById = new Map<string, ImportedItem<MCPServerDef>>();
-  const skillsById = new Map<string, ImportedItem<SkillDef>>();
-  const skipped = { mcp: [] as string[], skills: [] as string[] };
+  // Aggregate native items across all agents, keyed by id.
+  const nativeMcp = new Map<
+    string,
+    {
+      first: { command: string; args?: string[]; env?: Record<string, string> };
+      sources: AgentId[];
+    }
+  >();
+  const nativeSkills = new Map<
+    string,
+    { first: SkillDef; sources: AgentId[] }
+  >();
 
   for (const agentId of ALL_AGENTS) {
     const mcps = await readMcpFromAgent(agentId);
     perAgent[agentId].mcp = mcps.length;
     for (const m of mcps) {
-      if (opts.existingPersonalMcpIds.includes(m.id)) {
-        if (!skipped.mcp.includes(m.id)) skipped.mcp.push(m.id);
-        continue;
-      }
-      const existing = mcpById.get(m.id);
-      if (existing) {
-        if (!existing.sourceAgents.includes(agentId)) existing.sourceAgents.push(agentId);
-        existing.item.enabledAgents = [...existing.sourceAgents];
+      const entry = nativeMcp.get(m.id);
+      if (entry) {
+        if (!entry.sources.includes(agentId)) entry.sources.push(agentId);
       } else {
-        mcpById.set(m.id, {
-          item: {
-            id: m.id,
-            command: m.command,
-            args: m.args,
-            env: m.env,
-            layer: "personal",
-            enabledAgents: [agentId],
-          },
-          sourceAgents: [agentId],
+        nativeMcp.set(m.id, {
+          first: { command: m.command, args: m.args, env: m.env },
+          sources: [agentId],
         });
       }
     }
@@ -151,27 +177,72 @@ export async function buildImportPreview(opts: {
     const skills = await readSkillsFromAgent(agentId);
     perAgent[agentId].skills = skills.length;
     for (const s of skills) {
-      if (opts.existingPersonalSkillIds.includes(s.id)) {
-        if (!skipped.skills.includes(s.id)) skipped.skills.push(s.id);
-        continue;
-      }
-      const existing = skillsById.get(s.id);
-      if (existing) {
-        if (!existing.sourceAgents.includes(agentId)) existing.sourceAgents.push(agentId);
-        existing.item.enabledAgents = [...existing.sourceAgents];
+      const entry = nativeSkills.get(s.id);
+      if (entry) {
+        if (!entry.sources.includes(agentId)) entry.sources.push(agentId);
       } else {
-        skillsById.set(s.id, {
-          item: { ...s, enabledAgents: [agentId] },
-          sourceAgents: [agentId],
-        });
+        nativeSkills.set(s.id, { first: s, sources: [agentId] });
       }
     }
   }
 
-  return {
-    mcp: Array.from(mcpById.values()),
-    skills: Array.from(skillsById.values()),
-    skipped,
-    perAgent,
-  };
+  const storeMcpById = new Map(args.storeMcp.map((m) => [m.id, m]));
+  const storeSkillsById = new Map(args.storeSkills.map((s) => [s.id, s]));
+
+  const mcp: MCPCandidate[] = [];
+  for (const [id, native] of nativeMcp) {
+    const inStore = storeMcpById.get(id);
+    if (inStore) {
+      const missing = native.sources.filter(
+        (a) => !inStore.enabledAgents.includes(a),
+      );
+      if (missing.length === 0) continue;
+      mcp.push({
+        kind: "extend",
+        id,
+        displayName: id,
+        agentsToAdd: missing,
+        currentAgents: inStore.enabledAgents,
+      });
+    } else {
+      mcp.push({
+        kind: "new",
+        item: {
+          id,
+          command: native.first.command,
+          args: native.first.args,
+          env: native.first.env,
+          layer: "personal",
+          enabledAgents: [...native.sources],
+        },
+        sourceAgents: native.sources,
+      });
+    }
+  }
+
+  const skills: SkillCandidate[] = [];
+  for (const [id, native] of nativeSkills) {
+    const inStore = storeSkillsById.get(id);
+    if (inStore) {
+      const missing = native.sources.filter(
+        (a) => !inStore.enabledAgents.includes(a),
+      );
+      if (missing.length === 0) continue;
+      skills.push({
+        kind: "extend",
+        id,
+        displayName: native.first.name,
+        agentsToAdd: missing,
+        currentAgents: inStore.enabledAgents,
+      });
+    } else {
+      skills.push({
+        kind: "new",
+        item: { ...native.first, enabledAgents: [...native.sources] },
+        sourceAgents: native.sources,
+      });
+    }
+  }
+
+  return { mcp, skills, perAgent };
 }

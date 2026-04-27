@@ -10,7 +10,6 @@ export default async function DashboardPage() {
   const mcp = await readAllMCP();
   const skills = await readAllSkills();
   const team = await teamStatus();
-  const hasAnyContent = mcp.length + skills.length > 0;
 
   return (
     <div className="space-y-10">
@@ -24,7 +23,7 @@ export default async function DashboardPage() {
         <SyncButton />
       </header>
 
-      <ImportBanner hasAnyContent={hasAnyContent} />
+      <ImportBanner />
 
       {team.subscribed ? (
         team.hasUpstreamUpdate ? (

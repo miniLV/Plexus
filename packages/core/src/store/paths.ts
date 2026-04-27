@@ -23,13 +23,13 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     mcp: true,
     skills: true,
     mcpFormat: "json",
-    // Claude Desktop config (Claude Code reuses MCP from Claude Desktop on macOS).
-    mcpPath:
-      platform === "darwin"
-        ? path.join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
-        : platform === "win32"
-        ? path.join(home, "AppData", "Roaming", "Claude", "claude_desktop_config.json")
-        : path.join(home, ".config", "Claude", "claude_desktop_config.json"),
+    // Claude Code stores user-scope MCPs in `~/.claude.json` (alongside many
+    // other client state keys). NOT to be confused with Claude *Desktop*
+    // which uses `~/Library/Application Support/Claude/claude_desktop_config.json`.
+    //
+    // Project-scope MCPs (`<repo>/.mcp.json`) are intentionally not handled
+    // by Plexus today; see README "Known limitations" for the planned design.
+    mcpPath: path.join(home, ".claude.json"),
     skillsDir: path.join(home, ".claude", "skills"),
   },
   cursor: {

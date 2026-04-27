@@ -85,6 +85,22 @@ plexus status       show subscription / sync status
 | Codex | `~/.codex/config.toml` (TOML, auto-converted) | `~/.codex/prompts/` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` |
 
+## Known limitations (MVP)
+
+- **Project-scope MCP files are not handled.** Both Claude Code (`<repo>/.mcp.json`)
+  and Cursor (`<repo>/.cursor/mcp.json`) support per-project MCP servers in
+  addition to the user-scope file. Plexus today only manages the user-scope
+  file (`~/.claude.json`, `~/.cursor/mcp.json`, `~/.codex/config.toml`,
+  `~/.factory/mcp.json`). Per-project sync is planned — it requires Plexus
+  to know which directories on disk you treat as "projects".
+- **No secret redaction yet.** When you import an MCP that has tokens in
+  `env`, those tokens land in `~/.config/plexus/personal/mcp/servers.yaml`.
+  Never push the `personal/` layer to a shared Git repo. Promotion-time
+  redaction is on the roadmap.
+- **No Windows verification.** All paths use `os.homedir()` and the symlink
+  fallback handles unprivileged Windows, but the MVP has only been exercised
+  on macOS.
+
 ## Architecture
 
 ```
