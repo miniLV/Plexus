@@ -37,12 +37,37 @@ const PACKAGES = [
 // Workspaces that depend on @plexus/core and must stay pinned.
 const CORE_DEPENDENTS = ["apps/web/package.json", "packages/cli/package.json"];
 
-function readPkg(rel) {
-  return JSON.parse(readFileSync(resolve(ROOT, rel), "utf8"));
+function readPkgText(rel) {
+  return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-function writePkg(rel, pkg) {
-  writeFileSync(resolve(ROOT, rel), `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+function readPkg(rel) {
+  return JSON.parse(readPkgText(rel));
+}
+
+function writePkgText(rel, text) {
+  writeFileSync(resolve(ROOT, rel), text, "utf8");
+}
+
+/**
+ * Replace the top-level `"version": "X.Y.Z"` line in a package.json without
+ * reformatting the rest of the file (so biome's preferred line wrapping for
+ * arrays/objects is preserved).
+ */
+function replaceVersionField(text, next) {
+  const re = /"version"\s*:\s*"\d+\.\d+\.\d+"/;
+  if (!re.test(text)) throw new Error("could not find a top-level version field");
+  return text.replace(re, `"version": "${next}"`);
+}
+
+/**
+ * Replace `"@plexus/core": "X.Y.Z"` inside a dependencies block. Workspace
+ * pins are always exact, so a pinned-semver match is unambiguous.
+ */
+function replaceCoreDep(text, next) {
+  const re = /"@plexus\/core"\s*:\s*"\d+\.\d+\.\d+"/;
+  if (!re.test(text)) return text;
+  return text.replace(re, `"@plexus/core": "${next}"`);
 }
 
 function bumpPatch(v) {
@@ -95,17 +120,12 @@ function main() {
   }
 
   for (const { path } of PACKAGES) {
-    const pkg = readPkg(path);
-    pkg.version = next;
-    writePkg(path, pkg);
-  }
-
-  for (const path of CORE_DEPENDENTS) {
-    const pkg = readPkg(path);
-    if (pkg.dependencies?.["@plexus/core"]) {
-      pkg.dependencies["@plexus/core"] = next;
-      writePkg(path, pkg);
+    let text = readPkgText(path);
+    text = replaceVersionField(text, next);
+    if (CORE_DEPENDENTS.includes(path)) {
+      text = replaceCoreDep(text, next);
     }
+    writePkgText(path, text);
   }
 
   console.log("[bump] done. Don't forget to commit + tag.");
