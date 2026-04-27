@@ -78,6 +78,11 @@ web_modules/
 .next
 out
 
+# Plexus build artifacts
+packages/*/dist
+apps/*/.next
+apps/*/out
+
 # Nuxt.js build / generate output
 .nuxt
 dist

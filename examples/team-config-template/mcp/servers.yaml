@@ -1,0 +1,10 @@
+servers:
+  - id: github
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    description: GitHub MCP server (read-only by default)
+    enabledAgents:
+      - claude-code
+      - cursor
+      - codex
+      - factory-droid

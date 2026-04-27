@@ -1,0 +1,23 @@
+{
+  "name": "@plexus/cli",
+  "version": "0.1.0",
+  "description": "Plexus CLI: launches the dashboard and exposes core commands.",
+  "type": "module",
+  "bin": {
+    "plexus": "./dist/bin.js"
+  },
+  "main": "dist/bin.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@plexus/core": "0.1.0",
+    "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  }
+}

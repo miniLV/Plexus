@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background: #0b0d12;
+  color: #e6e9ef;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+* {
+  border-color: #1f2330;
+}
+
+::selection {
+  background: rgba(124, 92, 255, 0.4);
+}
