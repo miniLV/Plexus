@@ -1,7 +1,7 @@
 {
   "name": "plexus-monorepo",
   "private": true,
-  "version": "1.0.0-alpha.1",
+  "version": "0.0.3",
   "description": "Team-shared AI agent config: one source of truth for MCP servers and skills across Claude Code, Cursor, Codex, and Factory Droid.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
