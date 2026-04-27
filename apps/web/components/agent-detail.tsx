@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, FileText, Loader2, Pencil, X } from "lucide-react";
+import { ArrowRight, ChevronRight, FileText, Loader2, Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -62,57 +62,11 @@ function truncMid(p: string, max = 60): string {
 }
 
 export function AgentDetail({ data }: { data: AgentInspection }) {
+  const plexusOwnedSkills = data.skills.filter((s) => s.isSymlink).length;
+  const localSkills = data.skills.length - plexusOwnedSkills;
+
   return (
     <div className="space-y-8">
-      {/* MCP file ───────────────────────── */}
-      <section className="space-y-3">
-        <h2 className="plexus-eyebrow">MCP File</h2>
-        <Card className="p-4 text-sm">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <code className="font-mono text-plexus-text">{data.mcpFile.path}</code>
-            <Badge
-              variant={data.mcpFileMode === "exclusive" ? "synced" : "divergent"}
-              title={
-                data.mcpFileMode === "exclusive"
-                  ? "Plexus owns this file end-to-end via a symlink to the canonical cache."
-                  : "This file holds many unrelated keys (auth, history, profile…). Plexus only rewrites its own section."
-              }
-            >
-              mode: {data.mcpFileMode}
-            </Badge>
-            {data.mcpFile.exists ? (
-              data.mcpFile.isSymlink ? (
-                <Badge variant="synced">symlink</Badge>
-              ) : (
-                <Badge variant="native">regular file</Badge>
-              )
-            ) : (
-              <Badge variant="native">missing</Badge>
-            )}
-          </div>
-          {data.mcpFile.isSymlink && data.mcpFile.linkTarget && (
-            <div className="mt-2 text-xs text-plexus-text-3">
-              <span className="text-plexus-text">→</span>{" "}
-              <code className="font-mono">{data.mcpFile.linkTarget}</code>
-            </div>
-          )}
-          <div className="mt-3 flex gap-4 text-xs text-plexus-text-3">
-            <span>size: {fmtSize(data.mcpFile.size)}</span>
-            <span>mtime: {fmtMtime(data.mcpFile.mtime)}</span>
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/mcp">
-                Edit MCP servers <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
-              </Link>
-            </Button>
-            {data.mcpFile.exists && (
-              <FileViewerButton agentId={data.id} filePath={data.mcpFile.path} readOnly />
-            )}
-          </div>
-        </Card>
-      </section>
-
       {/* Instruction files ─────────────── */}
       <section className="space-y-3">
         <h2 className="plexus-eyebrow">Instruction Files</h2>
@@ -145,63 +99,135 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
 
       {/* Skills ────────────────────────── */}
       <section className="space-y-3">
-        <div className="flex items-baseline justify-between">
-          <h2 className="plexus-eyebrow">Skills ({data.skills.length})</h2>
-          <Link
-            href="/skills"
-            className="inline-flex items-center gap-1 text-xs text-plexus-accent hover:underline"
-          >
-            Manage in Skills page <ArrowRight className="h-3 w-3" strokeWidth={1.5} />
-          </Link>
-        </div>
-        <Card className="overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border px-4 py-3 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
-            <div>ID</div>
-            <div className="text-right">Owner</div>
-            <div className="text-right">Action</div>
-          </div>
-          {data.skills.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-plexus-text-3">
-              No skills installed for this agent.
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-md border border-plexus-border bg-plexus-surface px-4 py-3 transition-colors hover:bg-plexus-surface-2/60">
+            <div className="flex items-center gap-3">
+              <ChevronRight
+                className="h-4 w-4 text-plexus-text-3 transition-transform group-open:rotate-90"
+                strokeWidth={1.5}
+              />
+              <span className="plexus-eyebrow">Skills</span>
+              <span className="text-sm text-plexus-text-2">{data.skills.length}</span>
+              {plexusOwnedSkills > 0 && (
+                <Badge variant="synced">{plexusOwnedSkills} Plexus-owned</Badge>
+              )}
+              {localSkills > 0 && <Badge variant="divergent">{localSkills} agent-local</Badge>}
             </div>
-          )}
-          {data.skills.slice(0, 50).map((s) => (
-            <div
-              key={s.path}
-              className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border/60 px-4 py-2.5 text-sm last:border-0 hover:bg-plexus-surface-2/40"
+            <Link
+              href="/skills"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-plexus-accent hover:underline"
             >
-              <div>
-                <div className="font-mono text-[13px] text-plexus-text">{s.id}</div>
-                {s.isSymlink && s.linkTarget && (
-                  <div className="mt-0.5 text-[10px] text-plexus-text-3">
-                    → {truncMid(s.linkTarget, 80)}
-                  </div>
-                )}
+              Manage in Skills page <ArrowRight className="h-3 w-3" strokeWidth={1.5} />
+            </Link>
+          </summary>
+          <Card className="mt-2 overflow-hidden">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border px-4 py-3 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
+              <div>ID</div>
+              <div className="text-right">Owner</div>
+              <div className="text-right">Action</div>
+            </div>
+            {data.skills.length === 0 && (
+              <div className="px-4 py-8 text-center text-sm text-plexus-text-3">
+                No skills installed for this agent.
               </div>
-              <div className="text-right">
-                {s.isSymlink ? (
-                  <Badge variant="synced">Plexus-owned</Badge>
+            )}
+            {data.skills.slice(0, 50).map((s) => (
+              <div
+                key={s.path}
+                className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border/60 px-4 py-2.5 text-sm last:border-0 hover:bg-plexus-surface-2/40"
+              >
+                <div>
+                  <div className="font-mono text-[13px] text-plexus-text">{s.id}</div>
+                  {s.isSymlink && s.linkTarget && (
+                    <div className="mt-0.5 text-[10px] text-plexus-text-3">
+                      → {truncMid(s.linkTarget, 80)}
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  {s.isSymlink ? (
+                    <Badge variant="synced">Plexus-owned</Badge>
+                  ) : (
+                    <Badge variant="divergent">agent-local</Badge>
+                  )}
+                </div>
+                <div className="text-right">
+                  {s.hasSkillMd && (
+                    <FileViewerButton
+                      agentId={data.id}
+                      filePath={`${s.path}/SKILL.md`}
+                      label="View"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+            {data.skills.length > 50 && (
+              <div className="border-t border-plexus-border/60 px-4 py-2 text-center text-xs text-plexus-text-3">
+                … and {data.skills.length - 50} more (manage on the Skills page)
+              </div>
+            )}
+          </Card>
+        </details>
+      </section>
+
+      {/* MCP file (collapsed by default) ─ */}
+      <section className="space-y-3">
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-md border border-plexus-border bg-plexus-surface px-4 py-3 transition-colors hover:bg-plexus-surface-2/60">
+            <div className="flex items-center gap-3">
+              <ChevronRight
+                className="h-4 w-4 text-plexus-text-3 transition-transform group-open:rotate-90"
+                strokeWidth={1.5}
+              />
+              <span className="plexus-eyebrow">MCP File</span>
+              <Badge
+                variant={data.mcpFileMode === "exclusive" ? "synced" : "divergent"}
+                title={
+                  data.mcpFileMode === "exclusive"
+                    ? "Plexus owns this file end-to-end via a symlink."
+                    : "Shared file — Plexus only rewrites its own section."
+                }
+              >
+                {data.mcpFileMode}
+              </Badge>
+              {data.mcpFile.exists ? (
+                data.mcpFile.isSymlink ? (
+                  <Badge variant="synced">symlink</Badge>
                 ) : (
-                  <Badge variant="divergent">agent-local</Badge>
-                )}
-              </div>
-              <div className="text-right">
-                {s.hasSkillMd && (
-                  <FileViewerButton
-                    agentId={data.id}
-                    filePath={`${s.path}/SKILL.md`}
-                    label="View"
-                  />
-                )}
-              </div>
+                  <Badge variant="native">regular file</Badge>
+                )
+              ) : (
+                <Badge variant="native">missing</Badge>
+              )}
             </div>
-          ))}
-          {data.skills.length > 50 && (
-            <div className="border-t border-plexus-border/60 px-4 py-2 text-center text-xs text-plexus-text-3">
-              … and {data.skills.length - 50} more (manage on the Skills page)
+            <span className="text-xs text-plexus-text-3">{fmtSize(data.mcpFile.size)}</span>
+          </summary>
+          <Card className="mt-2 p-4 text-sm">
+            <code className="font-mono text-plexus-text-2">{data.mcpFile.path}</code>
+            {data.mcpFile.isSymlink && data.mcpFile.linkTarget && (
+              <div className="mt-2 text-xs text-plexus-text-3">
+                <span className="text-plexus-text">→</span>{" "}
+                <code className="font-mono">{data.mcpFile.linkTarget}</code>
+              </div>
+            )}
+            <div className="mt-3 flex gap-4 text-xs text-plexus-text-3">
+              <span>size: {fmtSize(data.mcpFile.size)}</span>
+              <span>mtime: {fmtMtime(data.mcpFile.mtime)}</span>
             </div>
-          )}
-        </Card>
+            <div className="mt-4 flex gap-2">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/mcp">
+                  Edit MCP servers <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                </Link>
+              </Button>
+              {data.mcpFile.exists && (
+                <FileViewerButton agentId={data.id} filePath={data.mcpFile.path} readOnly />
+              )}
+            </div>
+          </Card>
+        </details>
       </section>
     </div>
   );
