@@ -1,6 +1,6 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
-import { snapshotAgentConfigs } from "../backup/index.js";
+import { cleanupLegacyResidue, snapshotAgentConfigs } from "../backup/index.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
 import { readConfig } from "../store/config.js";
@@ -28,6 +28,9 @@ export async function runSync(only?: AgentId[]): Promise<SyncReport & { backup?:
   const backup = await snapshotAgentConfigs({
     reason: only ? `partial sync: ${only.join(",")}` : "full sync",
   }).catch(() => undefined);
+
+  // One-shot cleanup of pre-v0.0.2 inline `.plexus-backup-*` residue.
+  await cleanupLegacyResidue().catch(() => undefined);
 
   const [teamMcp, personalMcp, teamSkills, personalSkills] = await Promise.all([
     readMCP("team"),

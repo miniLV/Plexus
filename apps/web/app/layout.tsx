@@ -15,6 +15,7 @@ const NAV = [
   { href: "/skills", label: "Skills" },
   { href: "/mirror", label: "Mirror" },
   { href: "/team", label: "Team" },
+  { href: "/backups", label: "Backups" },
   { href: "/settings", label: "Settings" },
 ];
 

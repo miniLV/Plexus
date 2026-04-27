@@ -1,6 +1,6 @@
 {
   "name": "@plexus/web",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "Plexus dashboard (Next.js).",
   "scripts": {
@@ -11,7 +11,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@plexus/core": "0.0.1",
+    "@plexus/core": "0.0.2",
     "next": "^14.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

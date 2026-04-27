@@ -45,7 +45,11 @@ export async function isSymlink(p: string): Promise<boolean> {
 
 /**
  * Place `target` at `linkPath` either as a symlink (preferred) or copy fallback.
- * If the destination is an existing real file/dir we back it up by renaming.
+ *
+ * If the destination is an existing real file/dir we evict it into the
+ * central Plexus backups area (~/.config/plexus/backups/_collisions/<ts>/...)
+ * BEFORE placing the new symlink. Older inline `.plexus-backup-<ts>` residue
+ * in agent directories is no longer created by this function.
  */
 export async function placeLinkOrCopy(
   target: string,
@@ -54,14 +58,16 @@ export async function placeLinkOrCopy(
 ): Promise<{ via: "symlink" | "copy"; backedUp?: string }> {
   await ensureDir(path.dirname(linkPath));
 
+  let backedUp: string | undefined;
+
   if (await pathExists(linkPath)) {
     if (await isSymlink(linkPath)) {
       await fs.unlink(linkPath);
     } else {
-      const backup = `${linkPath}.plexus-backup-${Date.now()}`;
-      await fs.rename(linkPath, backup);
-      const result = await placeLinkOrCopy(target, linkPath, strategy);
-      return { ...result, backedUp: backup };
+      const { quarantineCollision } = await import("../../backup/index.js");
+      const dest = await quarantineCollision({ agent: "unknown", sourcePath: linkPath });
+      if (dest) backedUp = dest;
+      // After quarantineCollision the original path is gone; fall through to placement.
     }
   }
 
@@ -70,7 +76,7 @@ export async function placeLinkOrCopy(
       const stat = await fs.lstat(target);
       const type = stat.isDirectory() ? "dir" : "file";
       await fs.symlink(target, linkPath, type);
-      return { via: "symlink" };
+      return { via: "symlink", backedUp };
     } catch {
       // Fallback to copy if symlink not supported (e.g. Windows without privilege).
     }
@@ -83,7 +89,7 @@ export async function placeLinkOrCopy(
   } else {
     await fs.copyFile(target, linkPath);
   }
-  return { via: "copy" };
+  return { via: "copy", backedUp };
 }
 
 export function emptyResult(agentId: AgentId): SyncResult {

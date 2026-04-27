@@ -4,6 +4,11 @@ import { AGENT_PATHS, ALL_AGENTS, PLEXUS_PATHS } from "../store/paths.js";
 import { ensureDir, pathExists } from "../store/fs-utils.js";
 import type { AgentId } from "../types.js";
 
+/** Where collision backups (from placeLinkOrCopy) end up. */
+export const COLLISION_BACKUP_ROOT = path.join(PLEXUS_PATHS.backups, "_collisions");
+/** Where one-time-quarantined `.plexus-backup-*` residue ends up. */
+export const LEGACY_RESIDUE_ROOT = path.join(PLEXUS_PATHS.backups, "_legacy-residue");
+
 /**
  * Plexus snapshots every agent's native MCP config file before any sync write.
  *
@@ -177,6 +182,80 @@ export async function snapshotSingleFile(
   } catch {
     return null;
   }
+}
+
+/**
+ * Move a colliding file/dir into the central backups area instead of leaving
+ * `<name>.plexus-backup-<ts>` debris in the agent's own directory.
+ *
+ * Called by adapter `placeLinkOrCopy` whenever it needs to evict a real
+ * file/dir before placing a symlink.
+ */
+export async function quarantineCollision(opts: {
+  agent: AgentId | "unknown";
+  sourcePath: string;
+}): Promise<string | null> {
+  if (!(await pathExists(opts.sourcePath))) return null;
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const destDir = path.join(COLLISION_BACKUP_ROOT, ts, opts.agent);
+  await ensureDir(destDir);
+  const destPath = path.join(destDir, path.basename(opts.sourcePath));
+  try {
+    await fs.rename(opts.sourcePath, destPath);
+    return destPath;
+  } catch {
+    // Cross-device or permission — fall back to copy + delete.
+    try {
+      const lst = await fs.lstat(opts.sourcePath);
+      if (lst.isDirectory()) {
+        await fs.cp(opts.sourcePath, destPath, { recursive: true });
+        await fs.rm(opts.sourcePath, { recursive: true, force: true });
+      } else {
+        await fs.copyFile(opts.sourcePath, destPath);
+        await fs.unlink(opts.sourcePath);
+      }
+      return destPath;
+    } catch {
+      return null;
+    }
+  }
+}
+
+/**
+ * One-shot cleanup: scan every agent's skills dir for `.plexus-backup-*`
+ * residue (left by old versions of placeLinkOrCopy) and quarantine them
+ * into the central backups area. Idempotent.
+ */
+export async function cleanupLegacyResidue(): Promise<{
+  moved: Array<{ agent: AgentId; from: string; to: string }>;
+}> {
+  const moved: Array<{ agent: AgentId; from: string; to: string }> = [];
+  for (const agentId of ALL_AGENTS) {
+    const caps = AGENT_PATHS[agentId];
+    if (!caps.skills) continue;
+    if (!(await pathExists(caps.skillsDir))) continue;
+    let entries: string[];
+    try {
+      entries = await fs.readdir(caps.skillsDir);
+    } catch {
+      continue;
+    }
+    for (const name of entries) {
+      if (!name.includes(".plexus-backup-")) continue;
+      const src = path.join(caps.skillsDir, name);
+      const ts = new Date().toISOString().replace(/[:.]/g, "-");
+      const destDir = path.join(LEGACY_RESIDUE_ROOT, ts, agentId);
+      await ensureDir(destDir);
+      const dest = path.join(destDir, name);
+      try {
+        await fs.rename(src, dest);
+        moved.push({ agent: agentId, from: src, to: dest });
+      } catch {
+        // best effort
+      }
+    }
+  }
+  return { moved };
 }
 
 /** Restore one snapshot by copying every backed-up file back over the original. */
