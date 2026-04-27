@@ -1,7 +1,7 @@
 {
   "name": "plexus-monorepo",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Team-shared AI agent config: one source of truth for MCP servers and skills across Claude Code, Cursor, Codex, and Factory Droid.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
@@ -22,7 +22,8 @@
     "bump": "node scripts/bump.mjs",
     "bump:patch": "node scripts/bump.mjs",
     "bump:dry": "node scripts/bump.mjs --dry",
-    "release:patch": "npm run verify && npm run bump:patch && node scripts/release-commit.mjs"
+    "release:patch": "npm run verify && npm run bump:patch && node scripts/release-commit.mjs",
+    "ship": "node scripts/ship.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
