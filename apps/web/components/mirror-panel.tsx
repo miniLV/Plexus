@@ -67,7 +67,6 @@ export function MirrorPanel({
     setPreviews(results);
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: targets-as-Set requires manual key
   useEffect(() => {
     if (from && targets.size > 0) loadPreviews();
     else setPreviews([]);
