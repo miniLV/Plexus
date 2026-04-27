@@ -26,6 +26,20 @@ function shortenPath(p: string, max = 60): string {
   return `${p.slice(0, left)}…${p.slice(p.length - right)}`;
 }
 
+// Deterministic across SSR (Node) and browser to avoid React hydration
+// mismatches that toLocaleString() (no locale) would otherwise cause.
+function fmtSnapshotTime(d: Date): string {
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
 export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
   const [snapshots, setSnapshots] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
@@ -112,7 +126,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <div className="font-mono text-sm text-plexus-text">
-                      {Number.isNaN(date.getTime()) ? snap.id : date.toLocaleString()}
+                      {Number.isNaN(date.getTime()) ? snap.id : fmtSnapshotTime(date)}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-plexus-text-3">
                       {snap.entries.length} file{snap.entries.length === 1 ? "" : "s"} ·{" "}

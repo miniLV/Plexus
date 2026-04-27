@@ -51,7 +51,17 @@ function fmtSize(n?: number) {
 
 function fmtMtime(t?: string) {
   if (!t) return "—";
-  return new Date(t).toLocaleString();
+  // Fixed locale so SSR (Node) and client (browser) produce identical text —
+  // otherwise React throws a hydration mismatch (en-US vs en-GB date order).
+  return new Date(t).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }
 
 function truncMid(p: string, max = 60): string {
