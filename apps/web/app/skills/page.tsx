@@ -12,13 +12,13 @@ export default async function SkillsPage() {
   >;
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Skills</h1>
-        <p className="text-sm text-plexus-mute">
+      <header>
+        <h1 className="plexus-display mb-2">Skills</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">
           Every unique skill across your installed agents and the Plexus store. Toggle a checkbox to
-          add or remove a skill from an agent.
+          add or remove a skill from an agent — Plexus snapshots and symlinks for you.
         </p>
-      </div>
+      </header>
       <SkillsEditor
         initial={rows}
         agents={[...ALL_AGENTS]}
