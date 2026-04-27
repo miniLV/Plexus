@@ -17,7 +17,7 @@
  * Exits non-zero on any failure; does NOT roll back partial work.
  */
 
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +42,20 @@ function sh(cmd) {
 
 function shInherit(cmd) {
   execSync(cmd, { cwd: ROOT, stdio: "inherit" });
+}
+
+/**
+ * Run an argv-array command without shell interpolation. Use this for any
+ * git invocation that takes user-controlled multi-line text (commit/tag
+ * messages) — `execSync` shell-quotes arguments and turns embedded \n into
+ * the literal two characters.
+ */
+function run(argv) {
+  const [cmd, ...args] = argv;
+  const r = spawnSync(cmd, args, { cwd: ROOT, stdio: "inherit" });
+  if (r.status !== 0) {
+    fail(`command failed: ${argv.join(" ")}`);
+  }
 }
 
 function fail(msg) {
@@ -90,12 +104,12 @@ function main() {
   }
   if (tagExists) fail(`tag v${version} already exists; bump again or delete it.`);
 
-  // Commit + tag + push.
-  const message = `release: v${version}\n\n${COAUTHOR_TRAILER}`;
-  shInherit(`git commit -m ${JSON.stringify(message)}`);
-  shInherit(`git tag -a v${version} -m ${JSON.stringify(`v${version}`)}`);
-  shInherit(`git push origin ${branch}`);
-  shInherit(`git push origin v${version}`);
+  // Commit + tag + push. Use argv-array form so newlines in the commit
+  // body are not flattened to the literal characters \n by shell quoting.
+  run(["git", "commit", "-m", `release: v${version}`, "-m", COAUTHOR_TRAILER]);
+  run(["git", "tag", "-a", `v${version}`, "-m", `v${version}`]);
+  run(["git", "push", "origin", branch]);
+  run(["git", "push", "origin", `v${version}`]);
 
   console.log(`\n[release] published v${version} on origin/${branch}`);
 }
