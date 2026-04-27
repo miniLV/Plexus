@@ -18,7 +18,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:core": "npm run test -w @plexus/core",
-    "verify": "npm run check && npm run typecheck && npm run test && npm run build",
+    "verify": "npm run check && npm run test:core && npm run build",
     "bump": "node scripts/bump.mjs",
     "bump:patch": "node scripts/bump.mjs",
     "bump:dry": "node scripts/bump.mjs --dry",

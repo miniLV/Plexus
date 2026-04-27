@@ -1,3 +1,4 @@
+import { CustomAgentsPanel } from "@/components/custom-agents-panel";
 import { SettingsPanel } from "@/components/settings-panel";
 import { AGENT_DISPLAY_NAMES, ALL_AGENTS, readConfig } from "@plexus/core";
 
@@ -15,6 +16,7 @@ export default async function SettingsPage() {
         </p>
       </header>
       <SettingsPanel config={config} agents={[...ALL_AGENTS]} displayNames={AGENT_DISPLAY_NAMES} />
+      <CustomAgentsPanel />
     </div>
   );
 }
