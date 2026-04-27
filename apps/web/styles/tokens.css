@@ -1,0 +1,78 @@
+/**
+ * Plexus 1.0 design tokens.
+ *
+ * Source of truth: docs/refactor/02-design.md §2.
+ * Mockup parity: docs/refactor/mockups/_shared.css.
+ *
+ * Colour values are stored as space-separated RGB triplets so Tailwind's
+ * `<alpha-value>` placeholder (rgb(... / <alpha-value>)) lets us write
+ * `bg-plexus-accent/12`, `text-plexus-text-2`, etc. and have opacity
+ * modifiers work uniformly. See tailwind.config.ts for the mapping.
+ */
+
+:root,
+[data-theme="dark"] {
+  --plexus-bg: 26 26 23;
+  --plexus-surface: 38 38 36;
+  --plexus-surface-2: 47 47 44;
+  --plexus-border: 58 58 55;
+  --plexus-border-strong: 74 74 69;
+
+  --plexus-text: 245 244 237;
+  --plexus-text-2: 194 191 179;
+  --plexus-text-3: 138 134 120;
+  --plexus-text-mute: 107 103 89;
+
+  --plexus-accent: 204 120 92;
+  --plexus-accent-2: 214 139 115;
+
+  --plexus-ok: 107 153 113;
+  --plexus-warn: 200 164 92;
+  --plexus-err: 196 96 79;
+  --plexus-info: 107 138 168;
+
+  --plexus-code-bg: 31 31 29;
+  --plexus-code-fg: 212 208 196;
+}
+
+[data-theme="light"] {
+  --plexus-bg: 245 244 237;
+  --plexus-surface: 255 255 255;
+  --plexus-surface-2: 250 249 244;
+  --plexus-border: 230 227 216;
+  --plexus-border-strong: 212 208 196;
+
+  --plexus-text: 26 26 23;
+  --plexus-text-2: 74 74 69;
+  --plexus-text-3: 107 103 89;
+  --plexus-text-mute: 138 134 120;
+
+  --plexus-accent: 184 95 63;
+  --plexus-accent-2: 168 84 51;
+
+  --plexus-ok: 74 122 82;
+  --plexus-warn: 150 111 44;
+  --plexus-err: 152 64 50;
+  --plexus-info: 74 102 136;
+
+  --plexus-code-bg: 240 238 229;
+  --plexus-code-fg: 42 42 38;
+}
+
+/* Common, theme-agnostic */
+:root {
+  --plexus-font-sans: "Inter", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --plexus-font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+  --plexus-radius-sm: 6px;
+  --plexus-radius: 8px;
+  --plexus-radius-md: 10px;
+  --plexus-radius-lg: 14px;
+  --plexus-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --plexus-dur-fast: 120ms;
+  --plexus-dur: 200ms;
+  --plexus-dur-slow: 320ms;
+  --plexus-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.18);
+  --plexus-shadow: 0 4px 12px rgb(0 0 0 / 0.2), 0 1px 2px rgb(0 0 0 / 0.1);
+  --plexus-shadow-lg: 0 20px 40px rgb(0 0 0 / 0.25), 0 4px 8px rgb(0 0 0 / 0.15);
+}

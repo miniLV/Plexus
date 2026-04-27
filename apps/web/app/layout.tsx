@@ -1,53 +1,39 @@
-import "./globals.css";
-import { PLEXUS_VERSION } from "@/lib/version";
+import { AppSidebar } from "@/components/app-sidebar";
+import { AppTopbar } from "@/components/app-topbar";
+import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--plexus-font-sans-loaded",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Plexus",
-  description: "Team-shared AI agent config",
+  description:
+    "Team-shared AI agent config — sync MCPs, skills, and CLAUDE.md across every coding agent on your machine.",
 };
-
-const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/mcp", label: "MCP Servers" },
-  { href: "/skills", label: "Skills" },
-  { href: "/mirror", label: "Mirror" },
-  { href: "/team", label: "Team" },
-  { href: "/backups", label: "Backups" },
-  { href: "/settings", label: "Settings" },
-];
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className="font-sans">
-        <div className="flex min-h-screen">
-          <aside className="w-56 border-r border-plexus-border bg-plexus-panel px-4 py-6">
-            <div className="mb-8">
-              <div className="flex items-baseline gap-2">
-                <div className="text-lg font-semibold tracking-tight text-plexus-text">
-                  <span className="text-plexus-accent">●</span> Plexus
-                </div>
-                <span className="font-mono text-[10px] text-plexus-mute">v{PLEXUS_VERSION}</span>
-              </div>
-              <div className="text-xs text-plexus-mute">team agent config</div>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
+      <body>
+        <ThemeProvider>
+          <TooltipProvider delayDuration={250}>
+            <div className="flex min-h-screen">
+              <AppSidebar />
+              <main className="flex min-w-0 flex-1 flex-col">
+                <AppTopbar />
+                <div className="mx-auto w-full max-w-[1180px] px-10 py-8">{children}</div>
+              </main>
             </div>
-            <nav className="flex flex-col gap-1 text-sm">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded px-3 py-2 text-plexus-text hover:bg-plexus-bg"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </aside>
-          <main className="flex-1 px-10 py-8">{children}</main>
-        </div>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

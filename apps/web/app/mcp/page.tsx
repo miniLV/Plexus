@@ -13,13 +13,13 @@ export default async function McpPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">MCP Servers</h1>
-        <p className="text-sm text-plexus-mute">
+      <header>
+        <h1 className="plexus-display mb-2">MCP Servers</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">
           Every unique MCP across your installed agents and the Plexus store. Toggle a checkbox to
-          add or remove that MCP from an agent — Plexus handles the writes.
+          add or remove an MCP from an agent — Plexus handles the writes and snapshots first.
         </p>
-      </div>
+      </header>
       <McpEditor
         initial={rows}
         agents={[...ALL_AGENTS]}

@@ -1,18 +1,52 @@
+@import "../styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html,
 body {
-  background: #0b0d12;
-  color: #e6e9ef;
-  font-feature-settings: "rlig" 1, "calt" 1;
+  background: rgb(var(--plexus-bg));
+  color: rgb(var(--plexus-text));
+  font-family: var(--plexus-font-sans-loaded), var(--plexus-font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "rlig" 1, "calt" 1;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
 }
 
-* {
-  border-color: #1f2330;
+/* Typed eyebrow / display / body utilities — match mockups. */
+.plexus-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgb(var(--plexus-text-3));
+}
+
+.plexus-display {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.plexus-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 ::selection {
-  background: rgba(124, 92, 255, 0.4);
+  background: rgb(var(--plexus-accent) / 0.2);
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
