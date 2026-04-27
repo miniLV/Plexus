@@ -1,5 +1,6 @@
 import { detectAgents, readAllMCP, readAllSkills, teamStatus } from "@plexus/core";
 import Link from "next/link";
+import { ImportBanner } from "@/components/import-banner";
 import { SyncButton } from "@/components/sync-button";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ export default async function DashboardPage() {
   const mcp = await readAllMCP();
   const skills = await readAllSkills();
   const team = await teamStatus();
+  const hasAnyContent = mcp.length + skills.length > 0;
 
   return (
     <div className="space-y-10">
@@ -21,6 +23,8 @@ export default async function DashboardPage() {
         </div>
         <SyncButton />
       </header>
+
+      <ImportBanner hasAnyContent={hasAnyContent} />
 
       {team.subscribed ? (
         team.hasUpstreamUpdate ? (
