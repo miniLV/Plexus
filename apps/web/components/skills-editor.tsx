@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 
-type SkillLite = {
+type Row = {
   id: string;
   name: string;
   description?: string;
-  layer: "team" | "personal";
-  enabledAgents: string[];
+  authority: "personal" | "team" | "native";
+  effectiveAgents: string[];
+  nativeAgents: string[];
+  enabledAgents?: string[];
 };
 
 const AGENT_LABELS: Record<string, string> = {
@@ -17,14 +19,25 @@ const AGENT_LABELS: Record<string, string> = {
   "factory-droid": "Droid",
 };
 
+function authorityClass(a: Row["authority"]): string {
+  if (a === "personal") return "bg-plexus-border text-plexus-mute";
+  if (a === "team") return "bg-plexus-accent/15 text-plexus-accent";
+  return "bg-plexus-warn/15 text-plexus-warn";
+}
+
 export function SkillsEditor({
   initial,
   agents,
+  displayNames,
+  installed,
 }: {
-  initial: SkillLite[];
+  initial: Row[];
   agents: string[];
+  displayNames: Record<string, string>;
+  installed: Record<string, boolean>;
 }) {
-  const [skills, setSkills] = useState<SkillLite[]>(initial);
+  const [rows, setRows] = useState<Row[]>(initial);
+  const [busy, setBusy] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({
     id: "",
@@ -35,32 +48,47 @@ export function SkillsEditor({
     enabledAgents: agents,
   });
   const [msg, setMsg] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
 
   async function reload() {
-    const res = await fetch("/api/skills");
+    const res = await fetch("/api/skills/effective");
     const data = await res.json();
-    setSkills(data.skills ?? []);
+    setRows(data.rows ?? []);
   }
 
-  async function toggleAgent(s: SkillLite, agent: string) {
-    const enabledAgents = s.enabledAgents.includes(agent)
-      ? s.enabledAgents.filter((a) => a !== agent)
-      : [...s.enabledAgents, agent];
-    await fetch(`/api/skills/${encodeURIComponent(s.id)}?layer=${s.layer}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ enabledAgents }),
-    });
-    await reload();
+  async function toggle(row: Row, agent: string, enabled: boolean) {
+    if (row.authority === "team") return;
+    setBusy(`${row.id}:${agent}`);
+    try {
+      const res = await fetch(
+        `/api/skills/${encodeURIComponent(row.id)}/toggle`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ agent, enabled }),
+        },
+      );
+      const data = await res.json();
+      if (!data.ok) setMsg(`Error: ${data.message}`);
+      await reload();
+    } finally {
+      setBusy(null);
+    }
   }
 
-  async function removeSkill(s: SkillLite) {
-    if (s.layer === "team") return;
-    if (!confirm(`Delete skill "${s.id}"?`)) return;
-    await fetch(`/api/skills/${encodeURIComponent(s.id)}?layer=${s.layer}`, {
-      method: "DELETE",
-    });
-    await reload();
+  async function removeRow(row: Row) {
+    if (row.authority !== "personal") return;
+    if (!confirm(`Delete skill "${row.id}"?`)) return;
+    setBusy(row.id);
+    try {
+      await fetch(`/api/skills/${encodeURIComponent(row.id)}?layer=personal`, {
+        method: "DELETE",
+      });
+      await fetch("/api/sync", { method: "POST" });
+      await reload();
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function addSkill() {
@@ -68,26 +96,57 @@ export function SkillsEditor({
       setMsg("id and name are required");
       return;
     }
-    const res = await fetch("/api/skills", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(draft),
-    });
-    if (!res.ok) {
-      setMsg(await res.text());
-      return;
+    setBusy("__new__");
+    try {
+      const res = await fetch("/api/skills", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+      if (!res.ok) {
+        setMsg(await res.text());
+        return;
+      }
+      await fetch("/api/sync", { method: "POST" });
+      setDraft({
+        id: "",
+        name: "",
+        description: "",
+        body: "",
+        layer: "personal",
+        enabledAgents: agents,
+      });
+      setAdding(false);
+      setMsg(null);
+      await reload();
+    } finally {
+      setBusy(null);
     }
-    setDraft({ id: "", name: "", description: "", body: "", layer: "personal", enabledAgents: agents });
-    setAdding(false);
-    setMsg(null);
-    await reload();
   }
+
+  const visible = filter
+    ? rows.filter(
+        (r) =>
+          r.id.toLowerCase().includes(filter.toLowerCase()) ||
+          r.name.toLowerCase().includes(filter.toLowerCase()),
+      )
+    : rows;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-plexus-mute">{skills.length} skill(s)</div>
+        <div className="text-xs text-plexus-mute">
+          {rows.length} unique skill(s) ·{" "}
+          {rows.filter((r) => r.authority === "personal").length} in personal store ·{" "}
+          {rows.filter((r) => r.authority === "native").length} native-only
+        </div>
         <div className="flex items-center gap-3">
+          <input
+            className="rounded border border-plexus-border bg-plexus-bg px-2 py-1 text-xs w-48"
+            placeholder="Filter by id or name..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
           {msg && <span className="text-xs text-plexus-err">{msg}</span>}
           <button
             onClick={() => setAdding(!adding)}
@@ -105,7 +164,9 @@ export function SkillsEditor({
               className="rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm"
               placeholder="id (folder-safe, e.g. code-review)"
               value={draft.id}
-              onChange={(e) => setDraft({ ...draft, id: e.target.value.replace(/[^a-z0-9-_]/gi, "-") })}
+              onChange={(e) =>
+                setDraft({ ...draft, id: e.target.value.replace(/[^a-z0-9-_]/gi, "-") })
+              }
             />
             <input
               className="rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm"
@@ -128,9 +189,10 @@ export function SkillsEditor({
           />
           <button
             onClick={addSkill}
+            disabled={busy === "__new__"}
             className="rounded bg-plexus-accent px-3 py-1.5 text-sm font-medium text-white"
           >
-            Save
+            Save and sync
           </button>
         </div>
       )}
@@ -143,51 +205,54 @@ export function SkillsEditor({
             <th className="border-b border-plexus-border py-2 pr-4">Layer</th>
             {agents.map((a) => (
               <th key={a} className="border-b border-plexus-border px-2 py-2 text-center">
-                {AGENT_LABELS[a] ?? a}
+                {displayNames[a] ?? AGENT_LABELS[a] ?? a}
               </th>
             ))}
             <th className="border-b border-plexus-border py-2"></th>
           </tr>
         </thead>
         <tbody>
-          {skills.length === 0 && (
+          {visible.length === 0 && (
             <tr>
-              <td colSpan={5 + agents.length} className="py-6 text-center text-plexus-mute">
-                No skills yet. Click <span className="text-plexus-text">+ Add Skill</span> to create one.
+              <td colSpan={4 + agents.length} className="py-6 text-center text-plexus-mute">
+                {rows.length === 0
+                  ? "No skills found in any agent or in your store."
+                  : "No skills match your filter."}
               </td>
             </tr>
           )}
-          {skills.map((s) => (
-            <tr key={`${s.layer}:${s.id}`} className="border-b border-plexus-border/60">
-              <td className="py-3 pr-4 font-mono">{s.id}</td>
-              <td className="py-3 pr-4">{s.name}</td>
+          {visible.map((r) => (
+            <tr key={r.id} className="border-b border-plexus-border/60">
+              <td className="py-3 pr-4 font-mono">{r.id}</td>
+              <td className="py-3 pr-4">{r.name}</td>
               <td className="py-3 pr-4">
-                <span
-                  className={`rounded px-2 py-0.5 text-xs ${
-                    s.layer === "team"
-                      ? "bg-plexus-accent/15 text-plexus-accent"
-                      : "bg-plexus-border text-plexus-mute"
-                  }`}
-                >
-                  {s.layer}
+                <span className={`rounded px-2 py-0.5 text-xs ${authorityClass(r.authority)}`}>
+                  {r.authority}
                 </span>
               </td>
-              {agents.map((a) => (
-                <td key={a} className="text-center">
-                  <input
-                    type="checkbox"
-                    checked={s.enabledAgents.includes(a)}
-                    onChange={() => toggleAgent(s, a)}
-                    disabled={s.layer === "team"}
-                    className="h-4 w-4 accent-plexus-accent"
-                  />
-                </td>
-              ))}
+              {agents.map((a) => {
+                const has = r.effectiveAgents.includes(a);
+                const isBusy = busy === `${r.id}:${a}`;
+                const disabled = r.authority === "team" || !installed[a];
+                return (
+                  <td key={a} className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={has}
+                      disabled={disabled || isBusy}
+                      onChange={(e) => toggle(r, a, e.target.checked)}
+                      className="h-4 w-4 accent-plexus-accent disabled:opacity-40"
+                      title={!installed[a] ? `${displayNames[a]} not installed` : ""}
+                    />
+                  </td>
+                );
+              })}
               <td className="py-3 text-right">
-                {s.layer === "personal" && (
+                {r.authority === "personal" && (
                   <button
-                    onClick={() => removeSkill(s)}
-                    className="text-xs text-plexus-mute hover:text-plexus-err"
+                    onClick={() => removeRow(r)}
+                    disabled={busy === r.id}
+                    className="text-xs text-plexus-mute hover:text-plexus-err disabled:opacity-50"
                   >
                     Delete
                   </button>
@@ -197,6 +262,13 @@ export function SkillsEditor({
           ))}
         </tbody>
       </table>
+      <p className="text-xs text-plexus-mute">
+        <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">native</span>{" "}
+        skills are still only in the agent's own folder. Toggling promotes them into your personal Plexus store.
+        <br />
+        <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">team</span>{" "}
+        skills are read-only here — propose changes via PR to the team repo.
+      </p>
     </div>
   );
 }

@@ -1,4 +1,9 @@
-import { detectAgents, readAllMCP, readAllSkills, teamStatus } from "@plexus/core";
+import {
+  detectAgents,
+  getEffectiveMcp,
+  getEffectiveSkills,
+  teamStatus,
+} from "@plexus/core";
 import Link from "next/link";
 import { ImportBanner } from "@/components/import-banner";
 import { SyncButton } from "@/components/sync-button";
@@ -7,8 +12,8 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const agents = detectAgents();
-  const mcp = await readAllMCP();
-  const skills = await readAllSkills();
+  const mcp = await getEffectiveMcp();
+  const skills = await getEffectiveSkills();
   const team = await teamStatus();
 
   return (
@@ -88,8 +93,9 @@ export default async function DashboardPage() {
           <div className="text-sm uppercase tracking-wider text-plexus-mute">MCP Servers</div>
           <div className="mt-1 text-3xl font-semibold">{mcp.length}</div>
           <div className="mt-1 text-xs text-plexus-mute">
-            {mcp.filter((m) => m.layer === "team").length} team ·{" "}
-            {mcp.filter((m) => m.layer === "personal").length} personal
+            {mcp.filter((m) => m.authority === "team").length} team ·{" "}
+            {mcp.filter((m) => m.authority === "personal").length} personal ·{" "}
+            {mcp.filter((m) => m.authority === "native").length} native-only
           </div>
         </Link>
         <Link
@@ -99,8 +105,9 @@ export default async function DashboardPage() {
           <div className="text-sm uppercase tracking-wider text-plexus-mute">Skills</div>
           <div className="mt-1 text-3xl font-semibold">{skills.length}</div>
           <div className="mt-1 text-xs text-plexus-mute">
-            {skills.filter((s) => s.layer === "team").length} team ·{" "}
-            {skills.filter((s) => s.layer === "personal").length} personal
+            {skills.filter((s) => s.authority === "team").length} team ·{" "}
+            {skills.filter((s) => s.authority === "personal").length} personal ·{" "}
+            {skills.filter((s) => s.authority === "native").length} native-only
           </div>
         </Link>
       </section>

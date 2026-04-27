@@ -1,27 +1,34 @@
-import { ALL_AGENTS, readAllSkills } from "@plexus/core";
+import {
+  ALL_AGENTS,
+  AGENT_DISPLAY_NAMES,
+  detectAgents,
+  getEffectiveSkills,
+} from "@plexus/core";
 import { SkillsEditor } from "@/components/skills-editor";
 
 export const dynamic = "force-dynamic";
 
 export default async function SkillsPage() {
-  const skills = await readAllSkills();
-  // Send only metadata to the client; SKILL.md body fetched on demand if needed.
-  const lite = skills.map((s) => ({
-    id: s.id,
-    name: s.name,
-    description: s.description,
-    layer: s.layer,
-    enabledAgents: s.enabledAgents,
-  }));
+  const rows = await getEffectiveSkills();
+  const detected = detectAgents();
+  const installed = Object.fromEntries(
+    detected.map((d) => [d.id, d.installed]),
+  ) as Record<string, boolean>;
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Skills</h1>
         <p className="text-sm text-plexus-mute">
-          Author once. Pick which agents see each skill.
+          Every unique skill across your installed agents and the Plexus store.
+          Toggle a checkbox to add or remove a skill from an agent.
         </p>
       </div>
-      <SkillsEditor initial={lite} agents={[...ALL_AGENTS]} />
+      <SkillsEditor
+        initial={rows}
+        agents={[...ALL_AGENTS]}
+        displayNames={AGENT_DISPLAY_NAMES}
+        installed={installed}
+      />
     </div>
   );
 }

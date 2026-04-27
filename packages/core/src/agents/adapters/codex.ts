@@ -27,7 +27,14 @@ export const codexAdapter: AgentAdapter = {
     try {
       await ensureDir(path.dirname(caps.mcpPath));
 
-      const filtered = ctx.mcp.filter((s) => s.enabledAgents.includes("codex"));
+      const enabledForAgent = ctx.mcp.filter((s) =>
+        s.enabledAgents.includes("codex"),
+      );
+      const enabledIds = new Set(enabledForAgent.map((s) => s.id));
+      const disabledManagedIds = new Set(
+        ctx.mcp.filter((s) => !s.enabledAgents.includes("codex")).map((s) => s.id),
+      );
+
       let existing: any = {};
       try {
         const raw = await fs.readFile(caps.mcpPath, "utf8");
@@ -35,16 +42,24 @@ export const codexAdapter: AgentAdapter = {
       } catch {
         // first write
       }
-      existing.mcp_servers = existing.mcp_servers ?? {};
-      for (const s of filtered) {
-        existing.mcp_servers[s.id] = {
+      const existingServers = (existing.mcp_servers ?? {}) as Record<string, any>;
+      const preserved: Record<string, any> = {};
+      for (const [k, v] of Object.entries(existingServers)) {
+        if (disabledManagedIds.has(k)) continue;
+        if (enabledIds.has(k)) continue; // will be replaced below
+        preserved[k] = v;
+      }
+      const nextServers: Record<string, any> = { ...preserved };
+      for (const s of enabledForAgent) {
+        nextServers[s.id] = {
           command: s.command,
           ...(s.args ? { args: s.args } : {}),
           ...(s.env ? { env: s.env } : {}),
         };
       }
+      existing.mcp_servers = nextServers;
       await fs.writeFile(caps.mcpPath, TOML.stringify(existing), "utf8");
-      result.applied.mcp = filtered.length;
+      result.applied.mcp = enabledForAgent.length;
     } catch (err) {
       result.errors.push(`Codex MCP write failed: ${(err as Error).message}`);
     }
@@ -53,6 +68,18 @@ export const codexAdapter: AgentAdapter = {
     try {
       await ensureDir(caps.skillsDir);
       const filtered = ctx.skills.filter((s) => s.enabledAgents.includes("codex"));
+      const disabledManagedSkillIds = new Set(
+        ctx.skills.filter((s) => !s.enabledAgents.includes("codex")).map((s) => s.id),
+      );
+      for (const id of disabledManagedSkillIds) {
+        const dir = path.join(caps.skillsDir, id);
+        try {
+          await fs.rm(dir, { recursive: true, force: true });
+        } catch {
+          // best effort cleanup
+        }
+      }
+
       for (const skill of filtered) {
         const sourcePath = ctx.skillSourcePaths.get(skill.id);
         if (!sourcePath) continue;
