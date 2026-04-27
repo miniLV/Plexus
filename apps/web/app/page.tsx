@@ -8,11 +8,30 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const AGENT_DISPLAY: Record<string, { mode: "shared" | "exclusive"; path: string }> = {
-  "claude-code": { mode: "shared", path: "~/.claude.json" },
-  cursor: { mode: "exclusive", path: "~/.cursor/mcp.json" },
-  codex: { mode: "shared", path: "~/.codex/config.toml" },
-  "factory-droid": { mode: "exclusive", path: "~/.factory/mcp.json" },
+const AGENT_DISPLAY: Record<
+  string,
+  { mode: "shared" | "exclusive"; instructionFile: string; mcpFile: string }
+> = {
+  "claude-code": {
+    mode: "shared",
+    instructionFile: "~/.claude/CLAUDE.md",
+    mcpFile: "~/.claude.json",
+  },
+  cursor: {
+    mode: "exclusive",
+    instructionFile: "~/.cursor/AGENTS.md",
+    mcpFile: "~/.cursor/mcp.json",
+  },
+  codex: {
+    mode: "shared",
+    instructionFile: "~/.codex/AGENTS.md",
+    mcpFile: "~/.codex/config.toml",
+  },
+  "factory-droid": {
+    mode: "exclusive",
+    instructionFile: "~/.factory/AGENTS.md",
+    mcpFile: "~/.factory/mcp.json",
+  },
 };
 
 export default async function DashboardPage() {
@@ -104,17 +123,22 @@ export default async function DashboardPage() {
             if (!a.installed) {
               return (
                 <Card key={a.id} className="px-5 py-4 opacity-70">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="plexus-title text-plexus-text-3">{a.displayName}</span>
                         <Badge variant="native">missing</Badge>
                       </div>
-                      <div className="mt-1 font-mono text-xs text-plexus-text-3">
-                        {meta?.path ?? a.rootDir}
+                      <div className="mt-1.5 truncate font-mono text-xs text-plexus-text-3">
+                        {meta?.instructionFile ?? a.rootDir}
                       </div>
+                      {meta?.mcpFile && (
+                        <div className="truncate font-mono text-[11px] text-plexus-text-mute">
+                          mcp · {meta.mcpFile}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-xs text-plexus-text-3">{meta?.mode}</span>
+                    <span className="shrink-0 text-xs text-plexus-text-3">{meta?.mode}</span>
                   </div>
                 </Card>
               );
@@ -122,8 +146,8 @@ export default async function DashboardPage() {
             return (
               <Link key={a.id} href={`/agents/${a.id}`} className="group">
                 <CardHover className="cursor-pointer px-5 py-4">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="plexus-title">{a.displayName}</span>
                         <Badge variant="synced">
@@ -134,11 +158,16 @@ export default async function DashboardPage() {
                           strokeWidth={1.5}
                         />
                       </div>
-                      <div className="mt-1 font-mono text-xs text-plexus-text-3">
-                        {meta?.path ?? a.rootDir}
+                      <div className="mt-1.5 truncate font-mono text-xs text-plexus-text-2">
+                        {meta?.instructionFile ?? a.rootDir}
                       </div>
+                      {meta?.mcpFile && (
+                        <div className="truncate font-mono text-[11px] text-plexus-text-mute">
+                          mcp · {meta.mcpFile}
+                        </div>
+                      )}
                     </div>
-                    <span className="text-xs text-plexus-text-3">{meta?.mode}</span>
+                    <span className="shrink-0 text-xs text-plexus-text-3">{meta?.mode}</span>
                   </div>
                 </CardHover>
               </Link>
