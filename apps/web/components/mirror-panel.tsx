@@ -111,7 +111,8 @@ export function MirrorPanel({
       errors.length > 0
         ? `Mirrored ${totalMcp} MCP, ${totalSkills} skill(s). Errors: ${errors.join("; ")}`
         : `Mirrored ${totalMcp} MCP and ${totalSkills} skill(s) across ${
-            previews.filter((p) => p.preview && (p.preview.mcp.length || p.preview.skills.length)).length
+            previews.filter((p) => p.preview && (p.preview.mcp.length || p.preview.skills.length))
+              .length
           } target agent(s).`,
     );
     setBusy(false);
@@ -128,9 +129,7 @@ export function MirrorPanel({
       <div className="rounded border border-plexus-border bg-plexus-panel p-5">
         <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4">
           <div>
-            <div className="mb-1 text-xs uppercase tracking-wider text-plexus-mute">
-              Source
-            </div>
+            <div className="mb-1 text-xs uppercase tracking-wider text-plexus-mute">Source</div>
             <select
               className="rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm"
               value={from}
@@ -213,14 +212,9 @@ export function MirrorPanel({
       {previews.length > 0 && (
         <div className="space-y-4">
           {previews.map((p) => (
-            <div
-              key={p.agent}
-              className="rounded border border-plexus-border bg-plexus-panel p-4"
-            >
+            <div key={p.agent} className="rounded border border-plexus-border bg-plexus-panel p-4">
               <div className="flex items-baseline gap-3">
-                <div className="text-sm font-medium">
-                  {displayNames[p.agent]}
-                </div>
+                <div className="text-sm font-medium">{displayNames[p.agent]}</div>
                 <span className="rounded bg-plexus-bg px-1.5 py-0.5 text-[10px] text-plexus-mute">
                   via {FILE_MODE_LABEL[p.agent] ?? "?"}
                 </span>
@@ -228,8 +222,8 @@ export function MirrorPanel({
                   {p.loading
                     ? "loading..."
                     : p.preview
-                    ? `${p.preview.mcp.length} MCP · ${p.preview.skills.length} skill(s) to mirror`
-                    : "unable to load"}
+                      ? `${p.preview.mcp.length} MCP · ${p.preview.skills.length} skill(s) to mirror`
+                      : "unable to load"}
                 </div>
               </div>
               {p.preview && (p.preview.mcp.length > 0 || p.preview.skills.length > 0) && (
@@ -241,9 +235,7 @@ export function MirrorPanel({
                     <ul className="space-y-0.5 text-plexus-mute">
                       {p.preview.mcp.slice(0, 12).map((c) => (
                         <li key={c.item.id}>
-                          <span className="font-mono text-plexus-text">
-                            {c.item.id}
-                          </span>
+                          <span className="font-mono text-plexus-text">{c.item.id}</span>
                           {!c.inStore && (
                             <span className="ml-2 rounded bg-plexus-warn/15 px-1 py-0.5 text-[9px] text-plexus-warn">
                               will import
@@ -251,9 +243,7 @@ export function MirrorPanel({
                           )}
                         </li>
                       ))}
-                      {p.preview.mcp.length > 12 && (
-                        <li>... +{p.preview.mcp.length - 12} more</li>
-                      )}
+                      {p.preview.mcp.length > 12 && <li>... +{p.preview.mcp.length - 12} more</li>}
                     </ul>
                   </div>
                   <div>
@@ -263,9 +253,7 @@ export function MirrorPanel({
                     <ul className="max-h-40 space-y-0.5 overflow-auto text-plexus-mute">
                       {p.preview.skills.slice(0, 30).map((c) => (
                         <li key={c.item.id}>
-                          <span className="font-mono text-plexus-text">
-                            {c.item.id}
-                          </span>
+                          <span className="font-mono text-plexus-text">{c.item.id}</span>
                         </li>
                       ))}
                       {p.preview.skills.length > 30 && (
@@ -276,9 +264,7 @@ export function MirrorPanel({
                 </div>
               )}
               {p.preview && p.preview.mcp.length === 0 && p.preview.skills.length === 0 && (
-                <div className="mt-2 text-xs text-plexus-ok">
-                  ● already up-to-date with source
-                </div>
+                <div className="mt-2 text-xs text-plexus-ok">● already up-to-date with source</div>
               )}
             </div>
           ))}
@@ -291,27 +277,24 @@ export function MirrorPanel({
         </summary>
         <div className="mt-3 space-y-2 leading-relaxed">
           <p>
-            For each target agent, Plexus imports any source-agent items not yet in
-            its store, adds the target to <code>enabledAgents</code>, and runs sync.
+            For each target agent, Plexus imports any source-agent items not yet in its store, adds
+            the target to <code>enabledAgents</code>, and runs sync.
           </p>
           <p>
             <span className="text-plexus-accent">Cursor</span> /{" "}
-            <span className="text-plexus-accent">Factory Droid</span>: their MCP file
-            becomes a symlink to{" "}
-            <code>~/.config/plexus/.cache/mcp/&lt;agent&gt;.json</code>. Editing
-            either side edits the same bytes — there is one source of truth.
+            <span className="text-plexus-accent">Factory Droid</span>: their MCP file becomes a
+            symlink to <code>~/.config/plexus/.cache/mcp/&lt;agent&gt;.json</code>. Editing either
+            side edits the same bytes — there is one source of truth.
           </p>
           <p>
             <span className="text-plexus-accent">Claude Code</span> /{" "}
-            <span className="text-plexus-accent">Codex</span>: their files carry
-            unrelated keys (auth, history, settings, [profile], [auth]). Plexus
-            partial-writes the MCP section in place; everything else is preserved
-            verbatim.
+            <span className="text-plexus-accent">Codex</span>: their files carry unrelated keys
+            (auth, history, settings, [profile], [auth]). Plexus partial-writes the MCP section in
+            place; everything else is preserved verbatim.
           </p>
           <p>
-            <span className="text-plexus-accent">Skills</span>: written as symlinks
-            from each agent's skill dir to the Plexus personal store. All agents
-            read the same SKILL.md.
+            <span className="text-plexus-accent">Skills</span>: written as symlinks from each
+            agent's skill dir to the Plexus personal store. All agents read the same SKILL.md.
           </p>
           <p>
             Every sync first snapshots all four agents' MCP files into{" "}

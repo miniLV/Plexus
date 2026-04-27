@@ -9,10 +9,7 @@ export async function GET() {
     const preview = await previewImport();
     return NextResponse.json(preview);
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
@@ -22,9 +19,6 @@ export async function POST() {
     const result = await applyImport();
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, error: (err as Error).message }, { status: 500 });
   }
 }

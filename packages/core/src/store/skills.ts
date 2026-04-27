@@ -2,9 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import type { ConfigLayer, SkillDef } from "../types.js";
+import { ensureDir, pathExists } from "./fs-utils.js";
 import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
 import { ensureStoreScaffolding, layerRoot } from "./scaffolding.js";
-import { ensureDir, pathExists } from "./fs-utils.js";
 
 function skillsRoot(layer: ConfigLayer): string {
   return path.join(layerRoot(layer), PLEXUS_PATHS.skillsDirRel);
@@ -59,9 +59,7 @@ export async function readSkills(layer: ConfigLayer): Promise<SkillDef[]> {
       body,
       frontmatter,
       layer,
-      enabledAgents: enabledFromFm.filter((a): a is any =>
-        ALL_AGENTS.includes(a as any),
-      ),
+      enabledAgents: enabledFromFm.filter((a): a is any => ALL_AGENTS.includes(a as any)),
     });
   }
   return skills;

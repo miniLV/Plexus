@@ -2,22 +2,12 @@ import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { snapshotAgentConfigs } from "../backup/index.js";
 import { buildImportPreview } from "../import/from-agents.js";
-import { mergeMCP, mergeSkills } from "../store/merge.js";
-import { ALL_AGENTS } from "../store/paths.js";
 import { readConfig } from "../store/config.js";
 import { readMCP, writeMCP } from "../store/mcp.js";
-import {
-  readSkills,
-  resolveSkillSourceDir,
-  writeSkill,
-} from "../store/skills.js";
-import type {
-  AgentId,
-  ConfigLayer,
-  MCPServerDef,
-  SkillDef,
-  SyncResult,
-} from "../types.js";
+import { mergeMCP, mergeSkills } from "../store/merge.js";
+import { ALL_AGENTS } from "../store/paths.js";
+import { readSkills, resolveSkillSourceDir, writeSkill } from "../store/skills.js";
+import type { AgentId, ConfigLayer, MCPServerDef, SkillDef, SyncResult } from "../types.js";
 
 /**
  * "Effective view" = the union of items present in any agent's native
@@ -71,10 +61,7 @@ export async function getEffectiveMcp(): Promise<EffectiveMcpRow[]> {
     });
   }
 
-  const allIds = new Set<string>([
-    ...merged.map((m) => m.id),
-    ...nativeById.keys(),
-  ]);
+  const allIds = new Set<string>([...merged.map((m) => m.id), ...nativeById.keys()]);
 
   const rows: EffectiveMcpRow[] = [];
   for (const id of allIds) {
@@ -82,9 +69,7 @@ export async function getEffectiveMcp(): Promise<EffectiveMcpRow[]> {
     const native = nativeById.get(id);
     const nativeAgents = native?.sources ?? [];
     const enabledAgents = storeRow?.enabledAgents ?? [];
-    const effectiveAgents = Array.from(
-      new Set<AgentId>([...nativeAgents, ...enabledAgents]),
-    );
+    const effectiveAgents = Array.from(new Set<AgentId>([...nativeAgents, ...enabledAgents]));
 
     let authority: ItemAuthority;
     if (personalIds.has(id)) authority = "personal";
@@ -124,10 +109,7 @@ export async function getEffectiveSkills(): Promise<EffectiveSkillRow[]> {
     });
   }
 
-  const allIds = new Set<string>([
-    ...merged.map((s) => s.id),
-    ...nativeById.keys(),
-  ]);
+  const allIds = new Set<string>([...merged.map((s) => s.id), ...nativeById.keys()]);
 
   const rows: EffectiveSkillRow[] = [];
   for (const id of allIds) {
@@ -135,9 +117,7 @@ export async function getEffectiveSkills(): Promise<EffectiveSkillRow[]> {
     const native = nativeById.get(id);
     const nativeAgents = native?.sources ?? [];
     const enabledAgents = storeRow?.enabledAgents ?? [];
-    const effectiveAgents = Array.from(
-      new Set<AgentId>([...nativeAgents, ...enabledAgents]),
-    );
+    const effectiveAgents = Array.from(new Set<AgentId>([...nativeAgents, ...enabledAgents]));
 
     let authority: ItemAuthority;
     if (personalIds.has(id)) authority = "personal";
@@ -180,7 +160,7 @@ export async function toggleMcpAgent(opts: {
   const personalIdx = personal.findIndex((m) => m.id === opts.id);
   const teamRow = team.find((m) => m.id === opts.id);
 
-  let nextPersonal = [...personal];
+  const nextPersonal = [...personal];
   let agentsToSync: AgentId[] = [opts.agent];
 
   if (personalIdx >= 0) {
@@ -201,9 +181,7 @@ export async function toggleMcpAgent(opts: {
   } else {
     // Promote: pull from any agent's native config and copy to personal.
     const nativePreview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
-    const cand = nativePreview.mcp.find(
-      (c) => c.kind === "new" && c.item.id === opts.id,
-    );
+    const cand = nativePreview.mcp.find((c) => c.kind === "new" && c.item.id === opts.id);
     if (!cand || cand.kind !== "new") {
       return { ok: false, message: `Item ${opts.id} not found in any agent's native config` };
     }
@@ -255,9 +233,7 @@ export async function toggleSkillAgent(opts: {
     await writeSkill({ ...teamRow, layer: "personal", enabledAgents });
   } else {
     const nativePreview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
-    const cand = nativePreview.skills.find(
-      (c) => c.kind === "new" && c.item.id === opts.id,
-    );
+    const cand = nativePreview.skills.find((c) => c.kind === "new" && c.item.id === opts.id);
     if (!cand || cand.kind !== "new") {
       return { ok: false, message: `Skill ${opts.id} not found in any agent's native config` };
     }

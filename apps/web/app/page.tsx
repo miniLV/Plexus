@@ -1,12 +1,7 @@
-import {
-  detectAgents,
-  getEffectiveMcp,
-  getEffectiveSkills,
-  teamStatus,
-} from "@plexus/core";
-import Link from "next/link";
 import { ImportBanner } from "@/components/import-banner";
 import { SyncButton } from "@/components/sync-button";
+import { detectAgents, getEffectiveMcp, getEffectiveSkills, teamStatus } from "@plexus/core";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +17,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-sm text-plexus-mute">
-            One source of truth for MCP servers and skills, synced across every AI agent on your machine.
+            One source of truth for MCP servers and skills, synced across every AI agent on your
+            machine.
           </p>
         </div>
         <SyncButton />
@@ -80,9 +76,7 @@ export default async function DashboardPage() {
                     installed
                   </span>
                 </div>
-                <div className="mt-2 font-mono text-xs text-plexus-mute">
-                  {a.rootDir}
-                </div>
+                <div className="mt-2 font-mono text-xs text-plexus-mute">{a.rootDir}</div>
               </Link>
             ) : (
               <div
@@ -95,9 +89,7 @@ export default async function DashboardPage() {
                     missing
                   </span>
                 </div>
-                <div className="mt-2 font-mono text-xs text-plexus-mute">
-                  {a.rootDir}
-                </div>
+                <div className="mt-2 font-mono text-xs text-plexus-mute">{a.rootDir}</div>
               </div>
             ),
           )}

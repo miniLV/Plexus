@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <title>Plexus — Skills</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="stylesheet" href="_shared.css" />
+</head>
+<body data-active="skills" data-title="Skills" data-crumb="Workspace / Skills">
+  <main id="content" style="display:none;">
+    <div class="space-y-8">
+
+      <section class="flex items-end justify-between gap-6">
+        <div>
+          <div class="display mb-2">Skills</div>
+          <p class="body text-2 max-w-xl">
+            Skill folders synced as symlinks into each agent's skills directory.
+            Edit a SKILL.md once — every agent picks it up.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Import
+          </button>
+          <button class="btn btn-primary">
+            <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New skill
+          </button>
+        </div>
+      </section>
+
+      <div class="tabs">
+        <div class="tab active">All <span class="caption text-mute ml-1">8</span></div>
+        <div class="tab">Team <span class="caption text-mute ml-1">2</span></div>
+        <div class="tab">Personal <span class="caption text-mute ml-1">5</span></div>
+        <div class="tab">Native-only <span class="caption text-mute ml-1">1</span></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Skill card 1 -->
+        <div class="card card-hover px-5 py-4 cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: var(--plexus-accent-faint); color: var(--plexus-accent);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M3 3h18v4H3z"/><path d="M3 11h18v10H3z"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">frontend-design</div>
+                <div class="caption text-3">anthropics/skills · 340.9K installs</div>
+              </div>
+            </div>
+            <span class="badge badge-team">team</span>
+          </div>
+          <p class="body text-2 mt-3">Build production-grade UIs with bold aesthetic direction. Avoids generic AI patterns.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="caption text-3">enabled on</span>
+            <div class="flex items-center gap-1">
+              <span class="badge badge-synced">Claude</span>
+              <span class="badge badge-synced">Cursor</span>
+              <span class="badge badge-synced">Droid</span>
+              <span class="badge badge-native">Codex off</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill card 2 -->
+        <div class="card card-hover px-5 py-4 cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: rgba(107,138,168,0.15); color: var(--plexus-info);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">qa-testing-strategy</div>
+                <div class="caption text-3">vasilyu1983/ai-agents · 283 installs</div>
+              </div>
+            </div>
+            <span class="badge badge-team">team</span>
+          </div>
+          <p class="body text-2 mt-3">Risk-based test strategy for software delivery. Coverage, gates, flaky test management.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="caption text-3">enabled on</span>
+            <div class="flex items-center gap-1">
+              <span class="badge badge-synced">Claude</span>
+              <span class="badge badge-synced">Cursor</span>
+              <span class="badge badge-synced">Codex</span>
+              <span class="badge badge-synced">Droid</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill card 3 -->
+        <div class="card card-hover px-5 py-4 cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: var(--plexus-accent-faint); color: var(--plexus-accent);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M12 2v4"/><path d="M12 18v4"/><circle cx="12" cy="12" r="6"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">prd-development</div>
+                <div class="caption text-3">deanpeters/product-manager · 1.4K installs</div>
+              </div>
+            </div>
+            <span class="badge badge-personal">personal</span>
+          </div>
+          <p class="body text-2 mt-3">Build a structured PRD that connects problem, users, solution, and success criteria.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="caption text-3">enabled on</span>
+            <div class="flex items-center gap-1">
+              <span class="badge badge-synced">Claude</span>
+              <span class="badge badge-native">Cursor off</span>
+              <span class="badge badge-synced">Droid</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill card 4 -->
+        <div class="card card-hover px-5 py-4 cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: rgba(200,164,92,0.15); color: var(--plexus-warn);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><polygon points="12 2 15 8.5 22 9.3 17 14.1 18.5 21 12 17.8 5.5 21 7 14.1 2 9.3 9 8.5 12 2"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">architecture-designer</div>
+                <div class="caption text-3">jeffallan/claude-skills · 2.8K installs</div>
+              </div>
+            </div>
+            <span class="badge badge-personal">personal</span>
+          </div>
+          <p class="body text-2 mt-3">High-level system design, ADRs, technology trade-offs, scalability planning.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="caption text-3">enabled on</span>
+            <div class="flex items-center gap-1">
+              <span class="badge badge-synced">Claude</span>
+              <span class="badge badge-synced">Cursor</span>
+              <span class="badge badge-native">Codex off</span>
+              <span class="badge badge-synced">Droid</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill card 5 — native only -->
+        <div class="card card-hover px-5 py-4 cursor-pointer" style="border-style: dashed;">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: rgba(138,134,120,0.15); color: var(--plexus-text-3);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">scrutiny-feature-reviewer</div>
+                <div class="caption text-3">native to Factory Droid only</div>
+              </div>
+            </div>
+            <span class="badge badge-native">native-only</span>
+          </div>
+          <p class="body text-2 mt-3">Found in <span class="font-mono">~/.factory/skills/</span> but not in your Plexus store.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <button class="btn btn-sm">Promote → store</button>
+            <button class="btn btn-ghost btn-sm">Ignore</button>
+          </div>
+        </div>
+
+        <!-- Skill card 6 -->
+        <div class="card card-hover px-5 py-4 cursor-pointer">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md grid place-items-center" style="background: var(--plexus-accent-faint); color: var(--plexus-accent);">
+                <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div>
+                <div class="body" style="font-weight:500;">design-critique</div>
+                <div class="caption text-3">anthropics/knowledge-work-plugins · 1.2K installs</div>
+              </div>
+            </div>
+            <span class="badge badge-personal">personal</span>
+          </div>
+          <p class="body text-2 mt-3">Get structured design feedback on usability, hierarchy, and consistency.</p>
+          <div class="mt-4 flex items-center gap-2">
+            <span class="caption text-3">enabled on</span>
+            <div class="flex items-center gap-1">
+              <span class="badge badge-synced">Claude</span>
+              <span class="badge badge-synced">Cursor</span>
+              <span class="badge badge-synced">Codex</span>
+              <span class="badge badge-synced">Droid</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Helper -->
+      <details class="card px-5 py-4">
+        <summary class="cursor-pointer body" style="font-weight:500;">How are skills synced?</summary>
+        <p class="body text-2 mt-3">
+          Each skill is one folder. Plexus places a symlink at the agent's skill location
+          pointing back at <span class="font-mono caption">~/.config/plexus/&lt;layer&gt;/skills/&lt;id&gt;/</span>.
+          Editing a skill's SKILL.md from this dashboard takes a snapshot first.
+        </p>
+      </details>
+    </div>
+  </main>
+  <script src="_shell.js"></script>
+</body>
+</html>

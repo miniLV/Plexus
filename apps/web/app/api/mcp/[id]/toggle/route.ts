@@ -6,10 +6,7 @@ export const dynamic = "force-dynamic";
 
 const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const body = (await req.json()) as { agent?: string; enabled?: boolean };
     if (!body.agent || !(VALID as string[]).includes(body.agent)) {
@@ -25,9 +22,6 @@ export async function POST(
     });
     return NextResponse.json(result);
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, message: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, message: (err as Error).message }, { status: 500 });
   }
 }

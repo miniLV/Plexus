@@ -3,7 +3,6 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import kleur from "kleur";
 import {
   detectAgents,
   ensureStoreScaffolding,
@@ -12,6 +11,7 @@ import {
   runSync,
   teamStatus,
 } from "@plexus/core";
+import kleur from "kleur";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,7 +60,9 @@ async function cmdStatus(): Promise<void> {
   if (ts.subscribed) {
     console.log(`Team:    ${kleur.cyan(ts.repoUrl ?? "")}`);
     if (ts.hasUpstreamUpdate) {
-      console.log(`         ${kleur.yellow(`⟳ ${ts.behind} update(s) available – run 'plexus pull'`)}`);
+      console.log(
+        `         ${kleur.yellow(`⟳ ${ts.behind} update(s) available – run 'plexus pull'`)}`,
+      );
     } else {
       console.log(`         ${kleur.green("up-to-date")}`);
     }
@@ -134,17 +136,17 @@ async function main(): Promise<void> {
       const r = await joinTeam(url);
       console.log(r.ok ? kleur.green(r.message) : kleur.red(r.message));
       process.exit(r.ok ? 0 : 1);
+      return;
     }
     case "pull": {
       const r = await pullTeam();
       console.log(r.ok ? kleur.green(r.message) : kleur.red(r.message));
       process.exit(r.ok ? 0 : 1);
+      return;
     }
-    case "start":
     default: {
       const portFlagIdx = rest.findIndex((a) => a === "-p" || a === "--port");
-      const port =
-        portFlagIdx >= 0 ? parseInt(rest[portFlagIdx + 1] ?? "7777", 10) : 7777;
+      const port = portFlagIdx >= 0 ? Number.parseInt(rest[portFlagIdx + 1] ?? "7777", 10) : 7777;
       await cmdStart(port);
       return;
     }

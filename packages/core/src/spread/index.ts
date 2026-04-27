@@ -1,22 +1,12 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
+import { buildImportPreview } from "../import/from-agents.js";
+import { readConfig } from "../store/config.js";
+import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
-import { readConfig } from "../store/config.js";
-import { readMCP, writeMCP, readAllMCP } from "../store/mcp.js";
-import {
-  readAllSkills,
-  readSkills,
-  writeSkill,
-  resolveSkillSourceDir,
-} from "../store/skills.js";
-import { buildImportPreview } from "../import/from-agents.js";
-import type {
-  AgentId,
-  MCPServerDef,
-  SkillDef,
-  SyncResult,
-} from "../types.js";
+import { readAllSkills, readSkills, resolveSkillSourceDir, writeSkill } from "../store/skills.js";
+import type { AgentId, MCPServerDef, SkillDef, SyncResult } from "../types.js";
 
 /**
  * "Spread" = copy MCP servers and skills from agent A to agent B.
@@ -45,9 +35,7 @@ export interface SpreadPreview {
 }
 
 /** Compute the effective MCP set for an agent from native + store. */
-async function effectiveMcpFor(
-  agentId: AgentId,
-): Promise<Map<string, MCPServerDef>> {
+async function effectiveMcpFor(agentId: AgentId): Promise<Map<string, MCPServerDef>> {
   const result = new Map<string, MCPServerDef>();
 
   // Plexus store entries enabled for this agent
@@ -69,9 +57,7 @@ async function effectiveMcpFor(
 }
 
 /** Compute the effective skill set for an agent from native + store. */
-async function effectiveSkillsFor(
-  agentId: AgentId,
-): Promise<Map<string, SkillDef>> {
+async function effectiveSkillsFor(agentId: AgentId): Promise<Map<string, SkillDef>> {
   const result = new Map<string, SkillDef>();
 
   const merged = mergeSkills(await readSkills("team"), await readSkills("personal"));
@@ -89,22 +75,18 @@ async function effectiveSkillsFor(
   return result;
 }
 
-export async function previewSpread(
-  from: AgentId,
-  to: AgentId,
-): Promise<SpreadPreview> {
+export async function previewSpread(from: AgentId, to: AgentId): Promise<SpreadPreview> {
   if (from === to) {
     return { from, to, mcp: [], skills: [] };
   }
-  const [fromMcp, toMcp, fromSkills, toSkills, allStoreMcp, allStoreSkills] =
-    await Promise.all([
-      effectiveMcpFor(from),
-      effectiveMcpFor(to),
-      effectiveSkillsFor(from),
-      effectiveSkillsFor(to),
-      readAllMCP(),
-      readAllSkills(),
-    ]);
+  const [fromMcp, toMcp, fromSkills, toSkills, allStoreMcp, allStoreSkills] = await Promise.all([
+    effectiveMcpFor(from),
+    effectiveMcpFor(to),
+    effectiveSkillsFor(from),
+    effectiveSkillsFor(to),
+    readAllMCP(),
+    readAllSkills(),
+  ]);
 
   const storeMcpIds = new Set(allStoreMcp.map((m) => m.id));
   const storeSkillIds = new Set(allStoreSkills.map((s) => s.id));

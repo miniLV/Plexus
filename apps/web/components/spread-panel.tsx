@@ -145,9 +145,7 @@ export function SpreadPanel({
             <button
               onClick={apply}
               disabled={
-                busy ||
-                from === to ||
-                (selectedMcp.size === 0 && selectedSkills.size === 0)
+                busy || from === to || (selectedMcp.size === 0 && selectedSkills.size === 0)
               }
               className="rounded bg-plexus-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
@@ -172,15 +170,14 @@ export function SpreadPanel({
         <div className="text-sm text-plexus-mute">Loading…</div>
       ) : preview.mcp.length === 0 && preview.skills.length === 0 ? (
         <div className="rounded border border-plexus-ok/40 bg-plexus-ok/10 px-5 py-8 text-center text-sm">
-          <span className="text-plexus-ok">●</span> {displayNames[to]} already has everything {displayNames[from]} has.
+          <span className="text-plexus-ok">●</span> {displayNames[to]} already has everything{" "}
+          {displayNames[from]} has.
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded border border-plexus-border bg-plexus-panel p-4">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">
-                MCP Servers ({preview.mcp.length})
-              </div>
+              <div className="text-sm font-medium">MCP Servers ({preview.mcp.length})</div>
               <label className="flex items-center gap-2 text-xs text-plexus-mute">
                 <input
                   type="checkbox"
@@ -221,13 +218,13 @@ export function SpreadPanel({
           </div>
           <div className="rounded border border-plexus-border bg-plexus-panel p-4">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium">
-                Skills ({preview.skills.length})
-              </div>
+              <div className="text-sm font-medium">Skills ({preview.skills.length})</div>
               <label className="flex items-center gap-2 text-xs text-plexus-mute">
                 <input
                   type="checkbox"
-                  checked={selectedSkills.size === preview.skills.length && preview.skills.length > 0}
+                  checked={
+                    selectedSkills.size === preview.skills.length && preview.skills.length > 0
+                  }
                   onChange={(e) => toggleAllSkills(e.target.checked)}
                   className="h-4 w-4 accent-plexus-accent"
                 />

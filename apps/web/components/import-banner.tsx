@@ -88,8 +88,8 @@ export function ImportBanner() {
       <div className="rounded border border-plexus-ok/40 bg-plexus-ok/10 px-4 py-3 text-sm">
         <span className="text-plexus-ok">✓ Imported</span>{" "}
         <span className="text-plexus-mute">
-          new: {done.mcpWritten} MCP / {done.skillsWritten} skill ·{" "}
-          extended: {done.mcpExtended} MCP / {done.skillsExtended} skill. Reloading...
+          new: {done.mcpWritten} MCP / {done.skillsWritten} skill · extended: {done.mcpExtended} MCP
+          / {done.skillsExtended} skill. Reloading...
         </span>
       </div>
     );
@@ -106,17 +106,15 @@ export function ImportBanner() {
           </div>
           <div className="mt-1 text-plexus-mute">
             {newMcp + newSkills > 0 && (
-              <>
-                <span>new: {newMcp} MCP, {newSkills} skill</span>
-              </>
+              <span>
+                new: {newMcp} MCP, {newSkills} skill
+              </span>
             )}
-            {newMcp + newSkills > 0 && extendMcp + extendSkills > 0 && (
-              <span> · </span>
-            )}
+            {newMcp + newSkills > 0 && extendMcp + extendSkills > 0 && <span> · </span>}
             {extendMcp + extendSkills > 0 && (
-              <>
-                <span>extend coverage: {extendMcp} MCP, {extendSkills} skill</span>
-              </>
+              <span>
+                extend coverage: {extendMcp} MCP, {extendSkills} skill
+              </span>
             )}
             <div className="mt-1 text-xs">
               {Object.entries(preview.perAgent)

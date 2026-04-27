@@ -1,9 +1,9 @@
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import { promisify } from "node:util";
-import { PLEXUS_PATHS } from "../store/paths.js";
 import { readConfig, writeConfig } from "../store/config.js";
 import { pathExists } from "../store/fs-utils.js";
+import { PLEXUS_PATHS } from "../store/paths.js";
 
 const exec = promisify(execFile);
 
@@ -104,7 +104,10 @@ export async function teamStatus(): Promise<{
         "--count",
         "HEAD...@{upstream}",
       ]);
-      const [a, b] = stdout.trim().split(/\s+/).map((n) => parseInt(n, 10));
+      const [a, b] = stdout
+        .trim()
+        .split(/\s+/)
+        .map((n) => Number.parseInt(n, 10));
       ahead = a || 0;
       behind = b || 0;
     } catch {

@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import type { ConfigLayer, PlexusConfig } from "../types.js";
-import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
 import { ensureDir, pathExists } from "./fs-utils.js";
+import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
 
 /**
  * Create the on-disk store layout under ~/.config/plexus/ if it doesn't exist

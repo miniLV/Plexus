@@ -8,9 +8,6 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     const result = await restoreSnapshot(params.id);
     return NextResponse.json({ ok: result.errors.length === 0, ...result });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, message: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, message: (err as Error).message }, { status: 500 });
   }
 }

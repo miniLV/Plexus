@@ -4,8 +4,8 @@ import TOML from "@iarna/toml";
 import { AGENT_PATHS } from "../../store/paths.js";
 import type { SyncResult } from "../../types.js";
 import {
-  ApplyContext,
-  AgentAdapter,
+  type AgentAdapter,
+  type ApplyContext,
   emptyResult,
   ensureDir,
   placeLinkOrCopy,
@@ -27,9 +27,7 @@ export const codexAdapter: AgentAdapter = {
     try {
       await ensureDir(path.dirname(caps.mcpPath));
 
-      const enabledForAgent = ctx.mcp.filter((s) =>
-        s.enabledAgents.includes("codex"),
-      );
+      const enabledForAgent = ctx.mcp.filter((s) => s.enabledAgents.includes("codex"));
       const enabledIds = new Set(enabledForAgent.map((s) => s.id));
       const disabledManagedIds = new Set(
         ctx.mcp.filter((s) => !s.enabledAgents.includes("codex")).map((s) => s.id),
@@ -94,9 +92,7 @@ export const codexAdapter: AgentAdapter = {
           await placeLinkOrCopy(sourcePath, destDir, ctx.syncStrategy);
           result.applied.skills += 1;
         } catch (err) {
-          result.errors.push(
-            `Skill ${skill.id} sync failed: ${(err as Error).message}`,
-          );
+          result.errors.push(`Skill ${skill.id} sync failed: ${(err as Error).message}`);
         }
       }
     } catch (err) {

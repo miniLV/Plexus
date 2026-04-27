@@ -3,8 +3,8 @@ import path from "node:path";
 import { AGENT_PATHS, PLEXUS_PATHS } from "../../store/paths.js";
 import type { AgentId, MCPServerDef, SyncResult } from "../../types.js";
 import {
-  ApplyContext,
-  AgentAdapter,
+  type AgentAdapter,
+  type ApplyContext,
   emptyResult,
   ensureDir,
   placeFileSymlink,
@@ -45,9 +45,7 @@ export function makeJsonMcpAdapter(agentId: AgentId): AgentAdapter {
         try {
           await ensureDir(path.dirname(caps.mcpPath));
 
-          const enabledForAgent = ctx.mcp.filter((s) =>
-            s.enabledAgents.includes(agentId),
-          );
+          const enabledForAgent = ctx.mcp.filter((s) => s.enabledAgents.includes(agentId));
           if (mode === "exclusive") {
             await writeExclusive(agentId, ctx.mcp, enabledForAgent, ctx.syncStrategy);
           } else {
@@ -85,9 +83,7 @@ export function makeJsonMcpAdapter(agentId: AgentId): AgentAdapter {
               await placeLinkOrCopy(sourcePath, destDir, ctx.syncStrategy);
               result.applied.skills += 1;
             } catch (err) {
-              result.errors.push(
-                `Skill ${skill.id} sync failed: ${(err as Error).message}`,
-              );
+              result.errors.push(`Skill ${skill.id} sync failed: ${(err as Error).message}`);
             }
           }
         } catch (err) {
@@ -135,8 +131,7 @@ async function writeShared(
     // first write
   }
 
-  const existingMcp =
-    (existing.mcpServers as Record<string, unknown> | undefined) ?? {};
+  const existingMcp = (existing.mcpServers as Record<string, unknown> | undefined) ?? {};
 
   // Preserve user-added (ids Plexus does not manage) and drop ones we now disown.
   const preserved: Record<string, unknown> = {};
@@ -181,8 +176,7 @@ async function writeExclusive(
   } catch {
     // first sync — fine
   }
-  const existingMcp =
-    (existing.mcpServers as Record<string, unknown> | undefined) ?? {};
+  const existingMcp = (existing.mcpServers as Record<string, unknown> | undefined) ?? {};
 
   const preserved: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(existingMcp)) {

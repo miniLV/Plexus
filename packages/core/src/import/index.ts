@@ -1,4 +1,4 @@
-import { readMCP, readAllMCP, writeMCP } from "../store/mcp.js";
+import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
 import { readAllSkills, readSkills, writeSkill } from "../store/skills.js";
 import { buildImportPreview } from "./from-agents.js";
 import type { ImportPreview, MCPCandidate, SkillCandidate } from "./from-agents.js";
@@ -18,10 +18,7 @@ export type {
  * already covers the agent → no need to import again.
  */
 export async function previewImport(): Promise<ImportPreview> {
-  const [storeMcp, storeSkills] = await Promise.all([
-    readAllMCP(),
-    readAllSkills(),
-  ]);
+  const [storeMcp, storeSkills] = await Promise.all([readAllMCP(), readAllSkills()]);
   return buildImportPreview({ storeMcp, storeSkills });
 }
 

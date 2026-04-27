@@ -1,5 +1,5 @@
-import { teamStatus } from "@plexus/core";
 import { TeamPanel } from "@/components/team-panel";
+import { teamStatus } from "@plexus/core";
 
 export const dynamic = "force-dynamic";
 

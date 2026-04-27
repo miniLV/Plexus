@@ -8,9 +8,6 @@ export async function POST() {
     const report = await runSync();
     return NextResponse.json(report);
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

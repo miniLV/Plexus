@@ -1,10 +1,5 @@
 import { existsSync } from "node:fs";
-import {
-  AGENT_DISPLAY_NAMES,
-  AGENT_PATHS,
-  AGENT_ROOTS,
-  ALL_AGENTS,
-} from "../store/paths.js";
+import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS, ALL_AGENTS } from "../store/paths.js";
 import type { AgentDescriptor } from "../types.js";
 
 /**

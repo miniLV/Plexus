@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <title>Plexus — Settings</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="stylesheet" href="_shared.css" />
+</head>
+<body data-active="settings" data-title="Settings" data-crumb="Configuration / Settings">
+  <main id="content" style="display:none;">
+    <div class="space-y-10">
+
+      <section>
+        <div class="display mb-2">Settings</div>
+        <p class="body text-2 max-w-xl">
+          Local configuration. None of these settings leave your machine.
+        </p>
+      </section>
+
+      <!-- Privacy pledge -->
+      <section class="card relative overflow-hidden" style="border-left: 3px solid var(--plexus-ok);">
+        <div class="px-5 py-4 flex items-start gap-4">
+          <div class="w-9 h-9 rounded-lg grid place-items-center mt-0.5" style="background: rgba(107,153,113,0.15); color: var(--plexus-ok);">
+            <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="body" style="font-weight:500;">Privacy pledge</div>
+            <p class="body text-2 mt-1">
+              Plexus performs zero network requests other than <span class="font-mono caption">git fetch</span>
+              from team subscriptions you opt into. No telemetry, no analytics, no auto-update calls.
+            </p>
+            <div class="mt-2 caption text-3">
+              Verifiable: <a class="accent">audit log on GitHub</a> ·
+              <a class="accent">network test (CI)</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Appearance -->
+      <section>
+        <h2 class="title mb-3">Appearance</h2>
+        <div class="card">
+          <div class="px-5 py-4 flex items-center justify-between border-b border-hair">
+            <div>
+              <div class="body" style="font-weight:500;">Theme</div>
+              <div class="caption text-3 mt-0.5">Dark by default. Click the toggle in the top bar to switch.</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-sm" style="border-color: var(--plexus-accent); background: var(--plexus-accent-faint); color: var(--plexus-accent);">Dark</button>
+              <button class="btn btn-sm">Light</button>
+              <button class="btn btn-sm">System</button>
+            </div>
+          </div>
+          <div class="px-5 py-4 flex items-center justify-between border-b border-hair">
+            <div>
+              <div class="body" style="font-weight:500;">Compact mode</div>
+              <div class="caption text-3 mt-0.5">Tighter spacing for power users.</div>
+            </div>
+            <div class="switch"></div>
+          </div>
+          <div class="px-5 py-4 flex items-center justify-between">
+            <div>
+              <div class="body" style="font-weight:500;">Reduce motion</div>
+              <div class="caption text-3 mt-0.5">Honours system <span class="font-mono caption">prefers-reduced-motion</span> by default.</div>
+            </div>
+            <div class="switch on"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Storage -->
+      <section>
+        <h2 class="title mb-3">Storage</h2>
+        <div class="card">
+          <div class="px-5 py-4 flex items-center justify-between border-b border-hair">
+            <div class="flex-1">
+              <div class="body" style="font-weight:500;">Canonical store path</div>
+              <div class="caption font-mono text-3 mt-0.5">~/.config/plexus/</div>
+            </div>
+            <button class="btn btn-sm">Change…</button>
+          </div>
+          <div class="px-5 py-4 flex items-center justify-between border-b border-hair">
+            <div>
+              <div class="body" style="font-weight:500;">Snapshot ring buffer</div>
+              <div class="caption text-3 mt-0.5">Keep this many backups. Older are pruned automatically.</div>
+            </div>
+            <select class="select" style="width: 80px;">
+              <option>10</option>
+              <option selected>20</option>
+              <option>50</option>
+              <option>100</option>
+            </select>
+          </div>
+          <div class="px-5 py-4 flex items-center justify-between">
+            <div>
+              <div class="body" style="font-weight:500;">Inspect store on disk</div>
+              <div class="caption text-3 mt-0.5">Opens the canonical store folder in Finder.</div>
+            </div>
+            <button class="btn btn-sm">Reveal</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Keyboard shortcuts -->
+      <section>
+        <h2 class="title mb-3">Keyboard shortcuts</h2>
+        <div class="card">
+          <div class="px-5 py-3 flex items-center justify-between border-b border-hair">
+            <div class="body">Open command palette</div>
+            <div class="flex gap-1">
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">⌘</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">K</kbd>
+            </div>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between border-b border-hair">
+            <div class="body">Go to Dashboard</div>
+            <div class="flex gap-1">
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">G</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">D</kbd>
+            </div>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between border-b border-hair">
+            <div class="body">Go to MCP Servers</div>
+            <div class="flex gap-1">
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">G</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">M</kbd>
+            </div>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between border-b border-hair">
+            <div class="body">Sync all agents</div>
+            <div class="flex gap-1">
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">⌘</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">⇧</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">S</kbd>
+            </div>
+          </div>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <div class="body">Toggle theme</div>
+            <div class="flex gap-1">
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">⌘</kbd>
+              <kbd class="caption font-mono px-2 py-0.5 rounded surface-2 border border-hair">.</kbd>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section>
+        <h2 class="title mb-3">About</h2>
+        <div class="card px-5 py-4 grid grid-cols-2 gap-4 caption">
+          <div>
+            <div class="text-3">Version</div>
+            <div class="body font-mono">1.0.0</div>
+          </div>
+          <div>
+            <div class="text-3">License</div>
+            <div class="body">Apache-2.0</div>
+          </div>
+          <div>
+            <div class="text-3">Repository</div>
+            <a class="body accent">github.com/miniLV/Plexus</a>
+          </div>
+          <div>
+            <div class="text-3">Issue tracker</div>
+            <a class="body accent">github.com/miniLV/Plexus/issues</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Danger zone -->
+      <section>
+        <h2 class="title mb-3 err">Danger zone</h2>
+        <div class="card" style="border-color: rgba(196,96,79,0.30);">
+          <div class="px-5 py-4 flex items-center justify-between border-b border-hair">
+            <div>
+              <div class="body" style="font-weight:500;">Wipe canonical store</div>
+              <div class="caption text-3 mt-0.5">
+                Removes <span class="font-mono">~/.config/plexus/</span>. Native agent files are left untouched.
+              </div>
+            </div>
+            <button class="btn btn-danger btn-sm">Wipe store…</button>
+          </div>
+          <div class="px-5 py-4 flex items-center justify-between">
+            <div>
+              <div class="body" style="font-weight:500;">Disconnect Plexus from all agents</div>
+              <div class="caption text-3 mt-0.5">
+                Replaces every Plexus symlink with a real copy. Native files stay intact.
+              </div>
+            </div>
+            <button class="btn btn-danger btn-sm">Disconnect…</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="_shell.js"></script>
+</body>
+</html>

@@ -2,9 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import type { ConfigLayer, MCPServerDef } from "../types.js";
+import { pathExists } from "./fs-utils.js";
 import { PLEXUS_PATHS } from "./paths.js";
 import { ensureStoreScaffolding, layerRoot } from "./scaffolding.js";
-import { pathExists } from "./fs-utils.js";
 
 function mcpFile(layer: ConfigLayer): string {
   return path.join(layerRoot(layer), PLEXUS_PATHS.mcpDirRel, "servers.yaml");

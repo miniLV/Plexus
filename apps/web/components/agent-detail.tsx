@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type FileStatus = {
   path: string;
@@ -54,7 +54,7 @@ function truncMid(p: string, max = 60): string {
   if (p.length <= max) return p;
   const left = Math.floor(max / 2 - 2);
   const right = Math.floor(max / 2 - 2);
-  return p.slice(0, left) + "..." + p.slice(p.length - right);
+  return `${p.slice(0, left)}...${p.slice(p.length - right)}`;
 }
 
 export function AgentDetail({ data }: { data: AgentInspection }) {
@@ -62,9 +62,7 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
     <div className="space-y-8">
       {/* MCP file ───────────────────────── */}
       <section className="space-y-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-plexus-mute">
-          MCP File
-        </h2>
+        <h2 className="text-sm font-medium uppercase tracking-wider text-plexus-mute">MCP File</h2>
         <div className="rounded border border-plexus-border bg-plexus-panel p-4 text-sm">
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <code className="font-mono text-plexus-text">{data.mcpFile.path}</code>
@@ -139,9 +137,7 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
           >
             <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
               <span className="font-medium">{f.label}</span>
-              <code className="font-mono text-xs text-plexus-mute">
-                {f.status.path}
-              </code>
+              <code className="font-mono text-xs text-plexus-mute">{f.status.path}</code>
               {f.status.exists ? (
                 <span className="rounded bg-plexus-ok/15 px-2 py-0.5 text-xs text-plexus-ok">
                   exists
@@ -169,10 +165,7 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
           <h2 className="text-sm font-medium uppercase tracking-wider text-plexus-mute">
             Skills ({data.skills.length})
           </h2>
-          <Link
-            href="/skills"
-            className="text-xs text-plexus-accent hover:underline"
-          >
+          <Link href="/skills" className="text-xs text-plexus-accent hover:underline">
             Manage in Skills page →
           </Link>
         </div>
@@ -319,9 +312,7 @@ function FileViewerButton({
                   ✕
                 </button>
               </div>
-              {msg && (
-                <div className="mt-2 text-xs text-plexus-mute">{msg}</div>
-              )}
+              {msg && <div className="mt-2 text-xs text-plexus-mute">{msg}</div>}
             </div>
             <textarea
               className="flex-1 resize-none bg-plexus-bg p-4 font-mono text-xs text-plexus-text outline-none"

@@ -82,9 +82,4 @@ export const AGENT_ROOTS: Record<AgentId, string> = {
   "factory-droid": path.join(home, ".factory"),
 };
 
-export const ALL_AGENTS: AgentId[] = [
-  "claude-code",
-  "cursor",
-  "codex",
-  "factory-droid",
-];
+export const ALL_AGENTS: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];

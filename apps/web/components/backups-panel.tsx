@@ -20,7 +20,7 @@ function shortenPath(p: string, max = 60): string {
   if (p.length <= max) return p;
   const left = Math.floor(max / 2 - 2);
   const right = Math.floor(max / 2 - 2);
-  return p.slice(0, left) + "..." + p.slice(p.length - right);
+  return `${p.slice(0, left)}...${p.slice(p.length - right)}`;
 }
 
 export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
@@ -109,7 +109,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="font-mono text-sm">
-                      {isNaN(date.getTime()) ? snap.id : date.toLocaleString()}
+                      {Number.isNaN(date.getTime()) ? snap.id : date.toLocaleString()}
                     </div>
                     <div className="mt-0.5 text-xs text-plexus-mute">
                       {snap.entries.length} file(s) ·{" "}
@@ -137,14 +137,15 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                     {snap.entries.length === 0 && (
                       <div className="text-plexus-mute">No file entries.</div>
                     )}
-                    {snap.entries.map((e, i) => (
-                      <div key={i} className="grid grid-cols-[1fr_auto] gap-3">
+                    {snap.entries.map((e) => (
+                      <div
+                        key={`${e.agent ?? "single"}:${e.originalPath}`}
+                        className="grid grid-cols-[1fr_auto] gap-3"
+                      >
                         <code className="font-mono text-plexus-text">
                           {shortenPath(e.originalPath, 80)}
                         </code>
-                        <span className="text-plexus-mute">
-                          {e.agent ?? "single-file"}
-                        </span>
+                        <span className="text-plexus-mute">{e.agent ?? "single-file"}</span>
                       </div>
                     ))}
                   </div>

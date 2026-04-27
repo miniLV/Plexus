@@ -1,17 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import TOML from "@iarna/toml";
-import {
-  AGENT_PATHS,
-  ALL_AGENTS,
-} from "../store/paths.js";
 import { pathExists } from "../store/fs-utils.js";
+import { AGENT_PATHS, ALL_AGENTS } from "../store/paths.js";
 import { parseSkillMarkdown } from "../store/skills.js";
-import type {
-  AgentId,
-  MCPServerDef,
-  SkillDef,
-} from "../types.js";
+import type { AgentId, MCPServerDef, SkillDef } from "../types.js";
 
 /**
  * Import existing on-disk configuration from each installed AI agent into
@@ -57,9 +50,7 @@ export interface ImportPreview {
   perAgent: Record<AgentId, { mcp: number; skills: number }>;
 }
 
-async function readMcpFromAgent(
-  agentId: AgentId,
-): Promise<
+async function readMcpFromAgent(agentId: AgentId): Promise<
   Array<{
     id: string;
     command: string;
@@ -80,23 +71,18 @@ async function readMcpFromAgent(
         command: String(cfg?.command ?? ""),
         args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
         env:
-          cfg?.env && typeof cfg.env === "object"
-            ? (cfg.env as Record<string, string>)
-            : undefined,
-      }));
-    } else {
-      const data = TOML.parse(raw) as { mcp_servers?: Record<string, any> };
-      const m = data.mcp_servers ?? {};
-      return Object.entries(m).map(([id, cfg]) => ({
-        id,
-        command: String(cfg?.command ?? ""),
-        args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
-        env:
-          cfg?.env && typeof cfg.env === "object"
-            ? (cfg.env as Record<string, string>)
-            : undefined,
+          cfg?.env && typeof cfg.env === "object" ? (cfg.env as Record<string, string>) : undefined,
       }));
     }
+    const data = TOML.parse(raw) as { mcp_servers?: Record<string, any> };
+    const m = data.mcp_servers ?? {};
+    return Object.entries(m).map(([id, cfg]) => ({
+      id,
+      command: String(cfg?.command ?? ""),
+      args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
+      env:
+        cfg?.env && typeof cfg.env === "object" ? (cfg.env as Record<string, string>) : undefined,
+    }));
   } catch {
     return [];
   }
@@ -136,9 +122,7 @@ export interface BuildImportPreviewArgs {
   storeSkills: SkillDef[];
 }
 
-export async function buildImportPreview(
-  args: BuildImportPreviewArgs,
-): Promise<ImportPreview> {
+export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<ImportPreview> {
   const perAgent: Record<AgentId, { mcp: number; skills: number }> = {
     "claude-code": { mcp: 0, skills: 0 },
     cursor: { mcp: 0, skills: 0 },
@@ -154,10 +138,7 @@ export async function buildImportPreview(
       sources: AgentId[];
     }
   >();
-  const nativeSkills = new Map<
-    string,
-    { first: SkillDef; sources: AgentId[] }
-  >();
+  const nativeSkills = new Map<string, { first: SkillDef; sources: AgentId[] }>();
 
   for (const agentId of ALL_AGENTS) {
     const mcps = await readMcpFromAgent(agentId);
@@ -193,9 +174,7 @@ export async function buildImportPreview(
   for (const [id, native] of nativeMcp) {
     const inStore = storeMcpById.get(id);
     if (inStore) {
-      const missing = native.sources.filter(
-        (a) => !inStore.enabledAgents.includes(a),
-      );
+      const missing = native.sources.filter((a) => !inStore.enabledAgents.includes(a));
       if (missing.length === 0) continue;
       mcp.push({
         kind: "extend",
@@ -224,9 +203,7 @@ export async function buildImportPreview(
   for (const [id, native] of nativeSkills) {
     const inStore = storeSkillsById.get(id);
     if (inStore) {
-      const missing = native.sources.filter(
-        (a) => !inStore.enabledAgents.includes(a),
-      );
+      const missing = native.sources.filter((a) => !inStore.enabledAgents.includes(a));
       if (missing.length === 0) continue;
       skills.push({
         kind: "extend",

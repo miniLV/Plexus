@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plexus — Dashboard mockup</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <link rel="preconnect" href="https://rsms.me/" />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <style>
+    :root, [data-theme="dark"] {
+      --plexus-bg:        #1a1a17;
+      --plexus-surface:   #262624;
+      --plexus-surface-2: #2f2f2c;
+      --plexus-border:    #3a3a37;
+      --plexus-border-strong: #4a4a45;
+      --plexus-text:      #f5f4ed;
+      --plexus-text-2:    #c2bfb3;
+      --plexus-text-3:    #8a8678;
+      --plexus-text-mute: #6b6759;
+      --plexus-accent:    #cc785c;
+      --plexus-accent-2:  #d68b73;
+      --plexus-accent-faint: rgba(204, 120, 92, 0.12);
+      --plexus-ok:        #6b9971;
+      --plexus-warn:      #c8a45c;
+      --plexus-err:       #c4604f;
+      --plexus-info:      #6b8aa8;
+      --plexus-code-bg:   #1f1f1d;
+      --plexus-code-fg:   #d4d0c4;
+    }
+    [data-theme="light"] {
+      --plexus-bg:        #f5f4ed;
+      --plexus-surface:   #ffffff;
+      --plexus-surface-2: #faf9f4;
+      --plexus-border:    #e6e3d8;
+      --plexus-border-strong: #d4d0c4;
+      --plexus-text:      #1a1a17;
+      --plexus-text-2:    #4a4a45;
+      --plexus-text-3:    #6b6759;
+      --plexus-text-mute: #8a8678;
+      --plexus-accent:    #b85f3f;
+      --plexus-accent-2:  #a85433;
+      --plexus-accent-faint: rgba(184, 95, 63, 0.10);
+      --plexus-ok:        #4a7a52;
+      --plexus-warn:      #966f2c;
+      --plexus-err:       #984032;
+      --plexus-info:      #4a6688;
+      --plexus-code-bg:   #f0eee5;
+      --plexus-code-fg:   #2a2a26;
+    }
+
+    html, body {
+      background: var(--plexus-bg);
+      color: var(--plexus-text);
+      font-family: "Inter", "Inter var", ui-sans-serif, system-ui, sans-serif;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      letter-spacing: -0.005em;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono { font-family: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .surface  { background: var(--plexus-surface); }
+    .surface-2{ background: var(--plexus-surface-2); }
+    .text-2   { color: var(--plexus-text-2); }
+    .text-3   { color: var(--plexus-text-3); }
+    .text-mute{ color: var(--plexus-text-mute); }
+    .border-hair { border-color: var(--plexus-border); }
+    .border-strong { border-color: var(--plexus-border-strong); }
+    .accent   { color: var(--plexus-accent); }
+    .bg-accent{ background: var(--plexus-accent); color: #1a1a17; }
+    .bg-accent-faint { background: var(--plexus-accent-faint); }
+    .ok       { color: var(--plexus-ok); }
+    .warn     { color: var(--plexus-warn); }
+    .err      { color: var(--plexus-err); }
+    .info     { color: var(--plexus-info); }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--plexus-text-3);
+    }
+    .display { font-size: 28px; font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; }
+    .title   { font-size: 18px; font-weight: 600; line-height: 1.25; letter-spacing: -0.01em; }
+    .body    { font-size: 14px; font-weight: 400; line-height: 1.55; }
+    .caption { font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: 0.02em; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 36px; padding: 0 14px;
+      border-radius: 8px;
+      font-size: 14px; font-weight: 500;
+      border: 1px solid var(--plexus-border);
+      background: var(--plexus-surface-2);
+      color: var(--plexus-text);
+      transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+    }
+    .btn:hover { background: var(--plexus-surface); border-color: var(--plexus-border-strong); }
+    .btn-primary {
+      background: var(--plexus-accent);
+      border-color: var(--plexus-accent);
+      color: #1a1a17;
+    }
+    .btn-primary:hover { background: var(--plexus-accent-2); border-color: var(--plexus-accent-2); }
+    .btn-ghost { background: transparent; border-color: transparent; color: var(--plexus-text-2); }
+    .btn-ghost:hover { background: var(--plexus-surface-2); color: var(--plexus-text); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      height: 20px; padding: 0 8px;
+      border-radius: 6px;
+      font-size: 11px; font-weight: 500; letter-spacing: 0.01em;
+    }
+    .badge-team    { background: rgba(107, 138, 168, 0.15); color: var(--plexus-info); }
+    .badge-personal{ background: rgba(204, 120, 92, 0.13); color: var(--plexus-accent); }
+    .badge-synced  { background: rgba(107, 153, 113, 0.15); color: var(--plexus-ok); }
+    .badge-divergent { background: rgba(200, 164, 92, 0.15); color: var(--plexus-warn); }
+    .badge-native  { background: rgba(138, 134, 120, 0.15); color: var(--plexus-text-3); }
+    .badge-beta    { background: rgba(204, 120, 92, 0.13); color: var(--plexus-accent); border: 1px solid rgba(204,120,92,0.25); }
+
+    .card {
+      background: var(--plexus-surface);
+      border: 1px solid var(--plexus-border);
+      border-radius: 10px;
+      transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .card-hover:hover { border-color: var(--plexus-border-strong); transform: translateY(-1px); }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      height: 32px; padding: 0 10px;
+      border-radius: 6px;
+      font-size: 13px; color: var(--plexus-text-2);
+      cursor: pointer;
+      transition: all 120ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .nav-item:hover { background: var(--plexus-surface-2); color: var(--plexus-text); }
+    .nav-item.active {
+      background: var(--plexus-surface-2);
+      color: var(--plexus-text);
+      box-shadow: inset 2px 0 0 var(--plexus-accent);
+    }
+
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; }
+
+    .pulse::before {
+      content: ""; position: absolute; inset: 0;
+      border-radius: inherit;
+      box-shadow: 0 0 0 0 currentColor;
+      animation: pulse 2.4s var(--ease-out, cubic-bezier(0.22,1,0.36,1)) infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(107, 153, 113, 0.55); }
+      80%  { box-shadow: 0 0 0 8px rgba(107, 153, 113, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(107, 153, 113, 0); }
+    }
+
+    .sidebar-divider {
+      height: 1px; background: var(--plexus-border);
+      margin: 14px 0;
+    }
+
+    .timeline-row { position: relative; }
+    .timeline-row::before {
+      content: ""; position: absolute; left: 9px; top: 24px; bottom: -8px;
+      width: 1px; background: var(--plexus-border);
+    }
+    .timeline-row:last-child::before { display: none; }
+
+    /* Lucide-style icons via inline SVG; sized via class */
+    .ico { width: 16px; height: 16px; flex: 0 0 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .ico-20 { width: 20px; height: 20px; flex-basis: 20px; }
+
+    /* Theme toggle visual */
+    .theme-toggle {
+      width: 56px; height: 28px; border-radius: 999px;
+      background: var(--plexus-surface-2);
+      border: 1px solid var(--plexus-border);
+      position: relative; cursor: pointer;
+    }
+    .theme-toggle::after {
+      content: ""; position: absolute; top: 2px; left: 2px;
+      width: 22px; height: 22px; border-radius: 999px;
+      background: var(--plexus-accent);
+      transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    [data-theme="light"] .theme-toggle::after { left: 30px; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <div class="flex min-h-screen">
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="w-[240px] border-r border-hair shrink-0 px-3 py-5 flex flex-col"
+           style="background: var(--plexus-surface);">
+      <div class="px-2 mb-6">
+        <div class="flex items-baseline gap-2">
+          <span class="dot bg-accent" style="width:10px;height:10px;"></span>
+          <span class="title">Plexus</span>
+          <span class="font-mono caption text-3">v1.0.0</span>
+        </div>
+        <div class="caption text-3 mt-1 px-3">team agent config</div>
+      </div>
+
+      <div class="px-1">
+        <div class="eyebrow px-2 mb-2">Workspace</div>
+        <a class="nav-item active">
+          <svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </a>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M5 12V8a2 2 0 0 1 2-2h2"/><path d="M19 12V8a2 2 0 0 0-2-2h-2"/><path d="M5 12v4a2 2 0 0 0 2 2h2"/><path d="M19 12v4a2 2 0 0 1-2 2h-2"/><circle cx="12" cy="12" r="2"/></svg>
+          MCP Servers
+          <span class="ml-auto caption text-mute">12</span>
+        </a>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9.5 8 10 4.5-.5 8-5 8-10V6l-8-4Z"/></svg>
+          Skills
+          <span class="ml-auto caption text-mute">8</span>
+        </a>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><path d="m17 3 4 4-4 4"/><path d="M21 7H9"/><path d="m7 21-4-4 4-4"/><path d="M3 17h12"/></svg>
+          Mirror
+        </a>
+
+        <div class="sidebar-divider"></div>
+        <div class="eyebrow px-2 mb-2">Configuration</div>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
+          Backups
+        </a>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Team
+          <span class="badge badge-beta ml-auto">1.1 beta</span>
+        </a>
+        <a class="nav-item">
+          <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </div>
+
+      <div class="mt-auto px-3 pt-4 border-t border-hair">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="dot ok pulse" style="background: var(--plexus-ok); position: relative;"></span>
+          <span class="body" style="font-weight: 500;">4 agents synced</span>
+        </div>
+        <div class="caption text-3">last sync 2 min ago</div>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="flex-1 min-w-0">
+      <!-- Top bar -->
+      <header class="flex items-center justify-between px-10 py-5 border-b border-hair">
+        <div class="flex items-center gap-3 caption text-3">
+          <span>Workspace</span>
+          <span>/</span>
+          <span class="text-2">Dashboard</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="btn btn-ghost">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="caption text-3">Search…</span>
+            <span class="caption text-mute font-mono ml-2 px-1.5 py-0.5 rounded" style="background: var(--plexus-surface-2); border:1px solid var(--plexus-border);">⌘K</span>
+          </button>
+          <div class="theme-toggle" title="Toggle theme"></div>
+          <div class="w-8 h-8 rounded-full grid place-items-center" style="background: var(--plexus-accent-faint); color: var(--plexus-accent); font-weight: 600;">M</div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="px-10 py-8 max-w-[1180px] mx-auto space-y-10">
+
+        <!-- Hero -->
+        <section class="flex items-end justify-between gap-6">
+          <div>
+            <div class="display mb-2">Dashboard</div>
+            <p class="body text-2 max-w-xl">
+              One source of truth for MCP servers, skills, and instruction
+              files — synced across every AI agent on your machine.
+            </p>
+          </div>
+          <button class="btn btn-primary">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+            Sync all agents
+          </button>
+        </section>
+
+        <!-- Status pill row -->
+        <section class="card px-5 py-4 flex items-center gap-6 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="dot pulse" style="background: var(--plexus-ok); position: relative;"></span>
+            <span class="body" style="font-weight: 500;">4 agents synced</span>
+          </div>
+          <span class="text-mute">·</span>
+          <div class="caption text-2">12 MCP servers</div>
+          <span class="text-mute">·</span>
+          <div class="caption text-2">8 skills</div>
+          <span class="text-mute">·</span>
+          <div class="caption text-2">last sync <span class="text-3">2 min ago</span></div>
+          <div class="ml-auto flex items-center gap-2 caption text-3">
+            <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg>
+            Auto-snapshot enabled
+          </div>
+        </section>
+
+        <!-- Import banner -->
+        <section class="card relative overflow-hidden" style="border-left: 3px solid var(--plexus-accent);">
+          <div class="absolute inset-y-0 left-0 w-32 opacity-20" style="background: linear-gradient(90deg, var(--plexus-accent) 0%, transparent 100%);"></div>
+          <div class="relative px-5 py-4 flex items-center gap-4">
+            <div class="w-9 h-9 rounded-lg grid place-items-center" style="background: var(--plexus-accent-faint); color: var(--plexus-accent);">
+              <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="body" style="font-weight: 500;">3 native configs ready to import</div>
+              <div class="caption text-2 mt-0.5">
+                Found 2 new MCPs and 1 skill in Claude Code and Cursor that aren't in your store.
+              </div>
+            </div>
+            <button class="btn btn-ghost">Review</button>
+            <button class="btn btn-primary">Import all</button>
+          </div>
+        </section>
+
+        <!-- Detected Agents -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="title">Detected agents</h2>
+            <span class="caption text-3">4 of 4 supported</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Agent card 1 -->
+            <a class="card card-hover px-5 py-4 cursor-pointer">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="title">Claude Code</span>
+                    <span class="badge badge-synced"><span class="dot" style="background:currentColor"></span> in sync</span>
+                  </div>
+                  <div class="caption text-3 font-mono">~/.claude.json</div>
+                </div>
+                <span class="caption text-3">shared</span>
+              </div>
+              <div class="mt-4 flex gap-6 caption text-2">
+                <span><span class="text-3">MCP</span> 11</span>
+                <span><span class="text-3">Skills</span> 5</span>
+                <span class="ml-auto text-3">2 min ago</span>
+              </div>
+            </a>
+            <!-- Agent card 2 -->
+            <a class="card card-hover px-5 py-4 cursor-pointer">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="title">Cursor</span>
+                    <span class="badge badge-synced"><span class="dot" style="background:currentColor"></span> in sync</span>
+                  </div>
+                  <div class="caption text-3 font-mono">~/.cursor/mcp.json</div>
+                </div>
+                <span class="caption text-3">exclusive</span>
+              </div>
+              <div class="mt-4 flex gap-6 caption text-2">
+                <span><span class="text-3">MCP</span> 8</span>
+                <span><span class="text-3">Skills</span> 3</span>
+                <span class="ml-auto text-3">2 min ago</span>
+              </div>
+            </a>
+            <!-- Agent card 3 -->
+            <a class="card card-hover px-5 py-4 cursor-pointer">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="title">Codex</span>
+                    <span class="badge badge-divergent"><span class="dot" style="background:currentColor"></span> drifted</span>
+                  </div>
+                  <div class="caption text-3 font-mono">~/.codex/config.toml</div>
+                </div>
+                <span class="caption text-3">shared</span>
+              </div>
+              <div class="mt-4 flex gap-6 caption text-2">
+                <span><span class="text-3">MCP</span> 4</span>
+                <span><span class="text-3">Skills</span> 0</span>
+                <span class="ml-auto warn">2 entries differ</span>
+              </div>
+            </a>
+            <!-- Agent card 4 -->
+            <a class="card card-hover px-5 py-4 cursor-pointer">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <span class="title">Factory Droid</span>
+                    <span class="badge badge-synced"><span class="dot" style="background:currentColor"></span> in sync</span>
+                  </div>
+                  <div class="caption text-3 font-mono">~/.factory/mcp.json</div>
+                </div>
+                <span class="caption text-3">exclusive</span>
+              </div>
+              <div class="mt-4 flex gap-6 caption text-2">
+                <span><span class="text-3">MCP</span> 6</span>
+                <span><span class="text-3">Skills</span> 12</span>
+                <span class="ml-auto text-3">2 min ago</span>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <!-- Quick stats -->
+        <section class="grid grid-cols-2 gap-3">
+          <a class="card card-hover px-5 py-5 cursor-pointer">
+            <div class="eyebrow mb-2">MCP Servers</div>
+            <div class="display mb-1">12</div>
+            <div class="caption text-2">
+              <span class="badge badge-team mr-1">team 4</span>
+              <span class="badge badge-personal mr-1">personal 6</span>
+              <span class="badge badge-native">native-only 2</span>
+            </div>
+          </a>
+          <a class="card card-hover px-5 py-5 cursor-pointer">
+            <div class="eyebrow mb-2">Skills</div>
+            <div class="display mb-1">8</div>
+            <div class="caption text-2">
+              <span class="badge badge-team mr-1">team 2</span>
+              <span class="badge badge-personal mr-1">personal 5</span>
+              <span class="badge badge-native">native-only 1</span>
+            </div>
+          </a>
+        </section>
+
+        <!-- Activity timeline -->
+        <section>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="title">Recent activity</h2>
+            <a class="caption accent cursor-pointer hover:underline">View all backups →</a>
+          </div>
+          <div class="card divide-y" style="--tw-divide-opacity:1; border-color: var(--plexus-border);">
+            <div class="px-5 py-4 timeline-row flex items-start gap-3">
+              <div class="w-[18px] h-[18px] rounded-full grid place-items-center mt-0.5" style="background: rgba(107,153,113,0.15); color: var(--plexus-ok);">
+                <svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Sync all agents</span> <span class="text-3">— 4 agents updated</span></div>
+                <div class="caption text-3">2 min ago · auto-snapshot <span class="font-mono">2026-04-27T03:14:22Z</span></div>
+              </div>
+              <button class="btn btn-ghost caption">Restore</button>
+            </div>
+            <div class="px-5 py-4 timeline-row flex items-start gap-3">
+              <div class="w-[18px] h-[18px] rounded-full grid place-items-center mt-0.5" style="background: rgba(204,120,92,0.13); color: var(--plexus-accent);">
+                <svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Toggled atlassian-mcp</span> <span class="text-3">on Cursor</span></div>
+                <div class="caption text-3">14 min ago · personal layer</div>
+              </div>
+              <button class="btn btn-ghost caption">Restore</button>
+            </div>
+            <div class="px-5 py-4 timeline-row flex items-start gap-3">
+              <div class="w-[18px] h-[18px] rounded-full grid place-items-center mt-0.5" style="background: rgba(107,138,168,0.15); color: var(--plexus-info);">
+                <svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Imported 3 entries</span> <span class="text-3">from Claude Code → personal</span></div>
+                <div class="caption text-3">1 hour ago</div>
+              </div>
+              <button class="btn btn-ghost caption">Restore</button>
+            </div>
+            <div class="px-5 py-4 flex items-start gap-3">
+              <div class="w-[18px] h-[18px] rounded-full grid place-items-center mt-0.5" style="background: rgba(138,134,120,0.15); color: var(--plexus-text-3);">
+                <svg class="ico" viewBox="0 0 24 24" style="width:11px;height:11px;"><circle cx="12" cy="12" r="10"/></svg>
+              </div>
+              <div class="flex-1">
+                <div class="body text-3">No earlier activity in this session.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="pt-6 caption text-mute flex items-center justify-between">
+          <div>Plexus is local-only and telemetry-free.</div>
+          <div class="flex items-center gap-3">
+            <a class="hover:text-2 cursor-pointer">Docs</a>
+            <a class="hover:text-2 cursor-pointer">GitHub</a>
+            <a class="hover:text-2 cursor-pointer">Privacy pledge</a>
+          </div>
+        </footer>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Theme toggle for the mockup
+    document.querySelector(".theme-toggle").addEventListener("click", () => {
+      const html = document.documentElement;
+      const next = html.dataset.theme === "dark" ? "light" : "dark";
+      html.dataset.theme = next;
+    });
+  </script>
+</body>
+</html>

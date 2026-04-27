@@ -64,9 +64,7 @@ export function TeamPanel({ status: initial }: { status: Status }) {
             <div className="mt-1 font-mono text-plexus-text">{status.repoUrl}</div>
             <div className="mt-3 text-sm">
               {status.hasUpstreamUpdate ? (
-                <span className="text-plexus-warn">
-                  ⟳ {status.behind} update(s) available
-                </span>
+                <span className="text-plexus-warn">⟳ {status.behind} update(s) available</span>
               ) : (
                 <span className="text-plexus-ok">● Up-to-date</span>
               )}
@@ -108,23 +106,26 @@ export function TeamPanel({ status: initial }: { status: Status }) {
             </div>
           </>
         )}
-        {msg && (
-          <div className="mt-3 text-xs text-plexus-mute">{msg}</div>
-        )}
+        {msg && <div className="mt-3 text-xs text-plexus-mute">{msg}</div>}
       </div>
 
       <div className="rounded border border-plexus-border bg-plexus-panel p-5">
         <div className="text-sm font-medium">Propose to team</div>
         <p className="mt-1 text-xs text-plexus-mute">
-          To share a personal MCP server or skill with the rest of the team, push it to the
-          team repo via a pull request. The MVP keeps this manual; a one-click PR helper is
-          on the roadmap.
+          To share a personal MCP server or skill with the rest of the team, push it to the team
+          repo via a pull request. The MVP keeps this manual; a one-click PR helper is on the
+          roadmap.
         </p>
         <ol className="mt-3 list-decimal pl-5 text-xs text-plexus-mute">
           <li>Fork or branch the team repo (the URL above).</li>
-          <li>Copy the file from <code className="font-mono">~/.config/plexus/personal/</code> into the same path under the team repo.</li>
+          <li>
+            Copy the file from <code className="font-mono">~/.config/plexus/personal/</code> into
+            the same path under the team repo.
+          </li>
           <li>Open a pull request — your team lead reviews and merges.</li>
-          <li>Run <code className="font-mono">Pull updates</code> here to receive the merged version.</li>
+          <li>
+            Run <code className="font-mono">Pull updates</code> here to receive the merged version.
+          </li>
         </ol>
       </div>
     </div>

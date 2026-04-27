@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <title>Plexus — Backups</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="stylesheet" href="_shared.css" />
+</head>
+<body data-active="backups" data-title="Backups" data-crumb="Configuration / Backups">
+  <main id="content" style="display:none;">
+    <div class="space-y-8">
+
+      <section class="flex items-end justify-between gap-6">
+        <div>
+          <div class="display mb-2">Backups</div>
+          <p class="body text-2 max-w-xl">
+            Every sync, toggle, and edit is snapshotted before it touches your agents.
+            Ring buffer keeps the last 20.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn">
+            <svg class="ico" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+            Snapshot now
+          </button>
+          <button class="btn btn-ghost caption">Open backups folder →</button>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="card px-5 py-4">
+          <div class="eyebrow mb-1">Snapshots</div>
+          <div class="display">14</div>
+          <div class="caption text-3 mt-1">of 20 max · 30 % of ring buffer</div>
+        </div>
+        <div class="card px-5 py-4">
+          <div class="eyebrow mb-1">Storage</div>
+          <div class="display">2.8 MB</div>
+          <div class="caption text-3 mt-1">~/.config/plexus/backups/</div>
+        </div>
+        <div class="card px-5 py-4">
+          <div class="eyebrow mb-1">Quarantined collisions</div>
+          <div class="display">3</div>
+          <div class="caption text-3 mt-1">_collisions/ — pre-link evictions</div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div>
+        <h2 class="title mb-3">Snapshot history</h2>
+        <div class="card divide-y" style="border-color: var(--plexus-border);">
+
+          <details class="px-5 py-4">
+            <summary class="cursor-pointer flex items-center gap-3 list-none">
+              <span class="dot pulse" style="background: var(--plexus-ok);"></span>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Sync all agents</span> <span class="text-3">— 4 files updated</span></div>
+                <div class="caption font-mono text-3 mt-0.5">2026-04-27T03:14:22Z · 2 min ago</div>
+              </div>
+              <span class="caption text-3">4 entries</span>
+              <button class="btn btn-sm" onclick="document.getElementById('confirm').classList.remove('hidden'); event.preventDefault();">Restore</button>
+            </summary>
+            <div class="mt-4 ml-5 grid grid-cols-2 gap-2 caption">
+              <div class="surface-2 px-3 py-2 rounded font-mono">claude-code-mcp.json <span class="text-3 ml-2">62.4 KB</span></div>
+              <div class="surface-2 px-3 py-2 rounded font-mono">cursor-mcp.json <span class="text-3 ml-2">3.1 KB</span></div>
+              <div class="surface-2 px-3 py-2 rounded font-mono">codex-config.toml <span class="text-3 ml-2">1.8 KB</span></div>
+              <div class="surface-2 px-3 py-2 rounded font-mono">factory-mcp.json <span class="text-3 ml-2">2.2 KB</span></div>
+            </div>
+          </details>
+
+          <details class="px-5 py-4">
+            <summary class="cursor-pointer flex items-center gap-3 list-none">
+              <span class="dot" style="background: var(--plexus-accent);"></span>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Toggled atlassian-mcp on Cursor</span></div>
+                <div class="caption font-mono text-3 mt-0.5">2026-04-27T03:00:58Z · 14 min ago</div>
+              </div>
+              <span class="caption text-3">1 entry</span>
+              <button class="btn btn-sm">Restore</button>
+            </summary>
+          </details>
+
+          <details class="px-5 py-4">
+            <summary class="cursor-pointer flex items-center gap-3 list-none">
+              <span class="dot" style="background: var(--plexus-info);"></span>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Imported 3 entries from Claude Code → personal</span></div>
+                <div class="caption font-mono text-3 mt-0.5">2026-04-27T02:14:09Z · 1 hour ago</div>
+              </div>
+              <span class="caption text-3">3 entries</span>
+              <button class="btn btn-sm">Restore</button>
+            </summary>
+          </details>
+
+          <details class="px-5 py-4">
+            <summary class="cursor-pointer flex items-center gap-3 list-none">
+              <span class="dot" style="background: var(--plexus-text-3);"></span>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">Edit CLAUDE.md</span> <span class="text-3">— ~/.claude/CLAUDE.md</span></div>
+                <div class="caption font-mono text-3 mt-0.5">2026-04-26T18:42:11Z · 9 hours ago</div>
+              </div>
+              <span class="caption text-3">1 entry</span>
+              <button class="btn btn-sm">Restore</button>
+            </summary>
+          </details>
+
+          <details class="px-5 py-4">
+            <summary class="cursor-pointer flex items-center gap-3 list-none">
+              <span class="dot" style="background: var(--plexus-warn);"></span>
+              <div class="flex-1">
+                <div class="body"><span style="font-weight:500;">First-time import</span> <span class="text-3">— bootstrapped store from 4 agents</span></div>
+                <div class="caption font-mono text-3 mt-0.5">2026-04-26T11:00:00Z · yesterday</div>
+              </div>
+              <span class="caption text-3">12 entries</span>
+              <button class="btn btn-sm">Restore</button>
+            </summary>
+          </details>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Restore confirm modal -->
+    <div id="confirm" class="hidden">
+      <div class="modal-backdrop" onclick="document.getElementById('confirm').classList.add('hidden');"></div>
+      <div class="modal">
+        <div class="px-6 py-5 border-b border-hair flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full grid place-items-center" style="background: rgba(196,96,79,0.13); color: var(--plexus-err);">
+            <svg class="ico ico-20" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="flex-1">
+            <div class="title mb-1">Restore this snapshot?</div>
+            <p class="body text-2">
+              This will overwrite the current contents of all 4 agent files with the
+              snapshot taken <span style="font-weight:500;">2 min ago</span>. Your current
+              state will <span class="err" style="font-weight:500;">not</span> be re-snapshotted.
+            </p>
+          </div>
+        </div>
+        <div class="px-6 py-4 surface-2 caption text-3" style="border-radius: 0 0 14px 14px;">
+          <div class="font-mono">2026-04-27T03:14:22Z</div>
+          <div>4 files · 69.5 KB total</div>
+        </div>
+        <div class="px-6 py-4 flex items-center justify-end gap-2 border-t border-hair">
+          <button class="btn" onclick="document.getElementById('confirm').classList.add('hidden');">Cancel</button>
+          <button class="btn btn-danger" style="background: var(--plexus-err); color: white; border-color: var(--plexus-err);">
+            Restore and overwrite
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="_shell.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <title>Plexus 1.0 mockups</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="stylesheet" href="_shared.css" />
+</head>
+<body class="min-h-screen">
+  <div class="max-w-3xl mx-auto px-8 py-16 space-y-10">
+    <header>
+      <div class="flex items-baseline gap-3 mb-3">
+        <span class="dot bg-accent" style="width:12px;height:12px;"></span>
+        <span class="display">Plexus 1.0 mockups</span>
+        <span class="font-mono caption text-3">Designer phase</span>
+      </div>
+      <p class="body text-2">
+        High-fidelity static mockups for the Plexus 1.0 redesign. Click into each
+        page to review the visual direction (Claude Code aesthetic, Anthropic
+        coral accent, Inter type, dark default with light alternative).
+      </p>
+    </header>
+
+    <nav class="card divide-y" style="border-color: var(--plexus-border);">
+      <a href="dashboard.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Dashboard</div>
+            <div class="caption text-3 mt-0.5">Hero, status pill, agent grid, quick stats, activity timeline.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="mcp-servers.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">MCP Servers</div>
+            <div class="caption text-3 mt-0.5">Tabs, table with per-agent toggles, divergent badge.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="skills.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Skills</div>
+            <div class="caption text-3 mt-0.5">Card grid with per-agent enable badges, native-only callout.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="agent-detail.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Agent detail</div>
+            <div class="caption text-3 mt-0.5">Inspector with mode/symlink stats, MCP file preview, instruction & skill lists.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="backups.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Backups</div>
+            <div class="caption text-3 mt-0.5">Ring buffer stats, snapshot timeline, destructive restore confirm.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="settings.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Settings</div>
+            <div class="caption text-3 mt-0.5">Privacy pledge, theme, storage, shortcuts, danger zone.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+      <a href="empty-state.html" class="block px-5 py-4 hover:surface-2 transition">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="body" style="font-weight:500;">Empty / loading / error states</div>
+            <div class="caption text-3 mt-0.5">Reference gallery for every list-style page.</div>
+          </div>
+          <span class="caption accent">Open →</span>
+        </div>
+      </a>
+    </nav>
+
+    <footer class="caption text-3">
+      All pages are static HTML using Tailwind CDN + Inter from rsms.me. Click the
+      pill in any page's top bar to flip between dark and light.
+    </footer>
+  </div>
+</body>
+</html>

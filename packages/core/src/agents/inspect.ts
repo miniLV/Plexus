@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { AGENT_PATHS, AGENT_DISPLAY_NAMES, AGENT_ROOTS } from "../store/paths.js";
 import { pathExists } from "../store/fs-utils.js";
+import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS } from "../store/paths.js";
 import type { AgentId } from "../types.js";
 
 /**
@@ -113,9 +113,7 @@ async function listSkills(skillsDir: string): Promise<SkillEntry[]> {
         isSymlink = lst.isSymbolicLink();
         if (isSymlink) {
           const t = await fs.readlink(full);
-          linkTarget = path.isAbsolute(t)
-            ? t
-            : path.resolve(path.dirname(full), t);
+          linkTarget = path.isAbsolute(t) ? t : path.resolve(path.dirname(full), t);
         }
       } catch {
         continue;
@@ -137,20 +135,42 @@ async function listSkills(skillsDir: string): Promise<SkillEntry[]> {
   }
 }
 
-function instructionsForAgent(agentId: AgentId): Array<{ label: string; filename: string; abs: string }> {
+function instructionsForAgent(
+  agentId: AgentId,
+): Array<{ label: string; filename: string; abs: string }> {
   const root = AGENT_ROOTS[agentId];
   switch (agentId) {
     case "claude-code":
-      return [{ label: "CLAUDE.md (user-level memory)", filename: "CLAUDE.md", abs: path.join(root, "CLAUDE.md") }];
+      return [
+        {
+          label: "CLAUDE.md (user-level memory)",
+          filename: "CLAUDE.md",
+          abs: path.join(root, "CLAUDE.md"),
+        },
+      ];
     case "cursor":
       return [
-        { label: "AGENTS.md (user-level)", filename: "AGENTS.md", abs: path.join(root, "AGENTS.md") },
+        {
+          label: "AGENTS.md (user-level)",
+          filename: "AGENTS.md",
+          abs: path.join(root, "AGENTS.md"),
+        },
       ];
     case "codex":
-      return [{ label: "AGENTS.md (user-level)", filename: "AGENTS.md", abs: path.join(root, "AGENTS.md") }];
+      return [
+        {
+          label: "AGENTS.md (user-level)",
+          filename: "AGENTS.md",
+          abs: path.join(root, "AGENTS.md"),
+        },
+      ];
     case "factory-droid":
       return [
-        { label: "AGENTS.md (user-level)", filename: "AGENTS.md", abs: path.join(root, "AGENTS.md") },
+        {
+          label: "AGENTS.md (user-level)",
+          filename: "AGENTS.md",
+          abs: path.join(root, "AGENTS.md"),
+        },
       ];
   }
 }

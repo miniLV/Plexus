@@ -22,9 +22,6 @@ export async function PUT(req: Request) {
     await writeMCP("personal", personal);
     return NextResponse.json({ ok: true, count: personal.length });
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

@@ -60,14 +60,11 @@ export function SkillsEditor({
     if (row.authority === "team") return;
     setBusy(`${row.id}:${agent}`);
     try {
-      const res = await fetch(
-        `/api/skills/${encodeURIComponent(row.id)}/toggle`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ agent, enabled }),
-        },
-      );
+      const res = await fetch(`/api/skills/${encodeURIComponent(row.id)}/toggle`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent, enabled }),
+      });
       const data = await res.json();
       if (!data.ok) setMsg(`Error: ${data.message}`);
       await reload();
@@ -136,9 +133,8 @@ export function SkillsEditor({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="text-xs text-plexus-mute">
-          {rows.length} unique skill(s) ·{" "}
-          {rows.filter((r) => r.authority === "personal").length} in personal store ·{" "}
-          {rows.filter((r) => r.authority === "native").length} native-only
+          {rows.length} unique skill(s) · {rows.filter((r) => r.authority === "personal").length} in
+          personal store · {rows.filter((r) => r.authority === "native").length} native-only
         </div>
         <div className="flex items-center gap-3">
           <input
@@ -208,7 +204,7 @@ export function SkillsEditor({
                 {displayNames[a] ?? AGENT_LABELS[a] ?? a}
               </th>
             ))}
-            <th className="border-b border-plexus-border py-2"></th>
+            <th className="border-b border-plexus-border py-2" />
           </tr>
         </thead>
         <tbody>
@@ -264,14 +260,10 @@ export function SkillsEditor({
       </table>
       <div className="space-y-2 text-xs text-plexus-mute">
         <div>
-          <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">
-            native
-          </span>{" "}
-          skills are still only in the agent's own folder. Toggling promotes them
-          into your personal Plexus store.{" "}
-          <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">
-            team
-          </span>{" "}
+          <span className="rounded bg-plexus-warn/15 px-1.5 py-0.5 text-plexus-warn">native</span>{" "}
+          skills are still only in the agent's own folder. Toggling promotes them into your personal
+          Plexus store.{" "}
+          <span className="rounded bg-plexus-accent/15 px-1.5 py-0.5 text-plexus-accent">team</span>{" "}
           skills are read-only here — propose changes via PR.
         </div>
         <details>
@@ -281,18 +273,15 @@ export function SkillsEditor({
           <div className="mt-2 space-y-1 leading-relaxed">
             <p>
               The skill folder is written into{" "}
-              <code>~/.config/plexus/personal/skills/&lt;id&gt;/</code> (the
-              canonical Plexus copy). Each enabled agent gets a symlink from its
-              own skills directory to that folder, so all agents read the same
-              SKILL.md.
+              <code>~/.config/plexus/personal/skills/&lt;id&gt;/</code> (the canonical Plexus copy).
+              Each enabled agent gets a symlink from its own skills directory to that folder, so all
+              agents read the same SKILL.md.
             </p>
             <p>
-              Toggling a skill off removes the symlink from that agent only; the
-              Plexus copy stays. Other agents still see it.
+              Toggling a skill off removes the symlink from that agent only; the Plexus copy stays.
+              Other agents still see it.
             </p>
-            <p>
-              Every toggle takes a backup snapshot first.
-            </p>
+            <p>Every toggle takes a backup snapshot first.</p>
           </div>
         </details>
       </div>

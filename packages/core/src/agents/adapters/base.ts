@@ -1,11 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type {
-  AgentId,
-  MCPServerDef,
-  SkillDef,
-  SyncResult,
-} from "../../types.js";
+import type { AgentId, MCPServerDef, SkillDef, SyncResult } from "../../types.js";
 
 export interface ApplyContext {
   agentId: AgentId;

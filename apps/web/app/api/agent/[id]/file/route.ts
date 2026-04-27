@@ -1,12 +1,8 @@
-import {
-  readTextFile,
-  writeTextFile,
-  snapshotSingleFile,
-} from "@plexus/core";
+import os from "node:os";
+import path from "node:path";
+import { readTextFile, snapshotSingleFile, writeTextFile } from "@plexus/core";
 import type { AgentId } from "@plexus/core";
 import { NextResponse } from "next/server";
-import path from "node:path";
-import os from "node:os";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +40,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const content = await readTextFile(resolved);
     return NextResponse.json({ ok: true, path: resolved, content });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, message: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, message: (err as Error).message }, { status: 500 });
   }
 }
 
@@ -65,10 +58,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
     const resolved = safeResolve(body.path);
     if (!resolved) {
-      return NextResponse.json(
-        { ok: false, message: "path not allowed" },
-        { status: 403 },
-      );
+      return NextResponse.json({ ok: false, message: "path not allowed" }, { status: 403 });
     }
     // Snapshot the exact file being edited so we always have a one-step undo.
     const backup = await snapshotSingleFile(
@@ -78,9 +68,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     await writeTextFile(resolved, body.content);
     return NextResponse.json({ ok: true, backup });
   } catch (err) {
-    return NextResponse.json(
-      { ok: false, message: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, message: (err as Error).message }, { status: 500 });
   }
 }

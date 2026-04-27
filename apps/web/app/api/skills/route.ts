@@ -34,9 +34,6 @@ export async function POST(req: Request) {
     await writeSkill(skill);
     return NextResponse.json({ ok: true, id: skill.id });
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

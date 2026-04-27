@@ -38,11 +38,7 @@ export function SyncButton() {
               {report.results?.map((r: any) => (
                 <div key={r.agent} className="flex items-center justify-between">
                   <span>{r.agent}</span>
-                  <span
-                    className={
-                      r.errors.length > 0 ? "text-plexus-err" : "text-plexus-ok"
-                    }
-                  >
+                  <span className={r.errors.length > 0 ? "text-plexus-err" : "text-plexus-ok"}>
                     {r.errors.length > 0
                       ? `${r.errors.length} error`
                       : `mcp ${r.applied.mcp} · skills ${r.applied.skills}`}

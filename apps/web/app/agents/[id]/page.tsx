@@ -1,8 +1,8 @@
+import { AgentDetail } from "@/components/agent-detail";
 import { inspectAgent } from "@plexus/core";
 import type { AgentId } from "@plexus/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AgentDetail } from "@/components/agent-detail";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +18,10 @@ export default async function AgentPage({ params }: { params: { id: string } }) 
         <Link href="/" className="text-xs text-plexus-mute hover:text-plexus-text">
           ← Dashboard
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-          {data.displayName}
-        </h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{data.displayName}</h1>
         <p className="text-sm text-plexus-mute">
-          Inspect this agent's files, see what Plexus owns vs what's still
-          local-only, and edit the instruction files directly.
+          Inspect this agent's files, see what Plexus owns vs what's still local-only, and edit the
+          instruction files directly.
         </p>
       </div>
       <AgentDetail data={data} />

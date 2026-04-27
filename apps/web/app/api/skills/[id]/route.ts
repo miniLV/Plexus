@@ -1,9 +1,4 @@
-import {
-  ALL_AGENTS,
-  deleteSkill,
-  readSkills,
-  writeSkill,
-} from "@plexus/core";
+import { ALL_AGENTS, deleteSkill, readSkills, writeSkill } from "@plexus/core";
 import type { AgentId, ConfigLayer } from "@plexus/core";
 import { NextResponse } from "next/server";
 
@@ -15,17 +10,11 @@ function layerFromQuery(req: Request): ConfigLayer {
   return l === "team" ? "team" : "personal";
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
     const layer = layerFromQuery(req);
     if (layer === "team") {
-      return NextResponse.json(
-        { error: "team-layer skills are read-only here" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "team-layer skills are read-only here" }, { status: 403 });
     }
     const skills = await readSkills(layer);
     const skill = skills.find((s) => s.id === params.id);
@@ -54,17 +43,11 @@ export async function PATCH(
     await writeSkill(next);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const layer = layerFromQuery(req);
     if (layer === "team") {
@@ -76,9 +59,6 @@ export async function DELETE(
     await deleteSkill("personal", params.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

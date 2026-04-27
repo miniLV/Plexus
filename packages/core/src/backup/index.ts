@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { AGENT_PATHS, ALL_AGENTS, PLEXUS_PATHS } from "../store/paths.js";
 import { ensureDir, pathExists } from "../store/fs-utils.js";
+import { AGENT_PATHS, ALL_AGENTS, PLEXUS_PATHS } from "../store/paths.js";
 import type { AgentId } from "../types.js";
 
 /** Where collision backups (from placeLinkOrCopy) end up. */
@@ -168,9 +168,7 @@ export async function snapshotSingleFile(
         {
           id,
           createdAt: new Date().toISOString(),
-          entries: [
-            { agent: null, backupPath, originalPath: filePath, wasSymlink: false },
-          ],
+          entries: [{ agent: null, backupPath, originalPath: filePath, wasSymlink: false }],
         },
         null,
         2,

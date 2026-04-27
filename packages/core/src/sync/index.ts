@@ -1,15 +1,11 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { cleanupLegacyResidue, snapshotAgentConfigs } from "../backup/index.js";
+import { readConfig } from "../store/config.js";
+import { readAllMCP, readMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
-import { readConfig } from "../store/config.js";
-import { readMCP, readAllMCP } from "../store/mcp.js";
-import {
-  readAllSkills,
-  readSkills,
-  resolveSkillSourceDir,
-} from "../store/skills.js";
+import { readAllSkills, readSkills, resolveSkillSourceDir } from "../store/skills.js";
 import type { AgentId, SyncReport } from "../types.js";
 
 /**
@@ -48,12 +44,10 @@ export async function runSync(only?: AgentId[]): Promise<SyncReport & { backup?:
     skillSourcePaths.set(s.id, resolveSkillSourceDir(s.layer, s.id));
   }
 
-  const targets: AgentId[] = (only && only.length > 0 ? only : ALL_AGENTS).filter(
-    (id) => {
-      const d = detected.find((x) => x.id === id);
-      return d?.installed && config.agents[id] !== false;
-    },
-  );
+  const targets: AgentId[] = (only && only.length > 0 ? only : ALL_AGENTS).filter((id) => {
+    const d = detected.find((x) => x.id === id);
+    return d?.installed && config.agents[id] !== false;
+  });
 
   const results = await Promise.all(
     targets.map((id) =>

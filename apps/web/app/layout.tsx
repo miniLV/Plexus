@@ -1,8 +1,8 @@
 import "./globals.css";
+import { PLEXUS_VERSION } from "@/lib/version";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ReactNode } from "react";
-import { PLEXUS_VERSION } from "@/lib/version";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Plexus",
@@ -30,9 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <div className="text-lg font-semibold tracking-tight text-plexus-text">
                   <span className="text-plexus-accent">●</span> Plexus
                 </div>
-                <span className="font-mono text-[10px] text-plexus-mute">
-                  v{PLEXUS_VERSION}
-                </span>
+                <span className="font-mono text-[10px] text-plexus-mute">v{PLEXUS_VERSION}</span>
               </div>
               <div className="text-xs text-plexus-mute">team agent config</div>
             </div>
