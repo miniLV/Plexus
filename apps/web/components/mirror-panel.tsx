@@ -1,5 +1,9 @@
 "use client";
 
+import { Badge, StatusDot } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Candidate<T> = { item: T; inStore: boolean };
@@ -44,9 +48,7 @@ export function MirrorPanel({
 
   async function loadPreviews() {
     const list: PerTargetPreview[] = [];
-    for (const t of targets) {
-      list.push({ agent: t, preview: null, loading: true });
-    }
+    for (const t of targets) list.push({ agent: t, preview: null, loading: true });
     setPreviews(list);
     const results = await Promise.all(
       Array.from(targets).map(async (t) => {
@@ -65,10 +67,10 @@ export function MirrorPanel({
     setPreviews(results);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: targets-as-Set requires manual key
   useEffect(() => {
     if (from && targets.size > 0) loadPreviews();
     else setPreviews([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from, Array.from(targets).join(",")]);
 
   function toggleTarget(agent: string) {
@@ -126,12 +128,12 @@ export function MirrorPanel({
 
   return (
     <div className="space-y-6">
-      <div className="rounded border border-plexus-border bg-plexus-panel p-5">
-        <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4">
+      <Card className="p-5">
+        <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-5">
           <div>
-            <div className="mb-1 text-xs uppercase tracking-wider text-plexus-mute">Source</div>
+            <div className="plexus-eyebrow mb-1.5">Source</div>
             <select
-              className="rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm"
+              className="h-9 rounded border border-plexus-border bg-plexus-bg px-3 text-sm focus:border-plexus-accent focus:outline-none"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
             >
@@ -144,164 +146,176 @@ export function MirrorPanel({
             </select>
           </div>
           <div>
-            <div className="mb-1 text-xs uppercase tracking-wider text-plexus-mute">
-              Target agents (mirror destinations)
-            </div>
+            <div className="plexus-eyebrow mb-1.5">Target agents (mirror destinations)</div>
             <div className="flex flex-wrap gap-2">
               {agents
                 .filter((a) => a !== from)
-                .map((a) => (
-                  <label
-                    key={a}
-                    className={`flex cursor-pointer items-center gap-2 rounded border px-3 py-1.5 text-sm ${
-                      targets.has(a)
-                        ? "border-plexus-accent/60 bg-plexus-accent/10"
-                        : "border-plexus-border"
-                    } ${!installed[a] ? "cursor-not-allowed opacity-40" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={targets.has(a)}
-                      disabled={!installed[a]}
-                      onChange={() => toggleTarget(a)}
-                      className="h-4 w-4 accent-plexus-accent"
-                    />
-                    <span>{displayNames[a] ?? a}</span>
-                    <span className="rounded bg-plexus-bg px-1.5 py-0.5 text-[10px] text-plexus-mute">
-                      via {FILE_MODE_LABEL[a] ?? "?"}
-                    </span>
-                  </label>
-                ))}
+                .map((a) => {
+                  const active = targets.has(a);
+                  return (
+                    <label
+                      key={a}
+                      className={`flex cursor-pointer items-center gap-2 rounded border px-3 py-1.5 text-sm transition-colors duration-plexus-fast ${
+                        active
+                          ? "border-plexus-accent bg-plexus-accent/12 text-plexus-text"
+                          : "border-plexus-border text-plexus-text-2 hover:bg-plexus-surface-2"
+                      } ${!installed[a] ? "cursor-not-allowed opacity-40" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        disabled={!installed[a]}
+                        onChange={() => toggleTarget(a)}
+                        className="h-4 w-4 accent-plexus-accent"
+                      />
+                      <span>{displayNames[a] ?? a}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        via {FILE_MODE_LABEL[a] ?? "?"}
+                      </Badge>
+                    </label>
+                  );
+                })}
             </div>
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
-          <div className="text-xs text-plexus-mute">
+        <div className="mt-6 flex items-center justify-between border-t border-plexus-border pt-4">
+          <div className="text-xs tracking-[0.02em] text-plexus-text-3">
             {totalDelta === 0
               ? targets.size === 0
                 ? "Pick at least one target."
                 : "Targets are already up-to-date with source."
-              : `${totalDelta} item(s) will be mirrored to ${targets.size} agent(s).`}
+              : `${totalDelta} item${totalDelta === 1 ? "" : "s"} will be mirrored to ${targets.size} agent${targets.size === 1 ? "" : "s"}.`}
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={loadPreviews}
-              disabled={targets.size === 0}
-              className="rounded border border-plexus-border px-3 py-2 text-xs hover:bg-plexus-bg disabled:opacity-50"
-            >
-              Refresh
-            </button>
-            <button
-              onClick={applyAll}
-              disabled={busy || totalDelta === 0}
-              className="rounded bg-plexus-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {busy ? "Mirroring..." : `Mirror ${totalDelta} → ${targets.size} agent(s)`}
-            </button>
+            <Button variant="ghost" size="sm" onClick={loadPreviews} disabled={targets.size === 0}>
+              <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} /> Refresh
+            </Button>
+            <Button variant="primary" onClick={applyAll} disabled={busy || totalDelta === 0}>
+              {busy ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+              ) : (
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              )}
+              {busy
+                ? "Mirroring…"
+                : `Mirror ${totalDelta} → ${targets.size} agent${targets.size === 1 ? "" : "s"}`}
+            </Button>
           </div>
         </div>
 
         {result && (
-          <div className="mt-4 rounded bg-plexus-bg px-3 py-2 text-xs text-plexus-text">
+          <div className="mt-4 rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-xs text-plexus-text-2">
             {result}
           </div>
         )}
-      </div>
+      </Card>
 
       {previews.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {previews.map((p) => (
-            <div key={p.agent} className="rounded border border-plexus-border bg-plexus-panel p-4">
+            <Card key={p.agent} className="p-4">
               <div className="flex items-baseline gap-3">
-                <div className="text-sm font-medium">{displayNames[p.agent]}</div>
-                <span className="rounded bg-plexus-bg px-1.5 py-0.5 text-[10px] text-plexus-mute">
+                <div className="text-sm font-semibold text-plexus-text">
+                  {displayNames[p.agent]}
+                </div>
+                <Badge variant="outline" className="text-[10px]">
                   via {FILE_MODE_LABEL[p.agent] ?? "?"}
-                </span>
-                <div className="ml-auto text-xs text-plexus-mute">
+                </Badge>
+                <div className="ml-auto text-xs tracking-[0.02em] text-plexus-text-3">
                   {p.loading
-                    ? "loading..."
+                    ? "loading…"
                     : p.preview
-                      ? `${p.preview.mcp.length} MCP · ${p.preview.skills.length} skill(s) to mirror`
+                      ? `${p.preview.mcp.length} MCP · ${p.preview.skills.length} skill${p.preview.skills.length === 1 ? "" : "s"} to mirror`
                       : "unable to load"}
                 </div>
               </div>
               {p.preview && (p.preview.mcp.length > 0 || p.preview.skills.length > 0) && (
                 <div className="mt-3 grid grid-cols-2 gap-4 text-xs">
                   <div>
-                    <div className="mb-1 font-medium text-plexus-text">
+                    <div className="mb-1.5 font-medium text-plexus-text">
                       MCP ({p.preview.mcp.length})
                     </div>
-                    <ul className="space-y-0.5 text-plexus-mute">
+                    <ul className="space-y-0.5 text-plexus-text-3">
                       {p.preview.mcp.slice(0, 12).map((c) => (
-                        <li key={c.item.id}>
+                        <li key={c.item.id} className="flex items-center gap-2">
                           <span className="font-mono text-plexus-text">{c.item.id}</span>
                           {!c.inStore && (
-                            <span className="ml-2 rounded bg-plexus-warn/15 px-1 py-0.5 text-[9px] text-plexus-warn">
+                            <Badge variant="divergent" className="text-[9px]">
                               will import
-                            </span>
+                            </Badge>
                           )}
                         </li>
                       ))}
-                      {p.preview.mcp.length > 12 && <li>... +{p.preview.mcp.length - 12} more</li>}
+                      {p.preview.mcp.length > 12 && <li>… +{p.preview.mcp.length - 12} more</li>}
                     </ul>
                   </div>
                   <div>
-                    <div className="mb-1 font-medium text-plexus-text">
+                    <div className="mb-1.5 font-medium text-plexus-text">
                       Skills ({p.preview.skills.length})
                     </div>
-                    <ul className="max-h-40 space-y-0.5 overflow-auto text-plexus-mute">
+                    <ul className="max-h-40 space-y-0.5 overflow-auto text-plexus-text-3">
                       {p.preview.skills.slice(0, 30).map((c) => (
                         <li key={c.item.id}>
                           <span className="font-mono text-plexus-text">{c.item.id}</span>
                         </li>
                       ))}
                       {p.preview.skills.length > 30 && (
-                        <li>... +{p.preview.skills.length - 30} more</li>
+                        <li>… +{p.preview.skills.length - 30} more</li>
                       )}
                     </ul>
                   </div>
                 </div>
               )}
               {p.preview && p.preview.mcp.length === 0 && p.preview.skills.length === 0 && (
-                <div className="mt-2 text-xs text-plexus-ok">● already up-to-date with source</div>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-plexus-ok">
+                  <StatusDot tone="ok" /> already up-to-date with source
+                </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      <details className="rounded border border-plexus-border bg-plexus-panel p-4 text-xs text-plexus-mute">
-        <summary className="cursor-pointer text-plexus-text">
-          What does mirror actually do under the hood?
-        </summary>
-        <div className="mt-3 space-y-2 leading-relaxed">
-          <p>
-            For each target agent, Plexus imports any source-agent items not yet in its store, adds
-            the target to <code>enabledAgents</code>, and runs sync.
-          </p>
-          <p>
-            <span className="text-plexus-accent">Cursor</span> /{" "}
-            <span className="text-plexus-accent">Factory Droid</span>: their MCP file becomes a
-            symlink to <code>~/.config/plexus/.cache/mcp/&lt;agent&gt;.json</code>. Editing either
-            side edits the same bytes — there is one source of truth.
-          </p>
-          <p>
-            <span className="text-plexus-accent">Claude Code</span> /{" "}
-            <span className="text-plexus-accent">Codex</span>: their files carry unrelated keys
-            (auth, history, settings, [profile], [auth]). Plexus partial-writes the MCP section in
-            place; everything else is preserved verbatim.
-          </p>
-          <p>
-            <span className="text-plexus-accent">Skills</span>: written as symlinks from each
-            agent's skill dir to the Plexus personal store. All agents read the same SKILL.md.
-          </p>
-          <p>
-            Every sync first snapshots all four agents' MCP files into{" "}
-            <code>~/.config/plexus/backups/&lt;timestamp&gt;/</code>.
-          </p>
-        </div>
-      </details>
+      <Card className="p-4">
+        <details className="text-xs leading-relaxed text-plexus-text-3">
+          <summary className="cursor-pointer text-plexus-text-2 hover:text-plexus-text">
+            What does mirror actually do under the hood?
+          </summary>
+          <div className="mt-3 space-y-2 leading-relaxed">
+            <p>
+              For each target agent, Plexus imports any source-agent items not yet in its store,
+              adds the target to <code className="font-mono">enabledAgents</code>, and runs sync.
+            </p>
+            <p>
+              <span className="text-plexus-accent">Cursor</span> /{" "}
+              <span className="text-plexus-accent">Factory Droid</span>: their MCP file becomes a
+              symlink to{" "}
+              <code className="rounded bg-plexus-surface-2 px-1 py-0.5 font-mono text-[11px]">
+                ~/.config/plexus/.cache/mcp/&lt;agent&gt;.json
+              </code>
+              . Editing either side edits the same bytes — there is one source of truth.
+            </p>
+            <p>
+              <span className="text-plexus-accent">Claude Code</span> /{" "}
+              <span className="text-plexus-accent">Codex</span>: their files carry unrelated keys
+              (auth, history, settings, [profile], [auth]). Plexus partial-writes the MCP section in
+              place; everything else is preserved verbatim.
+            </p>
+            <p>
+              <span className="text-plexus-accent">Skills</span>: written as symlinks from each
+              agent's skill dir to the Plexus personal store. All agents read the same SKILL.md.
+            </p>
+            <p>
+              Every sync first snapshots all four agents' MCP files into{" "}
+              <code className="rounded bg-plexus-surface-2 px-1 py-0.5 font-mono text-[11px]">
+                ~/.config/plexus/backups/&lt;timestamp&gt;/
+              </code>
+              .
+            </p>
+          </div>
+        </details>
+      </Card>
     </div>
   );
 }

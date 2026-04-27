@@ -7,17 +7,17 @@ export default async function MirrorPage() {
   const detected = detectAgents();
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Mirror</h1>
-        <p className="text-sm text-plexus-mute">
-          Pick a source agent and the target agents that should mirror it. Plexus handles the
-          writes: <span className="text-plexus-text">Cursor</span> and{" "}
+      <header>
+        <h1 className="plexus-display mb-2">Mirror</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">
+          Pick a source agent and the targets that should mirror it. Plexus handles the writes:{" "}
+          <span className="text-plexus-text">Cursor</span> and{" "}
           <span className="text-plexus-text">Factory Droid</span> get a single symlink to the
           canonical Plexus copy; <span className="text-plexus-text">Claude Code</span> and{" "}
           <span className="text-plexus-text">Codex</span> have their MCP section partial-written in
-          place (other settings preserved). Skills are symlinked everywhere.
+          place. Skills are symlinked everywhere.
         </p>
-      </div>
+      </header>
       <MirrorPanel
         agents={[...ALL_AGENTS]}
         displayNames={AGENT_DISPLAY_NAMES}
