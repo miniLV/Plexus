@@ -1,5 +1,6 @@
 "use client";
 
+import { MarkdownContent } from "@/components/markdown-content";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -70,6 +71,10 @@ function truncMid(p: string, max = 60): string {
   const left = Math.floor(max / 2 - 2);
   const right = Math.floor(max / 2 - 2);
   return `${p.slice(0, left)}…${p.slice(p.length - right)}`;
+}
+
+function isMarkdownPath(p: string): boolean {
+  return /\.(md|markdown)$/i.test(p);
 }
 
 export function AgentDetail({ data }: { data: AgentInspection }) {
@@ -313,6 +318,7 @@ function FileViewerButton({
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const isMarkdown = isMarkdownPath(filePath);
 
   useEffect(() => {
     if (!open || loaded) return;
@@ -485,12 +491,50 @@ function FileViewerButton({
                 {msg}
               </div>
             )}
-            <textarea
-              className="flex-1 resize-none bg-plexus-bg p-4 font-mono text-xs text-plexus-text outline-none"
-              value={content}
-              readOnly={!isEdit}
-              onChange={(e) => setContent(e.target.value)}
-            />
+            <div className="min-h-0 flex-1 overflow-hidden bg-plexus-bg">
+              {!loaded ? (
+                <div className="flex h-full items-center justify-center gap-2 text-sm text-plexus-text-3">
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                  Loading file…
+                </div>
+              ) : isMarkdown ? (
+                isEdit ? (
+                  <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-2">
+                    <div className="flex min-h-0 flex-col border-plexus-border border-b lg:border-r lg:border-b-0">
+                      <div className="border-plexus-border border-b bg-plexus-surface px-4 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-plexus-text-3">
+                        Markdown
+                      </div>
+                      <textarea
+                        className="min-h-[260px] flex-1 resize-none bg-plexus-bg p-4 font-mono text-xs leading-6 text-plexus-text outline-none"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        spellCheck={false}
+                      />
+                    </div>
+                    <div className="flex min-h-0 flex-col">
+                      <div className="border-plexus-border border-b bg-plexus-surface px-4 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-plexus-text-3">
+                        Preview
+                      </div>
+                      <div className="min-h-0 flex-1 overflow-auto px-5 py-4">
+                        <MarkdownContent content={content} />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full overflow-auto px-6 py-5">
+                    <MarkdownContent content={content} />
+                  </div>
+                )
+              ) : (
+                <textarea
+                  className="h-full w-full resize-none bg-plexus-bg p-4 font-mono text-xs leading-6 text-plexus-text outline-none"
+                  value={content}
+                  readOnly={!isEdit}
+                  onChange={(e) => setContent(e.target.value)}
+                  spellCheck={false}
+                />
+              )}
+            </div>
             <div className="flex items-center justify-end gap-2 border-t border-plexus-border px-5 py-3">
               <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
                 Close
