@@ -60,17 +60,9 @@ function fmtSize(n?: number) {
 
 function fmtMtime(t?: string) {
   if (!t) return "—";
-  // Fixed locale so SSR (Node) and client (browser) produce identical text —
-  // otherwise React throws a hydration mismatch (en-US vs en-GB date order).
-  return new Date(t).toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+  const d = new Date(t);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.toISOString().slice(0, 19).replace("T", " ")} UTC`;
 }
 
 function truncMid(p: string, max = 60): string {
@@ -386,17 +378,14 @@ function FileViewerButton({
 
       {/* Pre-edit confirmation dialog ─── */}
       {confirming && (
-        <button
-          type="button"
-          aria-label="Close confirmation"
-          className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-black/70 p-6"
-          onClick={() => setConfirming(false)}
-        >
-          <div
-            className="w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Close confirmation"
+            className="absolute inset-0 cursor-default bg-black/70"
+            onClick={() => setConfirming(false)}
+          />
+          <div className="relative z-10 w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg">
             <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
               <div className="mt-0.5 rounded-md bg-amber-500/10 p-2 text-amber-400">
                 <ShieldAlert className="h-4 w-4" strokeWidth={1.5} />
@@ -448,22 +437,19 @@ function FileViewerButton({
               </Button>
             </div>
           </div>
-        </button>
+        </div>
       )}
 
       {/* Editor / viewer modal ─────────── */}
       {open && (
-        <button
-          type="button"
-          aria-label="Close file viewer"
-          className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-black/70 p-6"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="flex h-[80vh] w-[80vw] max-w-5xl cursor-default flex-col overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Close file viewer"
+            className="absolute inset-0 cursor-default bg-black/70"
+            onClick={() => setOpen(false)}
+          />
+          <div className="relative z-10 flex h-[80vh] w-[80vw] max-w-5xl cursor-default flex-col overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg">
             <div className="flex items-center justify-between border-b border-plexus-border px-5 py-3">
               <div className="flex items-center gap-2">
                 {isEdit ? (
@@ -517,7 +503,7 @@ function FileViewerButton({
               )}
             </div>
           </div>
-        </button>
+        </div>
       )}
     </>
   );
