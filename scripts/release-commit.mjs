@@ -3,11 +3,11 @@
  * scripts/release-commit.mjs — final step of `npm run release:patch`.
  *
  * Assumes `npm run verify` and `npm run bump:patch` have already succeeded
- * and the working tree contains version bumps in 4 package.json files.
+ * and the working tree contains version bumps in package manifests.
  *
  * What it does:
  *   1. Reads the new version from root package.json.
- *   2. `git add` the four version files.
+ *   2. `git add` the version files.
  *   3. Refuses to continue if there are *other* unrelated staged or
  *      unstaged changes (safety: release commits should be version-only).
  *   4. Creates a commit "release: v<version>" with co-author trailer.
@@ -26,6 +26,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const VERSION_FILES = [
   "package.json",
+  "package-lock.json",
   "apps/web/package.json",
   "packages/core/package.json",
   "packages/cli/package.json",

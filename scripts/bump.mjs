@@ -15,6 +15,7 @@
  *   - apps/web/package.json
  *   - packages/core/package.json
  *   - packages/cli/package.json
+ *   - package-lock.json
  * And keeps the @plexus/core dependency in apps/web + packages/cli pinned
  * to the new version.
  *
@@ -34,6 +35,8 @@ const PACKAGES = [
   { path: "packages/cli/package.json" },
 ];
 
+const LOCKFILE = "package-lock.json";
+
 // Workspaces that depend on @plexus/core and must stay pinned.
 const CORE_DEPENDENTS = ["apps/web/package.json", "packages/cli/package.json"];
 
@@ -47,6 +50,10 @@ function readPkg(rel) {
 
 function writePkgText(rel, text) {
   writeFileSync(resolve(ROOT, rel), text, "utf8");
+}
+
+function writeJson(rel, value) {
+  writeFileSync(resolve(ROOT, rel), `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
 /**
@@ -68,6 +75,32 @@ function replaceCoreDep(text, next) {
   const re = /"@plexus\/core"\s*:\s*"\d+\.\d+\.\d+"/;
   if (!re.test(text)) return text;
   return text.replace(re, `"@plexus/core": "${next}"`);
+}
+
+function replaceIfCurrent(holder, key, current, next) {
+  if (holder?.[key] === current) {
+    holder[key] = next;
+  }
+}
+
+function bumpPackageLock(current, next) {
+  const lock = readPkg(LOCKFILE);
+
+  replaceIfCurrent(lock, "version", current, next);
+  replaceIfCurrent(lock.packages?.[""], "version", current, next);
+
+  for (const { path } of PACKAGES.filter((pkg) => !pkg.isRoot)) {
+    replaceIfCurrent(lock.packages?.[path], "version", current, next);
+  }
+
+  for (const path of CORE_DEPENDENTS) {
+    replaceIfCurrent(lock.packages?.[path]?.dependencies, "@plexus/core", current, next);
+  }
+
+  replaceIfCurrent(lock.dependencies?.["@plexus/cli"]?.requires, "@plexus/core", current, next);
+  replaceIfCurrent(lock.dependencies?.["@plexus/web"]?.requires, "@plexus/core", current, next);
+
+  writeJson(LOCKFILE, lock);
 }
 
 function bumpPatch(v) {
@@ -113,6 +146,7 @@ function main() {
 
   if (dry) {
     for (const { path } of PACKAGES) console.log(`  - ${path}: version → ${next}`);
+    console.log(`  - ${LOCKFILE}: workspace versions → ${next}`);
     for (const path of CORE_DEPENDENTS) {
       console.log(`  - ${path}: dependencies["@plexus/core"] → ${next}`);
     }
@@ -127,6 +161,7 @@ function main() {
     }
     writePkgText(path, text);
   }
+  bumpPackageLock(current, next);
 
   console.log("[bump] done. Don't forget to commit + tag.");
 }

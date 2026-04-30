@@ -1,0 +1,68 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish, for example v0.0.11"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  github-release:
+    name: publish GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must look like vX.Y.Z: $tag" >&2
+            exit 1
+          fi
+
+          git fetch --tags --force
+          git rev-parse "$tag" >/dev/null
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "$TAG" \
+              --latest \
+              --draft=false \
+              --prerelease=false
+          else
+            gh release create "$TAG" \
+              --verify-tag \
+              --title "$TAG" \
+              --generate-notes \
+              --latest
+          fi
