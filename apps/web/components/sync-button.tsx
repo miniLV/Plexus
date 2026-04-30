@@ -1,8 +1,10 @@
 "use client";
 
+import { Badge, StatusDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Loader2, RefreshCw } from "lucide-react";
+import * as Popover from "@radix-ui/react-popover";
+import { Check, ChevronDown, Loader2, RefreshCw, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const AGENT_LABELS: Record<string, string> = {
@@ -59,11 +61,14 @@ interface SyncReport {
 }
 
 export function SyncButton() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [planLoading, setPlanLoading] = useState(true);
   const [plan, setPlan] = useState<SharePlan | null>(null);
   const [preferredAgent, setPreferredAgent] = useState("");
   const [report, setReport] = useState<SyncReport | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   async function refreshPlan(nextPreferredAgent?: string) {
     setPlanLoading(true);
@@ -100,12 +105,15 @@ export function SyncButton() {
       });
       const data = (await res.json()) as SyncReport;
       setReport(data);
+      setReportOpen(true);
       if (data.plan) setPlan(data.plan);
       if (!data.error) {
-        setTimeout(() => window.location.reload(), 1600);
+        router.refresh();
+        void refreshPlan(preferredAgent || undefined);
       }
     } catch (e) {
       setReport({ error: String(e) });
+      setReportOpen(true);
     } finally {
       setLoading(false);
     }
@@ -114,45 +122,90 @@ export function SyncButton() {
   const activeSources = plan?.sources.filter((source) => source.total > 0) ?? [];
   const showPrimaryPicker = activeSources.length > 1 || (plan?.conflictCount ?? 0) > 0;
   const safeCount = (plan?.mcp.safe ?? 0) + (plan?.skills.safe ?? 0);
+  const preferredLabel = preferredAgent
+    ? (AGENT_LABELS[preferredAgent] ?? preferredAgent)
+    : "Choose source";
 
   return (
     <div className="flex flex-col items-end gap-2">
       {(planLoading || plan) && (
-        <div className="flex max-w-[24rem] flex-wrap items-center justify-end gap-2 text-xs text-plexus-text-3">
+        <div className="flex max-w-[30rem] flex-wrap items-center justify-end gap-2 text-xs text-plexus-text-3">
           {planLoading ? (
-            <span>Analyzing local agents…</span>
+            <span className="inline-flex h-8 items-center rounded border border-plexus-border bg-plexus-surface px-2.5">
+              Analyzing local agents…
+            </span>
           ) : plan && showPrimaryPicker ? (
             <>
-              <span>
+              <span className="inline-flex h-8 items-center gap-2 rounded border border-plexus-border bg-plexus-surface px-2.5">
+                <StatusDot tone={plan.conflictCount > 0 ? "warn" : "ok"} />
                 Smart merge: {safeCount} safe · {plan.conflictCount} conflicts
               </span>
-              <label className="flex items-center gap-2">
-                <span>Primary</span>
-                <select
-                  className="rounded-md border border-plexus-border bg-white px-2 py-1 text-plexus-text shadow-sm outline-none focus:border-plexus-accent"
-                  value={preferredAgent}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setPreferredAgent(next);
-                    void refreshPlan(next);
-                  }}
-                >
-                  {activeSources.map((source) => (
-                    <option key={source.agent} value={source.agent}>
-                      {AGENT_LABELS[source.agent] ?? source.agent}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <Popover.Root open={pickerOpen} onOpenChange={setPickerOpen}>
+                <Popover.Trigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center gap-2 rounded border border-plexus-border bg-plexus-surface px-2.5 text-xs text-plexus-text-2 shadow-sm outline-none transition-colors hover:border-plexus-border-strong hover:bg-plexus-surface-2 focus-visible:ring-2 focus-visible:ring-plexus-accent/45"
+                  >
+                    <span className="text-plexus-text-3">Primary</span>
+                    <span className="font-medium text-plexus-text">{preferredLabel}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-plexus-text-3" strokeWidth={1.5} />
+                  </button>
+                </Popover.Trigger>
+                <Popover.Portal>
+                  <Popover.Content
+                    align="end"
+                    sideOffset={6}
+                    className="z-50 w-64 overflow-hidden rounded-md border border-plexus-border bg-plexus-surface p-1 shadow-lg outline-none animate-in fade-in-0 zoom-in-95"
+                  >
+                    {activeSources.map((source) => {
+                      const selected = source.agent === preferredAgent;
+                      return (
+                        <button
+                          type="button"
+                          key={source.agent}
+                          className="flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 text-left text-sm text-plexus-text transition-colors hover:bg-plexus-surface-2 focus:bg-plexus-surface-2 focus:outline-none"
+                          onClick={() => {
+                            setPreferredAgent(source.agent);
+                            setPickerOpen(false);
+                            void refreshPlan(source.agent);
+                          }}
+                        >
+                          <span>
+                            <span className="block font-medium">
+                              {AGENT_LABELS[source.agent] ?? source.agent}
+                            </span>
+                            <span className="mt-0.5 block font-mono text-[11px] text-plexus-text-3">
+                              {source.mcp} MCP · {source.skills} skills
+                              {source.rules ? " · rules" : ""}
+                            </span>
+                          </span>
+                          {selected ? (
+                            <Check className="h-4 w-4 text-plexus-ok" strokeWidth={1.7} />
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </Popover.Content>
+                </Popover.Portal>
+              </Popover.Root>
             </>
           ) : plan && activeSources[0] ? (
-            <span>Source: {AGENT_LABELS[activeSources[0].agent] ?? activeSources[0].agent}</span>
+            <span className="inline-flex h-8 items-center gap-2 rounded border border-plexus-border bg-plexus-surface px-2.5">
+              <span>Source: {AGENT_LABELS[activeSources[0].agent] ?? activeSources[0].agent}</span>
+            </span>
           ) : (
-            <span>No local source config yet</span>
+            <span className="inline-flex h-8 items-center rounded border border-plexus-border bg-plexus-surface px-2.5">
+              No local source config yet
+            </span>
           )}
         </div>
       )}
-      <Button variant="primary" onClick={run} disabled={loading}>
+      <Button
+        variant="secondary"
+        className="border-plexus-accent/35 bg-plexus-accent/10 text-plexus-text shadow-sm hover:border-plexus-accent/55 hover:bg-plexus-accent/15"
+        onClick={run}
+        disabled={loading}
+      >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
         ) : (
@@ -160,54 +213,122 @@ export function SyncButton() {
         )}
         {loading ? "Sharing…" : "Share config everywhere"}
       </Button>
-      {report && (
-        <Card className="w-[22rem] px-4 py-3 text-xs shadow">
-          {report.error ? (
-            <div className="text-plexus-err">{report.error}</div>
-          ) : (
-            <div className="space-y-1">
-              <div className="mb-2 font-medium text-plexus-text">
-                Shared with {report.targetAgents?.length ?? report.results?.length ?? 0} agents
+
+      {reportOpen && report ? (
+        <div
+          className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-black/55 p-6"
+          onClick={() => setReportOpen(false)}
+        >
+          <dialog
+            open
+            aria-modal="true"
+            className="w-full max-w-lg cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-plexus-border px-5 py-4">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-plexus-text">
+                  <StatusDot tone={report.error ? "err" : "ok"} />
+                  {report.error ? "Share failed" : "Config shared"}
+                </div>
+                {!report.error ? (
+                  <div className="mt-1 text-xs text-plexus-text-3">
+                    Synced with {report.targetAgents?.length ?? report.results?.length ?? 0} agents.
+                  </div>
+                ) : null}
               </div>
-              {report.imported && (
-                <div className="text-plexus-text-3">
-                  imported {report.imported.mcpWritten + report.imported.mcpExtended} MCP ·{" "}
-                  {report.imported.skillsWritten + report.imported.skillsExtended} skills
-                </div>
-              )}
-              {report.shared && (
-                <div className="text-plexus-text-3">
-                  enabled {report.shared.mcp} MCP · {report.shared.skills} skills everywhere
-                </div>
-              )}
-              {report.preferredAgent && (report.conflictsResolved ?? 0) > 0 && (
-                <div className="text-plexus-text-3">
-                  resolved {report.conflictsResolved} conflicts with{" "}
-                  {AGENT_LABELS[report.preferredAgent] ?? report.preferredAgent}
-                </div>
-              )}
-              {report.rules?.skipped ? (
-                <div className="text-plexus-warn">{report.rules.skipped}</div>
-              ) : (
-                <div className="text-plexus-text-3">
-                  rules applied to {report.rules?.applied.filter((r) => r.applied).length ?? 0}{" "}
-                  targets
-                </div>
-              )}
-              {report.results?.map((r) => (
-                <div key={r.agent} className="flex items-center justify-between">
-                  <span className="text-plexus-text-2">{r.agent}</span>
-                  <span className={r.errors.length > 0 ? "text-plexus-err" : "text-plexus-ok"}>
-                    {r.errors.length > 0
-                      ? `${r.errors.length} error`
-                      : `mcp ${r.applied.mcp} · skills ${r.applied.skills}`}
-                  </span>
-                </div>
-              ))}
+              <button
+                type="button"
+                aria-label="Close"
+                className="rounded-sm p-1 text-plexus-text-3 hover:bg-plexus-surface-2 hover:text-plexus-text"
+                onClick={() => setReportOpen(false)}
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
             </div>
-          )}
-        </Card>
-      )}
+
+            <div className="space-y-4 px-5 py-4 text-sm">
+              {report.error ? (
+                <div className="rounded border border-plexus-err/30 bg-plexus-err/10 px-3 py-2 text-xs text-plexus-err">
+                  {report.error}
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    {report.imported ? (
+                      <div className="rounded border border-plexus-border bg-plexus-surface-2/50 px-3 py-2">
+                        <div className="plexus-eyebrow mb-1">Imported</div>
+                        <div className="text-sm font-medium text-plexus-text">
+                          {report.imported.mcpWritten + report.imported.mcpExtended} MCP ·{" "}
+                          {report.imported.skillsWritten + report.imported.skillsExtended} skills
+                        </div>
+                      </div>
+                    ) : null}
+                    {report.shared ? (
+                      <div className="rounded border border-plexus-border bg-plexus-surface-2/50 px-3 py-2">
+                        <div className="plexus-eyebrow mb-1">Enabled</div>
+                        <div className="text-sm font-medium text-plexus-text">
+                          {report.shared.mcp} MCP · {report.shared.skills} skills
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    {report.preferredAgent && (report.conflictsResolved ?? 0) > 0 ? (
+                      <div className="text-xs text-plexus-text-3">
+                        Resolved {report.conflictsResolved} conflicts with{" "}
+                        <span className="text-plexus-text">
+                          {AGENT_LABELS[report.preferredAgent] ?? report.preferredAgent}
+                        </span>
+                        .
+                      </div>
+                    ) : null}
+                    {report.rules?.skipped ? (
+                      <div className="text-xs text-plexus-warn">{report.rules.skipped}</div>
+                    ) : (
+                      <div className="text-xs text-plexus-text-3">
+                        Rules applied to{" "}
+                        {report.rules?.applied.filter((result) => result.applied).length ?? 0}{" "}
+                        targets.
+                      </div>
+                    )}
+                  </div>
+
+                  {report.results && report.results.length > 0 ? (
+                    <div className="overflow-hidden rounded border border-plexus-border">
+                      {report.results.map((result) => (
+                        <div
+                          key={result.agent}
+                          className="flex items-center justify-between gap-3 border-b border-plexus-border/60 px-3 py-2 text-xs last:border-0"
+                        >
+                          <span className="text-plexus-text-2">
+                            {AGENT_LABELS[result.agent] ?? result.agent}
+                          </span>
+                          {result.errors.length > 0 ? (
+                            <Badge variant="danger">{result.errors.length} error</Badge>
+                          ) : (
+                            <span className="font-mono text-plexus-ok">
+                              mcp {result.applied.mcp} · skills {result.applied.skills}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end border-t border-plexus-border bg-plexus-surface-2/35 px-5 py-3">
+              <Button variant="secondary" size="sm" onClick={() => setReportOpen(false)}>
+                Done
+              </Button>
+            </div>
+          </dialog>
+        </div>
+      ) : null}
     </div>
   );
 }
