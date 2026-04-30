@@ -1,6 +1,6 @@
 {
   "name": "@plexus/core",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Plexus core: agent detection, MCP/skill store, sync engine, adapters.",
   "type": "module",
   "main": "dist/index.js",

@@ -1,7 +1,7 @@
 {
   "name": "plexus-monorepo",
   "private": true,
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Local AI agent config dashboard: one source of truth for rules, MCP servers, and skills across Claude Code, Cursor, Codex, and Factory Droid.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
