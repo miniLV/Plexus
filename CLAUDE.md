@@ -1,574 +1,890 @@
 # CLAUDE.md - Plexus
 
-> **For the next Droid/Claude Code session.** This file is the single source
-> of truth for "what is Plexus, what's already built, what's open, and what
-> conventions to follow." Read it end-to-end before touching code.
+> **For the next Claude Code / Droid / Codex session.** This is the working
+> map for Plexus: what the product is, how the repo is shaped today, which
+> invariants are load-bearing, and how to validate changes. Read it before
+> touching code.
 
 ---
 
 ## 1. What Plexus Is
 
-A **local web dashboard** that lets a single human (and eventually a team)
-manage AI agent configuration — MCP servers, skills, and instruction files
-(`CLAUDE.md` / `AGENTS.md`) — across **every AI agent installed on the same
-machine** (Claude Code, Cursor, Codex, Factory Droid, …).
+Plexus is a **local-only web dashboard** for managing AI agent configuration
+on one machine. It centralizes:
 
-The pitch in one sentence:
+- MCP servers
+- Skills / command bundles
+- User-level instruction files such as `CLAUDE.md` and `AGENTS.md`
 
-> *"One source of truth in `~/.config/plexus/`, kept in sync with each
-> agent's native location via symlinks where possible and partial-write
-> JSON/TOML where not, with automatic backups and a 1-click revert."*
+Supported built-in agents:
 
-Distribution model (target): `npx plexus dev` opens
-http://localhost:7777, no install. Team config layered via a public GitHub
-repo subscription.
+| Agent | MCP file | Skill / prompt dir | MCP mode |
+|---|---|---|---|
+| Claude Code | `~/.claude.json` | `~/.claude/skills/` | `shared` |
+| Cursor | `~/.cursor/mcp.json` | `~/.cursor/commands/` | `exclusive` |
+| Codex | `~/.codex/config.toml` | `~/.codex/prompts/` | `shared` |
+| Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 
-### Why this exists (problem statement)
+The current package version is **0.0.8**. All workspace `package.json` files
+must stay on the same version:
 
-- A power user has 11 MCPs configured in Claude Code, 8 in Cursor, none in
-  Codex. Every change has to be made in N places.
-- Skills are even worse: `~/.claude/skills/` and `~/.cursor/...` and
-  `~/.factory/skills/` all hold near-identical folders that drift.
-- A team wants to standardise "everyone in the org gets the
-  `atlassian-mcp` skill," but each engineer is on a different agent.
-- Today there's no neutral surface to (a) see all this, (b) edit it
-  safely, (c) push a change to multiple agents at once, (d) undo when
-  something breaks.
+- `package.json`
+- `apps/web/package.json`
+- `packages/core/package.json`
+- `packages/cli/package.json`
 
-Plexus solves (a)–(d) with a deliberately *thin* design: it never *invents*
-configuration; it just lifts native files into a canonical store and
-projects them back out via the cheapest reversible mechanism per agent.
+### Product Contract
 
-### Non-goals
+Plexus keeps a canonical store under `~/.config/plexus/` and projects it into
+agent-native locations with the smallest reversible write:
 
-- Not a runtime engine — Plexus does not execute MCPs or skills.
-- Not Windows-first — we assume macOS/Linux symlinks work.
-- Not a secrets manager — secrets stay in agent-native files; the
-  canonical store can hold them but we surface a warning.
+- **Exclusive MCP files** are rendered into
+  `~/.config/plexus/.cache/mcp/<agent>.json`, then linked or copied into the
+  agent path.
+- **Shared MCP files** are partial-written in place; Plexus rewrites only the
+  MCP section and preserves unrelated auth/history/profile keys.
+- **Skills** are linked or copied from the Plexus store into each agent's
+  native skill directory.
+- **Rules** are stored once at
+  `~/.config/plexus/personal/rules/global.md`, then linked or copied to
+  Claude Code's `CLAUDE.md` and each other built-in agent's `AGENTS.md`.
+- **Backups** are taken before syncs, toggles, and dashboard file edits.
+
+### Non-Goals
+
+- Plexus does not execute MCP servers or skills.
+- Plexus is not a secrets manager; imported `env` values are plaintext in the
+  local store.
+- Project-scoped MCP files are not managed yet.
+- Windows is best-effort only; macOS/Linux symlink behavior is the baseline.
 
 ---
 
 ## 2. Repo Layout
 
-```
+```text
 Plexus/
-├── package.json                 # npm workspaces root (private)
-├── tsconfig.base.json           # strict TS shared by every workspace
-├── .nvmrc                       # 20 (Next.js 14 needs >=18.17)
-├── .gitignore
+├── package.json                  # npm workspaces root; scripts and version
+├── package-lock.json
+├── tsconfig.base.json             # strict shared TS config
+├── biome.json                     # formatter/linter config
+├── .nvmrc                         # Node 20
 ├── README.md
-├── CLAUDE.md                    # ← this file
+├── CLAUDE.md                      # this file
+├── AGENTS.md                      # agent-facing instructions if present
 ├── apps/
-│   └── web/                     # Next.js 14 dashboard (App Router)
+│   └── web/                       # Next.js 14 App Router dashboard
 │       ├── app/
-│       │   ├── layout.tsx       # sidebar + nav + version label
-│       │   ├── page.tsx         # Dashboard (agent grid + counts)
-│       │   ├── agents/[id]/page.tsx     # per-agent detail page
+│       │   ├── layout.tsx         # shell: sidebar, topbar, theme provider
+│       │   ├── page.tsx           # dashboard
+│       │   ├── rules/page.tsx
 │       │   ├── mcp/page.tsx
 │       │   ├── skills/page.tsx
-│       │   ├── mirror/page.tsx          # source × multi-target
-│       │   ├── spread/page.tsx          # 307 → /mirror
-│       │   ├── backups/page.tsx         # snapshot list + restore
+│       │   ├── mirror/page.tsx
+│       │   ├── spread/page.tsx    # redirects to /mirror
+│       │   ├── agents/[id]/page.tsx
+│       │   ├── backups/page.tsx
+│       │   ├── debug/page.tsx
 │       │   ├── team/page.tsx
 │       │   ├── settings/page.tsx
-│       │   └── api/
-│       │       ├── sync/route.ts
-│       │       ├── mcp/route.ts
-│       │       ├── mcp/[id]/toggle/route.ts
-│       │       ├── mcp/effective/route.ts
-│       │       ├── skills/route.ts
-│       │       ├── skills/[id]/route.ts
-│       │       ├── skills/[id]/toggle/route.ts
-│       │       ├── skills/effective/route.ts
-│       │       ├── import/route.ts
-│       │       ├── spread/route.ts
-│       │       ├── team/route.ts
-│       │       ├── config/route.ts
-│       │       ├── agent/[id]/route.ts          # GET inspector
-│       │       ├── agent/[id]/file/route.ts     # GET/PUT file
-│       │       ├── backups/route.ts             # GET list
-│       │       └── backups/[id]/restore/route.ts
+│       │   └── api/               # thin route handlers around @plexus/core
+│       │       └── rules/route.ts
 │       ├── components/
-│       │   ├── sync-button.tsx
+│       │   ├── app-sidebar.tsx
+│       │   ├── app-topbar.tsx
+│       │   ├── agent-detail.tsx
+│       │   ├── backups-panel.tsx
+│       │   ├── custom-agents-panel.tsx
+│       │   ├── debug-panel.tsx
 │       │   ├── import-banner.tsx
 │       │   ├── mcp-editor.tsx
-│       │   ├── skills-editor.tsx
-│       │   ├── agent-detail.tsx
 │       │   ├── mirror-panel.tsx
-│       │   └── backups-panel.tsx
-│       ├── lib/version.ts       # PLEXUS_VERSION from pkg.version
-│       ├── tailwind.config.ts
-│       ├── next.config.mjs
+│       │   ├── rules-panel.tsx
+│       │   ├── settings-panel.tsx
+│       │   ├── skills-editor.tsx
+│       │   ├── sync-button.tsx
+│       │   ├── team-panel.tsx
+│       │   └── ui/
+│       ├── styles/tokens.css
+│       ├── lib/version.ts
 │       └── package.json
 ├── packages/
-│   ├── core/                    # all real logic — pure TS, no DOM
+│   ├── core/                      # all filesystem and sync logic; no React
 │   │   ├── src/
-│   │   │   ├── types.ts         # AgentId, ServerEntry, Skill, …
-│   │   │   ├── store/
-│   │   │   │   ├── paths.ts                 # PLEXUS_PATHS, AGENT_PATHS
-│   │   │   │   ├── fs-utils.ts
-│   │   │   │   ├── config.ts                # personal/team config
-│   │   │   │   ├── mcp.ts                   # YAML I/O
-│   │   │   │   ├── skills.ts                # frontmatter+md I/O
-│   │   │   │   ├── merge.ts                 # personal overrides team
-│   │   │   │   └── scaffolding.ts           # ensures dirs exist
-│   │   │   ├── agents/
-│   │   │   │   ├── detect.ts
-│   │   │   │   ├── inspect.ts               # full per-agent snapshot
-│   │   │   │   └── adapters/
-│   │   │   │       ├── base.ts              # placeLinkOrCopy
-│   │   │   │       ├── json-mcp.ts          # Claude/Cursor/Droid
-│   │   │   │       ├── codex.ts             # TOML partial-write
-│   │   │   │       └── index.ts
-│   │   │   ├── sync/index.ts                # one-shot sync engine
-│   │   │   ├── effective/index.ts           # native + store merge
-│   │   │   ├── import/index.ts              # 3-kind candidates
-│   │   │   ├── spread/index.ts              # source→targets diff
-│   │   │   ├── backup/index.ts              # snapshot/restore/cleanup
-│   │   │   ├── team/git.ts                  # GitHub subscription stub
-│   │   │   └── index.ts                     # barrel
-│   │   ├── tsconfig.json
+│   │   │   ├── types.ts
+│   │   │   ├── store/             # ~/.config/plexus store I/O
+│   │   │   ├── agents/            # detection, inspection, adapters
+│   │   │   ├── sync/
+│   │   │   ├── rules/
+│   │   │   ├── effective/
+│   │   │   ├── import/
+│   │   │   ├── spread/
+│   │   │   ├── backup/
+│   │   │   ├── team/
+│   │   │   ├── debug/
+│   │   │   └── index.ts
+│   │   ├── test/                  # vitest safety tests
 │   │   └── package.json
-│   └── cli/                     # `plexus` CLI (kept small)
-│       ├── src/index.ts
+│   └── cli/
+│       ├── src/bin.ts             # `plexus` command
 │       └── package.json
-├── examples/
-│   └── team-config-template/    # what a team repo looks like
-└── scripts/                     # dev helpers (none required by docs)
+├── docs/refactor/                 # PRD, design, architecture, mockups
+├── examples/team-config-template/
+└── scripts/
+    ├── bump.mjs                   # synchronized patch bump
+    ├── release-commit.mjs
+    └── ship.mjs                   # verify + bump + commit + tag + push
 ```
 
-### Workspace conventions
+### Workspace Conventions
 
-- **TS strict, ESM only** (`"type": "module"`, `.js` imports inside `.ts`).
-- Every workspace has its own `package.json`. Versions match the root
-  package.json (currently **0.0.2**) and bump together on every
-  business-logic commit.
-- `apps/web` imports core via `"@plexus/core": "0.0.x"` workspace symlink.
+- TypeScript is strict and ESM-only.
+- Local imports in TS use `.js` extensions.
+- `apps/web` and `packages/cli` depend on `@plexus/core` with an exact version
+  pin matching the monorepo version.
+- `packages/core` must stay free of React, Next.js, DOM, or browser-only APIs.
+- Prefer small, surgical changes. Do not refactor adjacent code unless the
+  user asked or the change is required for the task.
 
 ---
 
-## 3. The Two Critical Mental Models
+## 3. Critical Mental Models
 
-If you remember nothing else, remember these two.
+### 3.1 Three Layers of State
 
-### 3.1 The Three Layers of Configuration State
-
-```
-                     ┌────────────────────────────────────┐
-                     │  Effective view in the dashboard   │  ← user-facing
-                     │  (ManagedKind for every entry)     │
-                     └─────────────▲──────────────────────┘
-                                   │ merge (effective/index.ts)
-              ┌────────────────────┴────────────────────┐
-              │                                         │
-   ┌──────────▼──────────┐                  ┌───────────▼────────┐
-   │   Plexus store      │                  │   Native agent     │
-   │ ~/.config/plexus/   │                  │   files            │
-   │   ├ team/   …       │                  │ ~/.claude.json     │
-   │   ├ personal/ …     │                  │ ~/.cursor/mcp.json │
-   │   ├ .cache/mcp/ …   │   sync writes    │ ~/.codex/...       │
-   │   └ backups/ …      ├──────────────────►  ~/.factory/...    │
-   └─────────────────────┘                  └────────────────────┘
-                ▲                                        │
-                └─── import (3-kind detector) ───────────┘
+```text
+                   dashboard effective view
+                 (authority + effectiveAgents)
+                             ▲
+                             │ computed by effective/index.ts
+        ┌────────────────────┴────────────────────┐
+        │                                         │
+        ▼                                         ▼
+Plexus canonical store                    native agent files
+~/.config/plexus/                         ~/.claude.json
+├── team/                                 ~/.cursor/mcp.json
+├── personal/                             ~/.codex/config.toml
+├── .cache/mcp/                           ~/.factory/mcp.json
+└── backups/                              skills dirs
+        ▲                                         │
+        └──── import/from-agents.ts reads native ─┘
 ```
 
-Three things that are *not* the same:
+Do not conflate these:
 
-1. **The Plexus canonical store** — YAML for MCPs (`mcp/servers.yaml`),
-   markdown+frontmatter for skills (`skills/<id>/SKILL.md`). One file =
-   one entry. The user can hand-edit these.
-2. **The native agent files** — `~/.claude.json` (a 60KB blob with auth +
-   history + mcpServers), `~/.cursor/mcp.json`, `~/.codex/config.toml`,
-   `~/.factory/mcp.json`. The file format is whatever the agent demands.
-3. **The effective view** — what the dashboard shows. For each MCP
-   server / skill we compute one of:
-   - `native-only` — exists in agent file, not in store
-   - `personal` — in store under personal layer
-   - `team` — in store under team layer
-   - `synced` — store entry currently mirrored to a native file
-   - `divergent` — same id in both, contents differ
+1. **Store state** lives under `~/.config/plexus/team` and
+   `~/.config/plexus/personal`.
+2. **Native state** is what each agent currently reads from its own path.
+3. **Effective state** is the dashboard's union of store and native state.
 
-The dashboard's job is to keep these three layers honest. **Never let the
-UI conflate "what's in the store" with "what an agent currently sees."**
-The bug we fixed twice was the dashboard treating the store as ground
-truth while the native files had drifted.
-
-### 3.2 Hybrid Sync: Exclusive vs Shared
-
-Different agent files carry different amounts of "stuff Plexus shouldn't
-touch." This single fact drives the entire sync engine.
-
-| Agent file              | Other contents besides MCPs           | Mode       |
-|-------------------------|---------------------------------------|------------|
-| `~/.claude.json`        | auth tokens, history, settings        | `shared`   |
-| `~/.codex/config.toml`  | profiles, auth, model overrides       | `shared`   |
-| `~/.cursor/mcp.json`    | (only MCP servers — single-purpose)   | `exclusive`|
-| `~/.factory/mcp.json`   | (only MCP servers — single-purpose)   | `exclusive`|
-
-#### Exclusive mode (Cursor, Factory Droid)
-
-The whole file is "ours." We:
-
-1. Render the merged store to `~/.config/plexus/.cache/mcp/<agent>.json`.
-2. Replace the agent's native path with a **symlink** pointing at the cache.
-3. If the native path was already a real file, we evict it via
-   `quarantineCollision()` (see §4.3) into `~/.config/plexus/backups/_collisions/`.
-
-Result: editing the agent file directly is impossible without breaking the
-symlink, and editing the cache file is reflected instantly in the agent.
-
-#### Shared mode (Claude Code, Codex)
-
-We can never own the file. Instead we **partial-write**:
-
-- Read the file.
-- Replace **only** the `mcpServers` (JSON) or `mcp_servers` (TOML)
-  section with the rendered store contents.
-- Write back. Every other key — auth, history, profiles — is preserved
-  byte-for-byte using `JSON.parse → mutate → JSON.stringify` (or a
-  TOML-specific equivalent).
-
-Result: Claude/Codex still see their own auth and history, and our
-managed servers ride along inside the same file.
-
-#### `mcpFileMode` is a per-agent capability
-
-`packages/core/src/types.ts → AgentCapabilities.mcpFileMode` carries
-`"exclusive" | "shared"` and is hard-coded in
-`packages/core/src/store/paths.ts → AGENT_PATHS`. The adapter reads it and
-dispatches accordingly. **Never change a mode without auditing every site
-that calls `placeFileSymlink` or partial-write helpers.**
-
-#### Skills are simpler
-
-Skills are always exclusive (one folder per skill). We symlink
-`<agent>/skills/<id>` → `~/.config/plexus/<layer>/skills/<id>/`. If a real
-folder is at the symlink target, `quarantineCollision()` evicts it before
-we place the link.
-
----
-
-## 4. The Backup Module
-
-Located in `packages/core/src/backup/index.ts`. **This is load-bearing.**
-Every write path on the agent side must funnel through it.
-
-### 4.1 Core APIs
+Current effective rows are intentionally simple:
 
 ```ts
-snapshotAgentConfigs({ reason })   // before every sync
-snapshotSingleFile(absPath, reason)// before every dashboard file edit
-listBackups()                      // returns Snapshot[] with entries
-restoreSnapshot(id)                // copy back over originals
-quarantineCollision({ agent, sourcePath })   // pre-write eviction
-cleanupLegacyResidue()             // one-shot scrub of old `.plexus-backup-*`
+authority: "team" | "personal" | "native";
+effectiveAgents: AgentId[];
+nativeAgents: AgentId[];
+enabledAgents?: AgentId[];
 ```
 
-### 4.2 Layout
+The old `synced` / `divergent` mental model still appears in some UI badge
+names, but `packages/core/src/effective/index.ts` does **not** currently
+compare byte-level or value-level divergence. If you add a divergence diff UI,
+do it deliberately in `effective/` and update this file.
 
+### 3.2 Hybrid MCP Sync
+
+`packages/core/src/store/paths.ts` declares `AGENT_PATHS` and each agent's
+`mcpFileMode`.
+
+#### Exclusive Mode: Cursor, Factory Droid
+
+These files are treated as dedicated MCP files.
+
+1. Render merged store entries to
+   `~/.config/plexus/.cache/mcp/<agent>.json`.
+2. Replace the agent file with a symlink to that cache when possible.
+3. Fall back to copy if symlinks fail.
+
+Implementation: `packages/core/src/agents/adapters/json-mcp.ts`
+`writeExclusive()`.
+
+Important nuance: exclusive mode still preserves native MCP IDs that Plexus
+does not manage by reading the current file first and carrying those entries
+forward.
+
+#### Shared Mode: Claude Code, Codex
+
+These files contain auth, history, profiles, and other agent-owned state.
+Plexus must never replace the whole file.
+
+- Claude Code JSON: rewrite only `mcpServers`.
+- Codex TOML: rewrite only `mcp_servers`.
+- Managed IDs disabled for the agent are removed from that MCP section.
+- Unmanaged native MCP IDs are preserved.
+
+Implementation:
+
+- JSON: `packages/core/src/agents/adapters/json-mcp.ts` `writeShared()`
+- TOML: `packages/core/src/agents/adapters/codex.ts`
+
+Tests:
+
+- `packages/core/test/partial-write-json.test.ts`
+- `packages/core/test/partial-write-toml.test.ts`
+
+### 3.3 Skills Sync
+
+Skills are directory-based and are treated as exclusive per skill ID.
+
+- Store format: `~/.config/plexus/<layer>/skills/<id>/SKILL.md`
+- Claude Code target: `~/.claude/skills/<id>`
+- Cursor target: `~/.cursor/commands/<id>`
+- Codex target: `~/.codex/prompts/<id>`
+- Factory Droid target: `~/.factory/skills/<id>`
+
+`placeLinkOrCopy()` is the shared helper. If a real file or directory already
+exists at the target, it is quarantined under
+`~/.config/plexus/backups/_collisions/` before the link/copy is placed.
+
+### 3.4 Global Rules Sync
+
+Rules are the product answer to "one instruction file for every AI tool."
+
+- Canonical file: `~/.config/plexus/personal/rules/global.md`
+- Claude Code target: `~/.claude/CLAUDE.md`
+- Cursor target: `~/.cursor/AGENTS.md`
+- Codex target: `~/.codex/AGENTS.md`
+- Factory Droid target: `~/.factory/AGENTS.md`
+
+Implementation:
+
+- Store I/O: `packages/core/src/store/rules.ts`
+- Status/apply/import: `packages/core/src/rules/index.ts`
+- API: `apps/web/app/api/rules/route.ts`
+- UI: `apps/web/app/rules/page.tsx` and
+  `apps/web/components/rules-panel.tsx`
+
+Apply behavior:
+
+1. Require a personal canonical rules file.
+2. Skip agents that are not installed or disabled in `config.yaml`.
+3. Snapshot an existing target instruction file with `snapshotSingleFile()`.
+4. Quarantine a real target file under `backups/_collisions/`.
+5. Place a symlink to the canonical rules file, falling back to copy if
+   symlinks fail.
+
+Rules apply is intentionally separate from MCP/skills `runSync()` so a user
+can edit and apply operating instructions without rewriting MCP state.
+
+### 3.5 Store Merge Rules
+
+The store has two layers:
+
+- `team`: cloned/pulled from a Git repo, treated as read-only by the normal UI
+- `personal`: local user-owned overrides and additions
+
+`packages/core/src/store/merge.ts` gives personal entries precedence over team
+entries with the same ID.
+
+Team rows are disabled in the MCP/Skills table UI. The core toggle functions
+can create personal overrides for team entries, but the current UI chooses the
+safer path: propose changes through the team repo instead.
+
+---
+
+## 4. Main Workflows
+
+### 4.1 Sync
+
+Entry points:
+
+- `POST /api/sync`
+- `plexus sync`
+- Sync button and add-row flows that explicitly call `/api/sync`
+
+Core function: `packages/core/src/sync/index.ts` `runSync()`.
+
+Flow:
+
+1. Read `~/.config/plexus/config.yaml`.
+2. Detect installed agents.
+3. Snapshot native MCP files with `snapshotAgentConfigs()`.
+4. Run `cleanupLegacyResidue()`.
+5. Read team + personal MCPs and skills.
+6. Merge team + personal.
+7. Apply adapters for enabled, installed targets.
+
+### 4.2 Import
+
+Entry points:
+
+- `GET /api/import`: preview only
+- `POST /api/import`: write previewed items into personal store
+- `<ImportBanner />`
+
+Implementation:
+
+- `packages/core/src/import/from-agents.ts`
+- `packages/core/src/import/index.ts`
+
+Candidate kinds:
+
+- `new`: ID is not in the store; write a new personal entry.
+- `extend`: ID exists in store, but at least one native source agent is
+  missing from `enabledAgents`; append those agents.
+- `managed`: not returned by the public preview; already covered.
+
+Current import logic reads real skill directories. If symlink-aware import is
+extended, it must not claim user-owned external skill links as Plexus-managed.
+
+### 4.3 Toggle Per Agent
+
+Entry points:
+
+- `POST /api/mcp/[id]/toggle`
+- `POST /api/skills/[id]/toggle`
+
+Implementation: `packages/core/src/effective/index.ts`.
+
+Behavior:
+
+- Native-only items are promoted into the personal layer on first toggle.
+- Promote syncs every native source agent plus the target agent, so those
+  agents start reading the canonical Plexus copy.
+- Non-promote toggles sync the affected agent.
+- Each toggle snapshots native MCP files before adapter writes.
+
+### 4.4 Mirror
+
+The old "Spread" concept is now exposed as `/mirror`; `/spread` redirects.
+The API is still named `/api/spread`.
+
+Entry points:
+
+- `GET /api/spread?from=<agent>&to=<agent>`: preview
+- `POST /api/spread`: apply
+
+Implementation: `packages/core/src/spread/index.ts`.
+
+Mirror computes the effective source set, writes missing items into the
+personal layer or adds the target to `enabledAgents`, then syncs the target.
+
+Current safety gap: `applySpread()` calls the target adapter directly and does
+not call `snapshotAgentConfigs()` first. This should be fixed before treating
+Mirror as fully compliant with the backup invariant.
+
+### 4.5 Team Subscription
+
+Team Git support is no longer just a stub, but it is still a beta flow.
+
+Entry points:
+
+- `plexus join <git-url>`
+- `plexus pull`
+- `plexus status`
+- `GET /api/team`
+- `POST /api/team` with `{ action: "join" | "pull" }`
+- `/team`
+
+Implementation: `packages/core/src/team/git.ts`.
+
+Current behavior:
+
+- `joinTeam(url)` clones the repo into `~/.config/plexus/team/`.
+- If the same repo is already configured, it runs `git pull --ff-only`.
+- If `team/` exists but is not a Git repo, it renames it to
+  `team.plexus-backup-<timestamp>` before clone.
+- `pullTeam()` runs `git pull --ff-only`.
+- `teamStatus()` fetches and reports ahead/behind when upstream is available.
+
+Still missing:
+
+- one-click PR proposal from dashboard
+- conflict UI when team and personal entries share an ID
+- leave/switch team flow
+- periodic refresh
+
+### 4.6 Custom Agents
+
+Settings includes a "Custom agents" lite registry.
+
+Implementation:
+
+- `packages/core/src/store/custom-agents.ts`
+- `GET/POST /api/custom-agents`
+- `DELETE /api/custom-agents/[id]`
+- `apps/web/components/custom-agents-panel.tsx`
+
+Storage: `~/.config/plexus/personal/custom-agents.json`.
+
+Scope today:
+
+- add/remove a custom agent record
+- store ID, display name, instruction file path, optional note
+
+Out of scope today:
+
+- MCP sync for custom agents
+- skills sync for custom agents
+- custom-agent detail page or file editor integration
+
+Do not imply custom agents are fully managed until those routes/components
+exist.
+
+### 4.7 Debug Snapshot
+
+The Debug page is intentionally metadata-only.
+
+Implementation:
+
+- `packages/core/src/debug/index.ts`
+- `GET /api/debug`
+- `/debug`
+
+It reports path existence, kind, size, mtime, symlink targets, and directory
+entry counts. It must not read or return file contents because native config
+files may contain secrets.
+
+### 4.8 Rules
+
+Entry points:
+
+- `GET /api/rules`: status
+- `PUT /api/rules`: save personal baseline
+- `POST /api/rules` with `{ action: "apply" }`
+- `POST /api/rules` with `{ action: "import", agentId }`
+- `/rules`
+
+Implementation: `packages/core/src/rules/index.ts`.
+
+The Rules page lets the user edit one shared baseline, save it, import from an
+agent's current instruction file, and apply the saved baseline to all
+available built-in agents. The status model reports installed/enabled state,
+target path, symlink target, and whether target contents match the canonical
+rules file.
+
+---
+
+## 5. Backup And Safety Invariants
+
+The backup module is load-bearing:
+
+`packages/core/src/backup/index.ts`
+
+### Core APIs
+
+```ts
+snapshotAgentConfigs({ reason });
+snapshotSingleFile(absPath, reason);
+listBackups();
+restoreSnapshot(id);
+quarantineCollision({ agent, sourcePath });
+cleanupLegacyResidue();
 ```
+
+### Backup Layout
+
+```text
 ~/.config/plexus/backups/
-├── 2026-04-27T03-00-58-753Z/         # ring-buffered snapshots (max 20)
+├── 2026-04-30T06-00-00-000Z/
 │   ├── manifest.json
 │   ├── _reason.txt
 │   ├── claude-code-mcp.json
 │   ├── cursor-mcp.json
-│   └── …
-├── _collisions/                       # placeLinkOrCopy quarantine
-│   └── 2026-04-27T03-00-58-757Z/
-│       ├── claude-code/...
-│       └── cursor/...
-└── _legacy-residue/                   # one-shot v0.0.1→v0.0.2 cleanup
-    └── 2026-04-27T03-00-58-757Z/
-        └── claude-code/agent-harness-construction.plexus-backup-…
+│   ├── codex-mcp.toml
+│   └── factory-droid-mcp.json
+├── _collisions/
+└── _legacy-residue/
 ```
 
-### 4.3 Critical invariants
+### Invariants
 
-1. **Symlink-safe removal.** Before removing any path we already think we
-   own, `lstat` first. If it's a symlink, `fs.unlink`; otherwise `fs.rm`
-   recursively. The naive `fs.rm(p, { recursive: true })` will follow the
-   symlink and delete the *cache target*, which is the canonical store —
-   this bug shipped once and never again.
+1. **Snapshot before native writes.** Any write outside
+   `~/.config/plexus/` needs a backup path or an explicit reason why it is
+   safe.
+2. **Never follow a symlink when removing.** Use `lstat` first. If it is a
+   symlink, `unlink` the link. If it is a real directory, then `rm -r`.
+3. **No inline `.plexus-backup-*` residue.** Real collisions belong under
+   `backups/_collisions/`, not next to agent files.
+4. **Restore is destructive by design.** `restoreSnapshot()` removes the
+   current file/symlink and writes the backed-up bytes back to the original
+   path. It does not currently recreate the original symlink, even though the
+   manifest records symlink metadata.
+5. **Ring buffer keeps 20 snapshot directories.** `_collisions` and
+   `_legacy-residue` live under the same backup root; be careful changing
+   pruning behavior.
+6. **Instruction file edits snapshot first.** The agent file editor calls
+   `snapshotSingleFile()` before saving `CLAUDE.md`, `AGENTS.md`, or other
+   allowed text files.
 
-2. **Inline residue is forbidden.** Adapters used to rename collisions to
-   `<name>.plexus-backup-<ts>` next to the original; we no longer do this
-   because it pollutes the agent's own directory. All collisions go to
-   `_collisions/<ts>/<agent>/...`. `cleanupLegacyResidue()` exists solely
-   to scrub the leftover `.plexus-backup-*` from older versions.
+### File Edit Route Safety
 
-3. **Restore is destructive on purpose.** `restoreSnapshot` does **not**
-   take a fresh snapshot before overwriting — that's the whole point of
-   a "go back to before this snapshot" operation. The UI surfaces this in
-   the confirm dialog.
+`apps/web/app/api/agent/[id]/file/route.ts` currently:
 
-4. **The 20-snapshot ring buffer.** Older snapshots are pruned on every
-   new write. If the user wants long-term archival they should copy
-   manually outside `~/.config/plexus/backups/`.
+- allows built-in agent IDs only
+- resolves paths under the user's home directory
+- blocks `~/.ssh` and `~/.aws`
+- snapshots before PUT
 
-5. **Restore covers per-file edits too.** `snapshotSingleFile` is called
-   when the dashboard saves an instruction file (`CLAUDE.md`, `AGENTS.md`,
-   per-skill `SKILL.md`). The same `restoreSnapshot()` works because the
-   manifest records `originalPath`.
+Despite the route comment, the code does **not** currently restrict edits to
+known agent roots. If you tighten this, update the route, UI expectations,
+and this file together.
 
 ---
 
-## 5. The UI Architecture
+## 6. UI Architecture
 
-### 5.1 Top-level navigation (`apps/web/app/layout.tsx`)
+The app is a local Next.js 14 App Router dashboard.
 
+Top-level navigation in `apps/web/components/app-sidebar.tsx`:
+
+```text
+Workspace:
+  Dashboard
+  Rules
+  MCP Servers
+  Skills
+  Mirror
+
+Configuration:
+  Backups
+  Debug
+  Team (1.1 beta)
+  Settings
 ```
-Dashboard / MCP Servers / Skills / Mirror / Team / Backups / Settings
-```
 
-Plus a tiny version badge `v0.0.X` in the sidebar header pulled from
-`apps/web/lib/version.ts` → `process.env`-free at build time.
+### Dashboard `/`
 
-### 5.2 Dashboard (`/`)
+Server component:
 
-- Imports detected? → green `Sync All Agents` CTA.
-- 4 agent cards in a 2-col grid; each is a `<Link>` to `/agents/<id>`.
-- Two big counters (MCPs, Skills) with breakdown:
-  `N team · M personal · K native-only`. Clicks route to /mcp /skills.
-- `<ImportBanner />` surfaces 3-kind import candidates (new / extend /
-  managed) with a single Apply button.
+- `detectAgents()`
+- `getEffectiveMcp()`
+- `getEffectiveSkills()`
+- `teamStatus()`
 
-### 5.3 Per-agent page (`/agents/[id]`)
+Shows:
 
-Server component renders `inspectAgent(id)` from
-`packages/core/src/agents/inspect.ts`. The client component `<AgentDetail>`
-renders three sections:
+- Sync CTA
+- import banner
+- detected built-in agents
+- rules target sync count
+- MCP/skill counters by authority
+- team update callout when subscribed and behind
+- recent activity placeholder
 
-- **MCP File**: path, mode (`exclusive`|`shared`), is-symlink, link target,
-  size, mtime. View button opens a `<FileViewerButton>` modal that fetches
-  the file via `GET /api/agent/[id]/file?path=...`. Save button calls
-  `PUT /api/agent/[id]/file` which `snapshotSingleFile` first.
-- **Instruction Files**: only `CLAUDE.md` for Claude Code,
-  `AGENTS.md` for the others. Same view/edit modal.
-- **Skills**: the on-disk folders the agent has. Each row tagged
-  `Plexus-owned` (symlink → store) or `agent-local` (real dir, drift
-  candidate). Per-skill SKILL.md edit button.
+### Agent Detail `/agents/[id]`
 
-`inspectAgent` filters out `.DS_Store` and any name containing
-`.plexus-backup-` so old residue doesn't pollute the list.
+Valid IDs are built-ins only.
 
-### 5.4 MCP / Skills pages
+Core source: `packages/core/src/agents/inspect.ts`.
 
-Effective list with toggles. Each row has:
+Shows:
 
-- A "managed kind" badge (team / personal / synced / divergent / native-only).
-- Per-(item × agent) checkboxes. Toggling triggers a re-sync of *all native
-  source agents* so promoting from native-only to personal stays consistent
-  across every agent that already had it.
+- conventional instruction file (`CLAUDE.md` for Claude Code, `AGENTS.md`
+  for Cursor/Codex/Droid)
+- skill entries with `Plexus-owned` vs `agent-local`
+- MCP file status, mode, size, mtime, symlink target
 
-Both pages include a `<details>` block titled
-*"How does checking a box change the file system?"* that explicitly walks
-through exclusive vs shared and reminds the user every toggle takes a
-backup snapshot first.
+The file viewer/editor modal lives in `apps/web/components/agent-detail.tsx`.
+Edits go through `/api/agent/[id]/file`, which snapshots first.
 
-### 5.5 Mirror page (`/mirror`)
+### Rules `/rules`
 
-Replaces the old "Spread" page. Single source dropdown × multi-target
-checkbox grid. Each target shows its file mode badge so the user can see
-whether their pick will result in a symlink or a partial-write. One Apply
-button. `/spread` 307-redirects to `/mirror`.
+Component: `apps/web/components/rules-panel.tsx`.
 
-### 5.6 Backups page (`/backups`)
+Current behavior:
 
-Lists `listBackups()` output. Each row shows timestamp, file count, and
-expand-able details with the originalPath for each entry. **Restore**
-button has a destructive confirm dialog, then POSTs to
-`/api/backups/<id>/restore` and refreshes the list.
+- edit the personal canonical rules file
+- save through `PUT /api/rules`
+- apply to all installed, enabled built-in agents through `POST /api/rules`
+- import one agent's current instruction file into the personal baseline
+- show target status as linked, in sync, drift, missing, disabled, or not
+  installed
 
-### 5.7 Team page (`/team`)
+### MCP Servers `/mcp`
 
-Stub for the GitHub subscription flow. Currently shows "No team
-subscription. Join a team →" but doesn't yet wire up `team/git.ts`. This
-is the biggest open feature.
+Component: `apps/web/components/mcp-editor.tsx`.
+
+Current behavior:
+
+- table rows come from `getEffectiveMcp()`
+- personal rows can be toggled or deleted
+- native rows can be toggled, which promotes them to personal
+- team rows are read-only in the UI
+- adding a row writes the personal MCP list through `/api/mcp`, then syncs
+
+### Skills `/skills`
+
+Component: `apps/web/components/skills-editor.tsx`.
+
+Current behavior mirrors MCP:
+
+- rows come from `getEffectiveSkills()`
+- native rows promote to personal on toggle
+- personal rows can be created/deleted
+- team rows are read-only in the UI
+- created skills generate `SKILL.md` frontmatter automatically
+
+### Mirror `/mirror`
+
+Component: `apps/web/components/mirror-panel.tsx`.
+
+Single source agent, multiple target agents. The panel calls `/api/spread`
+for each target preview and apply. Target badges show how the target will be
+written: `partial-write` for Claude/Codex, `symlink` for Cursor/Droid.
+
+### Backups `/backups`
+
+Component: `apps/web/components/backups-panel.tsx`.
+
+Lists `listBackups()` and posts to `/api/backups/[id]/restore` after a
+destructive confirmation.
+
+### Debug `/debug`
+
+Component: `apps/web/components/debug-panel.tsx`.
+
+Shows copyable metadata-only diagnostics. Keep it free of file contents.
+
+### Team `/team`
+
+Component: `apps/web/components/team-panel.tsx`.
+
+Wired to clone/pull/status, but still labeled 1.1 beta. PR proposals and
+conflict handling are manual.
+
+### Settings `/settings`
+
+Components:
+
+- `SettingsPanel`: enabled agents, sync strategy, local-only pledge
+- `CustomAgentsPanel`: custom agent lite registry
 
 ---
 
-## 6. The Version Story
+## 7. CLI And Scripts
 
-- Started at **0.0.0**.
-- v0.0.1 added: agent detail page, Spread→Mirror, version label,
-  symlink-direction visibility.
-- v0.0.2 (current) adds: restore-from-backup UI, central
-  `_collisions/` quarantine, one-shot `_legacy-residue/` cleanup, agent
-  inspector hides residue.
+### CLI
 
-Every monorepo `package.json` carries the same version. Bump all four
-together on each business-logic commit. The sidebar reads from
-`apps/web/lib/version.ts`, which imports `apps/web/package.json`.
+Source: `packages/cli/src/bin.ts`.
 
-```json
-// example: apps/web/package.json
-{
-  "name": "@plexus/web",
-  "version": "0.0.2",
-  "dependencies": { "@plexus/core": "0.0.2" }
-}
+Commands:
+
+```text
+plexus
+plexus start [-p <port>]
+plexus detect
+plexus join <git-url>
+plexus pull
+plexus sync
+plexus status
+plexus help
 ```
+
+`plexus` / `plexus start` locates `apps/web` and runs:
+
+- `npm run start` if `.next/` exists
+- otherwise `npm run dev`
+
+This is convenient for the monorepo and `npm link`. A fully packaged
+zero-install `npx plexus` distribution is still a release-hardening item;
+`apps/web/next.config.mjs` does not currently use `output: "standalone"`.
+
+### Important Scripts
+
+Root `package.json`:
+
+```text
+npm run dev          # web dev server on :7777
+npm run build        # build all workspaces
+npm run build:core
+npm run build:cli
+npm run typecheck
+npm run test
+npm run test:core
+npm run check        # biome check
+npm run verify       # biome + core tests + all builds
+npm run bump:patch
+npm run release:patch
+npm run ship -- "<subject>"
+```
+
+`scripts/ship.mjs` is the one-shot release path:
+
+1. verify
+2. patch bump
+3. stage all changes
+4. commit with co-author trailer
+5. tag `vX.Y.Z`
+6. push branch and tag
+
+Do not run `ship` casually when the worktree contains user changes that should
+not be included.
 
 ---
 
-## 7. Conventions
+## 8. Development Rules
 
-### 7.1 Communication
+### Communication
 
-- **Talk to the user in Chinese.** Code, identifiers, commit messages,
-  PR titles → English.
+- Talk to the user in Chinese.
+- Code, identifiers, commit messages, PR titles, and this technical file stay
+  in English unless asked otherwise.
+- Before implementation, state assumptions and success criteria when the task
+  is non-trivial.
 
-### 7.2 Default git behaviour
+### Editing
 
-- Default branch: `master` (yes, master, not main — the upstream remote
-  is configured this way; do not rename without asking).
-- After finishing and verifying a substantive change: **commit + push +
-  bump patch** without asking. The user has explicitly opted into this.
-- Doc-only changes under `docs/**/*.puml` or `docs/presentations/*.html`
-  → commit only, no push, no tag, unless the user says otherwise.
-- Use small English commit messages with co-author trailer:
-  ```
-  Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>
-  ```
-- Never push without running the build first
-  (`npm run build --workspace=@plexus/core` and
-  `npm run build --workspace=@plexus/web`).
+- Keep changes surgical.
+- Do not clean up unrelated code.
+- Preserve user changes in the working tree.
+- Never use destructive git commands such as `git reset --hard` or
+  `git checkout -- <file>` unless the user explicitly asks.
+- Use `rg` for search.
+- Use `apply_patch` for manual file edits.
 
-### 7.3 Node version
+### Git
 
-Next.js 14 requires Node ≥18.17. The user's default `node` on PATH is
-18.15, but Node 20 is installed via nvm at
-`~/.nvm/versions/node/v20.19.6/bin`. **Always prefix dev/build commands
-with `export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"`** or
-the build will fail.
+- Default branch is `master`.
+- Business-logic commits should bump patch versions across all workspace
+  packages.
+- Never push without a successful build.
+- Commit messages are short English subjects with this trailer:
 
-### 7.4 Dev server
+```text
+Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>
+```
 
-Port `7777` is reserved for the dashboard. There may be stale
-`next-server` processes from previous sessions; check
-`lsof -ti:7777` before starting and kill stale PIDs.
+### Node Version
+
+Use Node 20 from nvm. The user's default PATH may point to an older Node.
 
 ```bash
 export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"
-cd apps/web && npm run dev   # http://localhost:7777
 ```
 
-### 7.5 Where the user's real config lives
+### Dev Server
 
-These are real, sensitive paths on the user's machine. Treat with care:
-
-- `~/.claude.json` — Claude Code (60 KB+ shared file)
-- `~/.cursor/mcp.json`
-- `~/.codex/config.toml`
-- `~/.factory/mcp.json`, `~/.factory/skills/`, `~/.factory/droids/`
-- `~/.claude/skills/` — Claude Code skills folder
-- `~/.config/plexus/` — Plexus canonical store + backups (the only place
-  Plexus owns)
-
-Any code path that writes outside the last bullet must (a) snapshot
-first, (b) be reversible from `/backups`, (c) never touch
-`~/.ssh/`, `~/.aws/` (the `agent/[id]/file` API has a hard-coded safelist
-that blocks those even via path traversal).
-
-### 7.6 Type discipline
-
-`packages/core` is strict TS with no `any` outside genuinely dynamic JSON
-parsing. New code there must keep that bar. The dashboard side is
-allowed pragmatic `any` in event handlers but should still type its
-fetch results.
-
----
-
-## 8. The Open Roadmap
-
-### 8.1 Confirmed but not started
-
-- **Team subscription flow.** `packages/core/src/team/git.ts` is a stub.
-  We need (a) `plexus team subscribe <github-url>`, (b) periodic refresh,
-  (c) handling of merge conflicts when team and personal share an id, (d)
-  a UI in `/team` that surfaces the team repo state.
-- **`npx plexus dev` distribution.** The CLI works locally but isn't
-  published. We need a `bin` entry that boots the Next.js app from a
-  packaged build, plus an `examples/team-config-template` linked to a
-  public repo.
-- **Conflict UI when divergent.** Today divergent rows just get a badge.
-  We need a small diff viewer to show "what changed where" and a
-  one-click "promote native → store" or "push store → native."
-
-### 8.2 Known limitations (documented in README)
-
-- Project-scoped MCP (`<repo>/.cursor/mcp.json`) is **not** considered.
-  Plexus only manages the per-user level today.
-- Secrets in the canonical store are written in plaintext. The Settings
-  page should grow a warning + a "redact for team push" workflow.
-- Windows is not tested. Symlink fallback to copy exists but the
-  partial-write helpers haven't been verified on NTFS.
-
-### 8.3 Recently fixed (don't undo)
-
-- Wrong Claude path (`~/.claude/claude.json` → `~/.claude.json`).
-- Symlink-following `fs.rm` deleting the cache (use `lstat` first).
-- Effective-view drift between banner and cards (single
-  `getEffective*()` source).
-- Inline `.plexus-backup-*` debris in agent dirs (now central).
-- Per-skill SKILL.md edit not snapshotting (now `snapshotSingleFile`).
-
----
-
-## 9. Validation Checklist Before You Commit
-
-Run all of these. They're fast.
+Port `7777` is reserved for Plexus.
 
 ```bash
 export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"
 cd /path/to/Plexus
-npm run build --workspace=@plexus/core      # tsc strict
-npm run build --workspace=@plexus/web       # next build
+lsof -ti:7777
+npm run dev
 ```
 
-Then sanity-test the running dev server:
+If a stale Next.js process is occupying `7777`, kill only that stale process
+after confirming it is Plexus-related.
+
+---
+
+## 9. Validation Checklist
+
+For code or behavior changes, run:
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"
+cd /path/to/Plexus
+npm run build --workspace=@plexus/core
+npm run build --workspace=@plexus/web
+```
+
+For broader changes, prefer:
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"
+cd /path/to/Plexus
+npm run verify
+```
+
+Sanity-test a running dev server:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/backups
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/api/backups
-curl -s -X POST http://localhost:7777/api/sync | python3 -c "import sys,json;print(json.load(sys.stdin)['results'])"
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:7777/debug
 ```
 
-After a sync, verify no inline residue:
+After sync-related changes, also verify no inline backup residue:
 
 ```bash
 ls ~/.claude/skills | grep plexus-backup || echo "(clean)"
-ls ~/.cursor       | grep plexus-backup || echo "(clean)"
-ls ~/.factory      | grep plexus-backup || echo "(clean)"
+ls ~/.cursor        | grep plexus-backup || echo "(clean)"
+ls ~/.factory       | grep plexus-backup || echo "(clean)"
 ```
 
-If any of those return non-empty, `cleanupLegacyResidue()` regressed.
+For doc-only changes to `CLAUDE.md`, at minimum run:
+
+```bash
+git diff --check -- CLAUDE.md
+```
 
 ---
 
-## 10. Quick Reference: Where Does X Live?
+## 10. Known Limitations And Roadmap
 
-| Question                                  | File |
-|-------------------------------------------|------|
-| What agents do we know about?             | `packages/core/src/store/paths.ts → ALL_AGENTS, AGENT_PATHS` |
-| How do we detect installed agents?        | `packages/core/src/agents/detect.ts` |
-| How does sync work end-to-end?            | `packages/core/src/sync/index.ts` |
-| How do we partial-write `~/.claude.json`? | `packages/core/src/agents/adapters/json-mcp.ts` |
-| How do we partial-write Codex TOML?       | `packages/core/src/agents/adapters/codex.ts` |
-| Who computes the effective view?          | `packages/core/src/effective/index.ts` |
-| Who imports a native MCP into the store?  | `packages/core/src/import/index.ts` |
-| Who picks "is this native, personal, team, synced, divergent"? | `packages/core/src/effective/index.ts` |
-| Where do we keep the Plexus canonical store? | `~/.config/plexus/` (`PLEXUS_PATHS` in `paths.ts`) |
-| Where does the agent inspector come from? | `packages/core/src/agents/inspect.ts` |
-| Where's the version label rendered?       | `apps/web/app/layout.tsx` (reads `lib/version.ts`) |
-| Where's the snapshot ring-buffer logic?   | `packages/core/src/backup/index.ts` |
-| Where's the restore UI?                   | `apps/web/components/backups-panel.tsx` |
-| Where's the safelist that blocks `~/.ssh`? | `apps/web/app/api/agent/[id]/file/route.ts` |
+Current limitations:
+
+- Effective view does not compute real `divergent` diffs.
+- Mirror / spread target sync currently bypasses the backup snapshot path.
+- Team subscription can clone/pull/status, but PR proposal and conflict
+  workflows are manual.
+- Custom agents are instruction-file registry records only.
+- Rules apply covers built-in agents only; custom agent rules projection is not
+  wired yet.
+- Project-scoped MCP files are not managed.
+- Secrets are plaintext in the local store.
+- Packaged `npx plexus` distribution is not fully hardened.
+- Windows is unverified.
+
+Recently important fixes that must not regress:
+
+- Claude Code path is `~/.claude.json`, not a Claude Desktop path.
+- Symlink-safe removal must use `lstat` first.
+- Collisions go to `backups/_collisions/`, not inline `.plexus-backup-*`
+  files.
+- Legacy residue cleanup hides/quarantines old `.plexus-backup-*` entries.
+- Instruction file edits snapshot with `snapshotSingleFile()`.
+- Debug snapshots must not include file contents.
 
 ---
 
-*Last updated for v0.0.2. If you change the directory layout, the sync
-contract, or the backup module, update this file in the same commit.*
+## 11. Quick Reference
+
+| Question | File |
+|---|---|
+| Known built-in agents and paths | `packages/core/src/store/paths.ts` |
+| Store scaffolding | `packages/core/src/store/scaffolding.ts` |
+| Config YAML I/O | `packages/core/src/store/config.ts` |
+| MCP YAML I/O | `packages/core/src/store/mcp.ts` |
+| Skill frontmatter I/O | `packages/core/src/store/skills.ts` |
+| Rules text I/O | `packages/core/src/store/rules.ts` |
+| Team/personal merge | `packages/core/src/store/merge.ts` |
+| Custom agents lite store | `packages/core/src/store/custom-agents.ts` |
+| Agent detection | `packages/core/src/agents/detect.ts` |
+| Agent inspection | `packages/core/src/agents/inspect.ts` |
+| JSON MCP adapters | `packages/core/src/agents/adapters/json-mcp.ts` |
+| Codex TOML adapter | `packages/core/src/agents/adapters/codex.ts` |
+| Adapter file/link helpers | `packages/core/src/agents/adapters/base.ts` |
+| Full sync | `packages/core/src/sync/index.ts` |
+| Rules status/apply/import | `packages/core/src/rules/index.ts` |
+| Effective MCP/skill tables and toggles | `packages/core/src/effective/index.ts` |
+| Import native config | `packages/core/src/import/from-agents.ts` |
+| Mirror/spread | `packages/core/src/spread/index.ts` |
+| Backups, restore, quarantine | `packages/core/src/backup/index.ts` |
+| Team Git subscription | `packages/core/src/team/git.ts` |
+| Debug snapshot | `packages/core/src/debug/index.ts` |
+| CLI | `packages/cli/src/bin.ts` |
+| Sidebar nav and version badge | `apps/web/components/app-sidebar.tsx` |
+| Agent file edit API | `apps/web/app/api/agent/[id]/file/route.ts` |
+| Rules API | `apps/web/app/api/rules/route.ts` |
+| Rules UI | `apps/web/components/rules-panel.tsx` |
+| Refactor docs | `docs/refactor/` |
+
+---
+
+*Last updated for v0.0.8 on 2026-04-30. If you change the sync contract,
+store layout, backup behavior, supported paths, CLI behavior, or UI routes,
+update this file in the same change.*

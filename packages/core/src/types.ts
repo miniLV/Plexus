@@ -76,6 +76,44 @@ export interface SkillDef {
   enabledAgents: AgentId[];
 }
 
+export interface RulesCanonicalStatus {
+  exists: boolean;
+  /** Effective layer: personal overrides team. */
+  layer: ConfigLayer | null;
+  path: string | null;
+  content: string | null;
+  updatedAt?: string;
+}
+
+export interface RulesTargetStatus {
+  agent: AgentId;
+  displayName: string;
+  targetPath: string;
+  installed: boolean;
+  enabled: boolean;
+  exists: boolean;
+  isSymlink: boolean;
+  linkTarget?: string;
+  inSync: boolean;
+}
+
+export interface RulesStatus {
+  canonical: RulesCanonicalStatus;
+  agents: RulesTargetStatus[];
+}
+
+export interface RulesApplyResult {
+  agent: AgentId;
+  targetPath: string;
+  applied: boolean;
+  via?: "symlink" | "copy";
+  skipped?: boolean;
+  reason?: string;
+  backedUp?: string;
+  snapshotDir?: string | null;
+  error?: string;
+}
+
 export type ConfigLayer = "team" | "personal";
 
 export interface PlexusConfig {

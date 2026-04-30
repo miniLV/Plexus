@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   title: "Plexus",
   description:
     "Team-shared AI agent config — sync MCPs, skills, and CLAUDE.md across every coding agent on your machine.",
+  icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

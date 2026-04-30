@@ -135,7 +135,7 @@ async function listSkills(skillsDir: string): Promise<SkillEntry[]> {
   }
 }
 
-function instructionsForAgent(
+export function instructionsForAgent(
   agentId: AgentId,
 ): Array<{ label: string; filename: string; abs: string }> {
   const root = AGENT_ROOTS[agentId];

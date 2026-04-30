@@ -88,51 +88,43 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
     <div className="space-y-8">
       {/* Instruction files ─────────────── */}
       <section className="space-y-3">
-        <h2 className="plexus-eyebrow">Instruction Files</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="plexus-eyebrow">Instruction Files</h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/rules">
+              Manage in Rules page <ArrowRight className="h-3 w-3" strokeWidth={1.5} />
+            </Link>
+          </Button>
+        </div>
         {data.instructionFiles.length === 0 && (
           <div className="text-sm text-plexus-text-3">
             No conventional instruction file for {data.displayName}.
           </div>
         )}
-        {data.instructionFiles.map((f) => (
-          <Card key={f.status.path} className="p-4 text-sm">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span className="font-semibold text-plexus-text">{f.label}</span>
-              <code className="font-mono text-xs text-plexus-text-3">{f.status.path}</code>
-              {f.status.exists ? (
-                <Badge variant="synced">exists</Badge>
-              ) : (
-                <Badge variant="native">not yet created</Badge>
-              )}
-            </div>
-            <div className="mt-3 flex gap-2">
-              {f.status.exists ? (
-                <>
-                  <FileViewerButton
-                    agentId={data.id}
-                    filePath={f.status.path}
-                    mode="view"
-                    label="View"
-                  />
-                  <FileViewerButton
-                    agentId={data.id}
-                    filePath={f.status.path}
-                    mode="edit"
-                    label="Edit"
-                  />
-                </>
-              ) : (
-                <FileViewerButton
-                  agentId={data.id}
-                  filePath={f.status.path}
-                  mode="edit"
-                  label="Create"
-                  allowCreate
-                />
-              )}
+        {data.instructionFiles.length > 0 && (
+          <Card className="overflow-hidden">
+            {data.instructionFiles.map((f) => (
+              <div
+                key={f.status.path}
+                className="border-b border-plexus-border/60 p-4 text-sm last:border-0"
+              >
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-semibold text-plexus-text">{f.label}</span>
+                  <code className="font-mono text-xs text-plexus-text-3">{f.status.path}</code>
+                  {f.status.exists ? (
+                    <Badge variant="synced">exists</Badge>
+                  ) : (
+                    <Badge variant="native">not yet created</Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="border-t border-plexus-border/60 bg-plexus-surface-2/40 px-4 py-3 text-xs text-plexus-text-3">
+              Use Rules to edit the shared baseline, import from this agent, or apply the baseline
+              across all tools.
             </div>
           </Card>
-        ))}
+        )}
       </section>
 
       {/* Skills ────────────────────────── */}

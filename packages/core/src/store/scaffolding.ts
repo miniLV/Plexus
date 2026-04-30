@@ -17,6 +17,7 @@ export async function ensureStoreScaffolding(): Promise<void> {
     const base = layer === "team" ? PLEXUS_PATHS.team : PLEXUS_PATHS.personal;
     await ensureDir(path.join(base, PLEXUS_PATHS.mcpDirRel));
     await ensureDir(path.join(base, PLEXUS_PATHS.skillsDirRel));
+    await ensureDir(path.join(base, "rules"));
   }
 
   if (!(await pathExists(PLEXUS_PATHS.config))) {

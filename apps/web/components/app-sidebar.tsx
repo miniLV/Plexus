@@ -10,6 +10,7 @@ import {
   type LucideIcon,
   Plug,
   Repeat,
+  ScrollText,
   Settings,
   Sparkles,
   Users,
@@ -34,6 +35,7 @@ const NAV: NavGroup[] = [
     group: "Workspace",
     items: [
       { href: "/", label: "Dashboard", icon: LayoutGrid },
+      { href: "/rules", label: "Rules", icon: ScrollText },
       { href: "/mcp", label: "MCP Servers", icon: Plug },
       { href: "/skills", label: "Skills", icon: Sparkles },
       { href: "/mirror", label: "Mirror", icon: Repeat },

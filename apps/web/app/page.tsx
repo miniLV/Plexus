@@ -2,7 +2,9 @@ import { ImportBanner } from "@/components/import-banner";
 import { SyncButton } from "@/components/sync-button";
 import { Badge, StatusDot } from "@/components/ui/badge";
 import { Card, CardHover } from "@/components/ui/card";
+import { type RulesPanelStatus, normalizeRulesStatus } from "@/lib/rules";
 import { detectAgents, getEffectiveMcp, getEffectiveSkills, teamStatus } from "@plexus/core";
+import * as core from "@plexus/core";
 import { Clock, ExternalLink, ExternalLink as LinkIcon, PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -34,11 +36,27 @@ const AGENT_DISPLAY: Record<
   },
 };
 
+type RulesCore = typeof core & {
+  getRulesStatus?: () => Promise<unknown> | unknown;
+};
+
+async function getDashboardRulesStatus(): Promise<RulesPanelStatus | null> {
+  const getRulesStatus = (core as RulesCore).getRulesStatus;
+  if (!getRulesStatus) return null;
+
+  try {
+    return normalizeRulesStatus(await getRulesStatus());
+  } catch {
+    return null;
+  }
+}
+
 export default async function DashboardPage() {
   const agents = detectAgents();
   const mcp = await getEffectiveMcp();
   const skills = await getEffectiveSkills();
   const team = await teamStatus();
+  const rules = await getDashboardRulesStatus();
 
   const installedCount = agents.filter((a) => a.installed).length;
   const teamCount = mcp.filter((m) => m.authority === "team").length;
@@ -47,6 +65,9 @@ export default async function DashboardPage() {
   const skillTeamCount = skills.filter((s) => s.authority === "team").length;
   const skillPersonalCount = skills.filter((s) => s.authority === "personal").length;
   const skillNativeOnlyCount = skills.filter((s) => s.authority === "native").length;
+  const rulesSyncedCount =
+    rules?.agents.filter((a) => ["linked", "copied", "in sync"].includes(a.status)).length ?? 0;
+  const rulesDriftCount = rules?.agents.filter((a) => a.status === "drift").length ?? 0;
 
   return (
     <div className="space-y-10">
@@ -55,8 +76,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="plexus-display mb-2">Dashboard</h1>
           <p className="max-w-xl text-sm leading-relaxed text-plexus-text-2">
-            One source of truth for MCP servers, skills, and instruction files — synced across every
-            AI agent on your machine.
+            One source of truth for rules, MCP servers, skills, and instruction files — synced
+            across every AI agent on your machine.
           </p>
         </div>
         <SyncButton />
@@ -82,6 +103,10 @@ export default async function DashboardPage() {
         </span>
         <span className="text-plexus-text-mute">·</span>
         <span className="text-xs tracking-[0.02em] text-plexus-text-2">{skills.length} skills</span>
+        <span className="text-plexus-text-mute">·</span>
+        <span className="text-xs tracking-[0.02em] text-plexus-text-2">
+          {rules ? `${rulesSyncedCount}/${rules.agents.length} rules targets` : "rules pending"}
+        </span>
         <div className="ml-auto flex items-center gap-2 text-xs tracking-[0.02em] text-plexus-text-3">
           <Clock className="h-4 w-4" strokeWidth={1.5} />
           Auto-snapshot enabled
@@ -177,7 +202,30 @@ export default async function DashboardPage() {
       </section>
 
       {/* Quick stats */}
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <Link href="/rules">
+          <CardHover className="cursor-pointer px-5 py-5">
+            <div className="plexus-eyebrow mb-2">Rules</div>
+            <div className="mb-2 flex items-end gap-2">
+              <div className="plexus-display">{rules ? rulesSyncedCount : "—"}</div>
+              <div className="pb-1 text-xs text-plexus-text-3">
+                {rules ? `of ${rules.agents.length} in sync` : "core API pending"}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {rules ? (
+                <>
+                  <Badge variant="synced">synced {rulesSyncedCount}</Badge>
+                  <Badge variant={rulesDriftCount > 0 ? "divergent" : "native"}>
+                    drift {rulesDriftCount}
+                  </Badge>
+                </>
+              ) : (
+                <Badge variant="native">waiting for core</Badge>
+              )}
+            </div>
+          </CardHover>
+        </Link>
         <Link href="/mcp">
           <CardHover className="cursor-pointer px-5 py-5">
             <div className="plexus-eyebrow mb-2">MCP Servers</div>
