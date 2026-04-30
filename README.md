@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="920" />
-</p>
-
 <h1 align="center">Plexus</h1>
 
 <p align="center">
@@ -28,6 +24,10 @@
     <img alt="License" src="https://img.shields.io/github/license/miniLV/Plexus" />
   </a>
   <img alt="Local first" src="https://img.shields.io/badge/local--first-yes-2ea043" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="920" />
 </p>
 
 ---
