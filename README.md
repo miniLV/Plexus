@@ -1,30 +1,92 @@
-# Plexus
+<p align="center">
+  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="920" />
+</p>
 
-Local control panel for keeping AI agent configuration in sync across tools.
+<h1 align="center">Plexus</h1>
 
-Plexus gives one human or one team a single local source of truth for:
+<p align="center">
+  <strong>One local control plane for every AI coding agent.</strong>
+</p>
 
-- global agent rules (`CLAUDE.md` / `AGENTS.md`)
-- MCP servers
-- skills / prompt bundles
-- backups and restore points before native files are changed
+<p align="center">
+  Stop copying the same rules, MCP servers, and skills into Claude Code,
+  Cursor, Codex, and Factory Droid by hand.
+</p>
 
-It is built for people who use more than one coding agent and do not want to
-configure the same MCP server, skill, or operating instruction four times.
+<p align="center">
+  <a href="https://github.com/miniLV/Plexus/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/miniLV/Plexus/actions/workflows/ci.yml/badge.svg" />
+  </a>
+  <a href="https://github.com/miniLV/Plexus/releases">
+    <img alt="Release" src="https://img.shields.io/github/v/release/miniLV/Plexus?include_prereleases" />
+  </a>
+  <a href="./LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/miniLV/Plexus" />
+  </a>
+  <img alt="Local first" src="https://img.shields.io/badge/local--first-yes-2ea043" />
+</p>
 
-## Status
+---
 
-Alpha. The core local workflows are usable on macOS and Linux:
+## Why Plexus?
 
-- detect Claude Code, Cursor, Codex, and Factory Droid
-- import existing user-level MCP servers and skills
-- save one global Rules baseline and apply it to built-in agents
-- sync MCP servers and skills to each agent's native path
-- mirror MCPs/skills from one agent to another
-- snapshot native files before writes and restore from backups
-- join/pull a team config repository as a read-only team layer
+Modern AI coding work is multi-agent. One person might use Claude Code for
+planning, Cursor for editing, Codex for automation, and Factory Droid for
+team workflows. Each tool has its own config files, MCP format, skills folder,
+and instruction file.
 
-Windows and project-scoped MCP files are not verified yet.
+That means every useful update turns into busywork:
+
+- paste the same MCP server into multiple native config files
+- keep `CLAUDE.md` and `AGENTS.md` in sync
+- duplicate skills or prompts across agent-specific folders
+- remember what changed when an agent breaks
+- undo a bad sync without losing unrelated auth or history
+
+Plexus gives those tools one local source of truth.
+
+## What It Does
+
+| Capability | What Plexus manages |
+| --- | --- |
+| Global Rules | One baseline in `~/.config/plexus/personal/rules/global.md`, projected to `CLAUDE.md` and `AGENTS.md` |
+| MCP Servers | Team + personal MCP servers synced into each agent's native format |
+| Skills | Markdown skill bundles linked or copied into each agent's skill directory |
+| Mirror | Copy effective config from one agent to other agents with a preview |
+| Backups | Snapshot native files before writes, then restore from the dashboard |
+| Team Layer | Subscribe to a Git repo for team-approved MCPs and skills |
+
+Plexus does not run your MCP servers. It is a local dashboard for safely
+editing and projecting configuration.
+
+## Screenshots
+
+### One Dashboard For Every Agent
+
+See detected agents, sync state, rules coverage, MCP counts, skills, and
+recent backup activity in one place.
+
+<p align="center">
+  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard showing detected agents and sync counts" width="920" />
+</p>
+
+### One Rules File, Applied Everywhere
+
+Edit one shared baseline and apply it to Claude Code's `CLAUDE.md` plus each
+other agent's `AGENTS.md`.
+
+<p align="center">
+  <img src="docs/assets/readme/rules.png" alt="Plexus rules page showing linked instruction files" width="920" />
+</p>
+
+### Mirror Config Between Agents
+
+Pick a source agent, preview what each target is missing, then mirror the
+needed MCP servers and skills.
+
+<p align="center">
+  <img src="docs/assets/readme/mirror.png" alt="Plexus mirror page showing source and target agents" width="920" />
+</p>
 
 ## Quick Start
 
@@ -64,7 +126,7 @@ npm run unlink
 Partial write means Plexus rewrites only the MCP section and preserves the
 agent-owned auth, history, profile, and settings data in the same file.
 
-## What Plexus Stores
+## How It Works
 
 Plexus stores canonical config under `~/.config/plexus/`:
 
@@ -83,45 +145,9 @@ Plexus stores canonical config under `~/.config/plexus/`:
 The `team/` layer is intended to come from a shared Git repo. The `personal/`
 layer belongs to the local user and overrides team entries with the same ID.
 
-## Main Workflows
-
-### Rules
-
-Use `/rules` to edit one shared baseline. Plexus saves it to:
-
-```text
-~/.config/plexus/personal/rules/global.md
-```
-
-Then it can apply the same content to each supported agent's instruction file.
-Existing native instruction files are snapshotted before replacement.
-
-### Import
-
-The dashboard import banner scans installed agents and offers to import
-native MCP servers and skills into the personal layer.
-
-Import does not mutate native files. It only writes to `~/.config/plexus/`.
-
-### Sync
-
-`Sync All Agents` and `plexus sync` apply the merged team + personal store to
-all installed, enabled agents.
-
-Before changing native files, Plexus snapshots the current state into
-`~/.config/plexus/backups/`.
-
-### Mirror
-
-`/mirror` copies the effective MCP/skill set from one source agent to one or
-more targets. This is useful when one agent is already configured and another
-is empty.
-
-### Backups
-
-`/backups` lists snapshots and can restore a previous native file state. The
-restore action is intentionally destructive: it puts the selected snapshot
-back over the current native file.
+For single-purpose native MCP files such as Cursor and Factory Droid, Plexus
+uses symlinks when possible. For shared native files such as `~/.claude.json`
+and `~/.codex/config.toml`, Plexus partial-writes only the MCP section.
 
 ## CLI
 
@@ -136,40 +162,43 @@ plexus status       show team subscription and sync status
 plexus help
 ```
 
+## Safety Model
+
+- Plexus is local-first.
+- Plexus does not execute MCP servers.
+- Native files are snapshotted before writes.
+- Debug snapshots return metadata only, not file contents.
+- Imported MCP `env` values are stored as plaintext in the local personal
+  store.
+- Do not push `~/.config/plexus/personal/` to a shared team repo without
+  reviewing and redacting secrets.
+
 ## Development
 
 ```bash
 npm ci
+npm run verify
+```
+
+Focused commands:
+
+```bash
 npm run check
 npm run test:core
 npm run build --workspace=@plexus/core
 npm run build --workspace=@plexus/web
 ```
 
-For the full local gate:
+## Current Status
 
-```bash
-npm run verify
-```
+Plexus is alpha software. The local workflows are usable on macOS and Linux,
+but there are still sharp edges:
 
-## Security Notes
-
-- Plexus is local-first and does not execute MCP servers.
-- Plexus is not a secrets manager.
-- Imported MCP `env` values are stored as plaintext in the local personal
-  store.
-- Do not push `~/.config/plexus/personal/` to a shared team repo without
-  reviewing and redacting secrets.
-- Debug snapshots intentionally return metadata only, not file contents.
-
-## Limitations
-
-- Project-scoped MCP files are not managed yet.
-- Team subscription can clone, pull, and report status; dashboard PR proposal
-  and conflict resolution are still manual.
-- Custom agents are stored as instruction-file registry records only.
-- Rules apply currently targets built-in agents only.
-- Windows support is unverified.
+- project-scoped MCP files are not managed yet
+- dashboard PR proposals for team config are not built yet
+- custom agents are instruction-file registry records only
+- Rules apply currently targets built-in agents only
+- Windows support is unverified
 
 ## License
 
