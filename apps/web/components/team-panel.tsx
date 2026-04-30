@@ -42,7 +42,7 @@ const COPY = {
     starterBody:
       "agent-primer is a compact baseline for rules, MCP servers, and reusable skills. Use it as the first team repo, then customize through pull requests.",
     useStarter: "Use agent-primer",
-    placeholder: "https://github.com/your-org/team-plexus-config.git",
+    placeholder: AGENT_PRIMER_URL,
     join: "Join",
     joining: "Joining…",
     rules: "Rules",
@@ -77,7 +77,7 @@ const COPY = {
     starterBody:
       "agent-primer 是一套轻量基线，包含 rules、MCP servers 和可复用 skills。可以先用它作为第一个 team repo，再通过 PR 慢慢定制。",
     useStarter: "使用 agent-primer",
-    placeholder: "https://github.com/your-org/team-plexus-config.git",
+    placeholder: AGENT_PRIMER_URL,
     join: "加入",
     joining: "加入中…",
     rules: "Rules",

@@ -2,6 +2,9 @@
 
 This is a starter layout for a team's shared Plexus config repo.
 
+For a real starter config, see [miniLV/agent-primer](https://github.com/miniLV/agent-primer).
+It uses this same layout and can be subscribed from Plexus directly.
+
 Members run:
 
 ```bash

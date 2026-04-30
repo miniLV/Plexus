@@ -186,7 +186,24 @@ plexus pull
 plexus sync
 ```
 
-注意：team repo 里的 MCP 如果依赖个人 token、本机路径或数据库连接，应该先在 team repo 中保持 placeholder / optional，再由个人在 `~/.config/plexus/personal/` 里覆盖或补全。
+也可以在 dashboard 里操作：打开 **Team**，点击 **使用 agent-primer**，再点击 **加入**。如果这个 repo 是 private，确保本机 GitHub credential 可用，或者改用 SSH URL：`git@github.com:miniLV/agent-primer.git`。
+
+这条命令会把 `agent-primer` clone 到 `~/.config/plexus/team/`。之后 Plexus 会把它当作 team layer，再叠加你本机的 `~/.config/plexus/personal/`：
+
+```text
+agent-primer repo
+  rules/global.md        -> Plexus Team Rules
+  skills/*/SKILL.md      -> Plexus Team Skills
+  mcp/servers.yaml       -> Plexus Team MCP
+
+local machine
+  ~/.config/plexus/team/     # git clone of agent-primer
+  ~/.config/plexus/personal/ # your overrides, secrets, local paths
+```
+
+举个例子：团队把 `code-review` skill 加进 `agent-primer`，所有成员只需要执行 `plexus pull && plexus sync`，这个 skill 就会进入 Claude Code、Cursor、Codex 等已启用 agent 的 skill 目录。团队把 `github` MCP 留成 optional placeholder；个人需要时，在 Plexus 的 MCP 页面启用它，并在 personal layer 里补自己的 token。
+
+注意：team repo 里的 MCP 如果依赖个人 token、本机路径或数据库连接，应该先保持 placeholder / optional，再由个人在 `~/.config/plexus/personal/` 里覆盖或补全。
 
 ## CLI
 

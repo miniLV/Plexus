@@ -201,6 +201,31 @@ plexus pull
 plexus sync
 ```
 
+You can also do this from the dashboard: open **Team**, click **Use
+agent-primer**, then click **Join**. If the repo is private, make sure your
+local GitHub credential can access it, or use the SSH URL:
+`git@github.com:miniLV/agent-primer.git`.
+
+This clones `agent-primer` into `~/.config/plexus/team/`. Plexus then treats it
+as the team layer and overlays your local `~/.config/plexus/personal/` layer:
+
+```text
+agent-primer repo
+  rules/global.md        -> Plexus Team Rules
+  skills/*/SKILL.md      -> Plexus Team Skills
+  mcp/servers.yaml       -> Plexus Team MCP
+
+local machine
+  ~/.config/plexus/team/     # git clone of agent-primer
+  ~/.config/plexus/personal/ # your overrides, secrets, local paths
+```
+
+Example: your team adds the `code-review` skill to `agent-primer`. Every member
+runs `plexus pull && plexus sync`, and that skill is projected into Claude Code,
+Cursor, Codex, and other enabled agents. The team can keep the `github` MCP as
+an optional placeholder; each person enables it from the Plexus MCP page and
+adds their own token in the personal layer.
+
 Note: MCP servers that depend on personal tokens, local paths, or database
 connection strings should stay as placeholders / optional entries in the team
 repo, then be completed or overridden from the user's local
