@@ -138,6 +138,12 @@ export function CustomAgentsPanel() {
   const formFileInput = useId();
   const formNoteInput = useId();
 
+  function closeAddForm() {
+    setAdding(false);
+    setError(null);
+    setForm({ id: "", displayName: "", instructionFile: "", note: "" });
+  }
+
   async function load() {
     setLoading(true);
     try {
@@ -197,8 +203,7 @@ export function CustomAgentsPanel() {
         setError(data.error ?? copy.addFailed);
         return;
       }
-      setForm({ id: "", displayName: "", instructionFile: "", note: "" });
-      setAdding(false);
+      closeAddForm();
       await load();
     } catch (err) {
       setError((err as Error).message);
@@ -259,12 +264,10 @@ export function CustomAgentsPanel() {
           <div className="plexus-eyebrow mb-1">{copy.catalog}</div>
           <p className="max-w-xl text-xs text-plexus-text-3">{copy.catalogHelp}</p>
         </div>
-        {!adding && (
-          <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
-            {copy.addAgent}
-          </Button>
-        )}
+        <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>
+          <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+          {copy.addAgent}
+        </Button>
       </div>
 
       {catalog.length > 0 && (
@@ -323,113 +326,136 @@ export function CustomAgentsPanel() {
         </div>
       )}
 
-      {/* Add form */}
       {adding && (
-        <form
-          onSubmit={handleAdd}
-          className="mt-5 space-y-3 rounded border border-plexus-border bg-plexus-bg p-4"
+        <dialog
+          open
+          aria-labelledby="custom-agent-form-title"
+          className="fixed inset-0 z-50 m-0 h-full w-full max-w-none border-0 bg-transparent p-0"
         >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor={formIdInput}
-                className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
-              >
-                {copy.agentId}
-              </label>
-              <input
-                id={formIdInput}
-                type="text"
-                required
-                placeholder="e.g. copilot-cli"
-                value={form.id}
-                onChange={(e) => setForm({ ...form, id: e.target.value })}
-                pattern="[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
-                className="w-full rounded border border-plexus-border bg-plexus-surface px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor={formNameInput}
-                className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
-              >
-                {copy.displayName}
-              </label>
-              <input
-                id={formNameInput}
-                type="text"
-                required
-                placeholder="e.g. GitHub Copilot CLI"
-                value={form.displayName}
-                onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-                className="w-full rounded border border-plexus-border bg-plexus-surface px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
-              />
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor={formFileInput}
-              className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
+          <div
+            role="presentation"
+            className="flex h-full w-full cursor-default items-center justify-center bg-black/70 p-4"
+            onClick={closeAddForm}
+          >
+            <form
+              onSubmit={handleAdd}
+              className="w-full max-w-2xl space-y-4 rounded-md border border-plexus-border bg-plexus-surface p-5 text-left shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
-              {copy.instructionFilePath}
-            </label>
-            <input
-              id={formFileInput}
-              type="text"
-              required
-              placeholder="e.g. ~/.config/copilot/AGENTS.md"
-              value={form.instructionFile}
-              onChange={(e) => setForm({ ...form, instructionFile: e.target.value })}
-              className="w-full rounded border border-plexus-border bg-plexus-surface px-3 py-2 font-mono text-xs text-plexus-text outline-none focus:border-plexus-accent"
-            />
-            <p className="mt-1 text-[11px] text-plexus-text-3">{copy.pathHelp}</p>
+              <div className="flex items-start justify-between gap-4 border-b border-plexus-border pb-3">
+                <div>
+                  <div
+                    id="custom-agent-form-title"
+                    className="text-sm font-semibold text-plexus-text"
+                  >
+                    {copy.addAgent}
+                  </div>
+                  <p className="mt-1 text-xs text-plexus-text-3">{copy.pathHelp}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={copy.close}
+                  onClick={closeAddForm}
+                  className="text-plexus-text-3 hover:text-plexus-text"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor={formIdInput}
+                    className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
+                  >
+                    {copy.agentId}
+                  </label>
+                  <input
+                    id={formIdInput}
+                    type="text"
+                    required
+                    placeholder="e.g. copilot-cli"
+                    value={form.id}
+                    onChange={(e) => setForm({ ...form, id: e.target.value })}
+                    pattern="[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
+                    className="w-full rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor={formNameInput}
+                    className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
+                  >
+                    {copy.displayName}
+                  </label>
+                  <input
+                    id={formNameInput}
+                    type="text"
+                    required
+                    placeholder="e.g. GitHub Copilot CLI"
+                    value={form.displayName}
+                    onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                    className="w-full rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor={formFileInput}
+                  className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
+                >
+                  {copy.instructionFilePath}
+                </label>
+                <input
+                  id={formFileInput}
+                  type="text"
+                  required
+                  placeholder="e.g. ~/.config/copilot/AGENTS.md"
+                  value={form.instructionFile}
+                  onChange={(e) => setForm({ ...form, instructionFile: e.target.value })}
+                  className="w-full rounded border border-plexus-border bg-plexus-bg px-3 py-2 font-mono text-xs text-plexus-text outline-none focus:border-plexus-accent"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor={formNoteInput}
+                  className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
+                >
+                  {copy.note}{" "}
+                  <span className="lowercase text-plexus-text-3">({copy.optional})</span>
+                </label>
+                <input
+                  id={formNoteInput}
+                  type="text"
+                  maxLength={280}
+                  placeholder={copy.notePlaceholder}
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  className="w-full rounded border border-plexus-border bg-plexus-bg px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
+                />
+              </div>
+              {error && (
+                <div className="rounded border border-plexus-err/40 bg-plexus-err/10 px-3 py-2 text-xs text-plexus-err">
+                  {error}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 border-t border-plexus-border pt-3">
+                <Button type="button" variant="ghost" size="sm" onClick={closeAddForm}>
+                  {copy.cancel}
+                </Button>
+                <Button type="submit" variant="primary" size="sm" disabled={busy}>
+                  {busy ? copy.adding : copy.addAgent}
+                </Button>
+              </div>
+            </form>
           </div>
-          <div>
-            <label
-              htmlFor={formNoteInput}
-              className="mb-1 block text-[11px] uppercase tracking-[0.10em] text-plexus-text-3"
-            >
-              {copy.note} <span className="lowercase text-plexus-text-3">({copy.optional})</span>
-            </label>
-            <input
-              id={formNoteInput}
-              type="text"
-              maxLength={280}
-              placeholder={copy.notePlaceholder}
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-              className="w-full rounded border border-plexus-border bg-plexus-surface px-3 py-2 text-sm text-plexus-text outline-none focus:border-plexus-accent"
-            />
-          </div>
-          {error && (
-            <div className="rounded border border-plexus-err/40 bg-plexus-err/10 px-3 py-2 text-xs text-plexus-err">
-              {error}
-            </div>
-          )}
-          <div className="flex justify-end gap-2 pt-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setAdding(false);
-                setError(null);
-                setForm({ id: "", displayName: "", instructionFile: "", note: "" });
-              }}
-            >
-              {copy.cancel}
-            </Button>
-            <Button type="submit" variant="primary" size="sm" disabled={busy}>
-              {busy ? copy.adding : copy.addAgent}
-            </Button>
-          </div>
-        </form>
+        </dialog>
       )}
 
       {/* List */}
       <div className="mt-5">
         {loading && <div className="text-xs text-plexus-text-3">{copy.loading}</div>}
-        {!loading && agents.length === 0 && !adding && (
+        {!loading && agents.length === 0 && (
           <div className="rounded border border-dashed border-plexus-border bg-plexus-bg/40 px-4 py-6 text-center text-xs text-plexus-text-3">
             {copy.noCustom}
           </div>

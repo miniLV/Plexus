@@ -149,7 +149,7 @@ export function AppSidebar() {
                   <span>{item.label}</span>
                   {item.beta && (
                     <Badge variant="beta" className="ml-auto">
-                      1.1 beta
+                      beta
                     </Badge>
                   )}
                 </Link>

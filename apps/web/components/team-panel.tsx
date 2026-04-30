@@ -25,9 +25,9 @@ type Status = {
 
 const COPY = {
   en: {
-    betaTitle: "Team workflow is shipping in 1.1",
+    betaTitle: "Team workflow is in beta",
     betaBody:
-      "Team subscription, shared baselines, and pull-based updates are already wired. The remaining 1.1 work is PR proposal and conflict UX.",
+      "Team subscription, shared baselines, and pull-based updates are already wired. PR proposal and conflict UX are still being refined.",
     starterLink: "View agent-primer starter repo",
     subscribedTo: "Subscribed to",
     upToDate: "Up-to-date",
@@ -61,8 +61,8 @@ const COPY = {
     ],
   },
   zh: {
-    betaTitle: "Team 工作流会在 1.1 完整推出",
-    betaBody: "Team 订阅、共享基线和 pull 更新已经接好。1.1 剩下的是 PR proposal 和冲突处理体验。",
+    betaTitle: "Team 工作流仍处于 beta",
+    betaBody: "Team 订阅、共享基线和 pull 更新已经接好。PR proposal 和冲突处理体验还在打磨。",
     starterLink: "查看 agent-primer starter repo",
     subscribedTo: "当前订阅",
     upToDate: "已是最新",
