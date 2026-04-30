@@ -11,15 +11,15 @@ const sandbox = await setupSandbox("snapshot-restore");
 const { snapshotAgentConfigs, restoreSnapshot, listBackups } = await import(
   "../src/backup/index.js"
 );
-const { AGENT_PATHS } = await import("../src/store/paths.js");
+const { AGENT_PATHS, ALL_AGENTS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
 
 describe("snapshot/restore round-trip", () => {
-  it("restores all four agent files to their original bytes", async () => {
-    // Seed all four agents with distinguishable content.
+  it("restores all agent files to their original bytes", async () => {
+    // Seed every built-in agent with distinguishable content.
     const seeds: Record<string, string> = {};
-    for (const id of ["claude-code", "cursor", "codex", "factory-droid"] as const) {
+    for (const id of ALL_AGENTS) {
       const p = AGENT_PATHS[id].mcpPath;
       await fs.mkdir(path.dirname(p), { recursive: true });
       const seed =
@@ -31,10 +31,10 @@ describe("snapshot/restore round-trip", () => {
     }
 
     const snap = await snapshotAgentConfigs({ reason: "test" });
-    expect(snap.entries.length).toBe(4);
+    expect(snap.entries.length).toBe(ALL_AGENTS.length);
 
     // Mutate every file.
-    for (const id of ["claude-code", "cursor", "codex", "factory-droid"] as const) {
+    for (const id of ALL_AGENTS) {
       const p = AGENT_PATHS[id].mcpPath;
       await fs.writeFile(p, "MUTATED", "utf8");
     }
@@ -42,10 +42,10 @@ describe("snapshot/restore round-trip", () => {
     // Restore.
     const out = await restoreSnapshot(snap.id);
     expect(out.errors).toEqual([]);
-    expect(out.restored).toBe(4);
+    expect(out.restored).toBe(ALL_AGENTS.length);
 
     // Every file matches the original bytes exactly.
-    for (const id of ["claude-code", "cursor", "codex", "factory-droid"] as const) {
+    for (const id of ALL_AGENTS) {
       const p = AGENT_PATHS[id].mcpPath;
       const after = await fs.readFile(p, "utf8");
       expect(after).toBe(seeds[id]);

@@ -28,6 +28,16 @@ const AGENT_DISPLAY: Record<
     instructionFile: "~/.codex/AGENTS.md",
     mcpFile: "~/.codex/config.toml",
   },
+  "gemini-cli": {
+    mode: "shared",
+    instructionFile: "~/.gemini/GEMINI.md",
+    mcpFile: "~/.gemini/settings.json",
+  },
+  "qwen-code": {
+    mode: "shared",
+    instructionFile: "~/.qwen/QWEN.md",
+    mcpFile: "~/.qwen/settings.json",
+  },
   "factory-droid": {
     mode: "exclusive",
     instructionFile: "~/.factory/AGENTS.md",

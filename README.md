@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  不用再把同一份规则、MCP Server 和 Skill 手动复制到 Claude Code、Cursor、Codex、Factory Droid。
+  不用再把同一份规则、MCP Server 和 Skill 手动复制到 Claude Code、Cursor、Codex、Gemini CLI、Qwen Code 等工具。
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@
 
 ## 为什么需要 Plexus？
 
-现在的 AI 编程工作很少只用一个工具。你可能用 Claude Code 做规划，用 Cursor 写代码，用 Codex 跑自动化，再用 Factory Droid 做团队流程。问题是，每个工具都有自己的配置文件、MCP 格式、Skill 目录和指令文件。
+现在的 AI 编程工作很少只用一个工具。你可能用 Claude Code 做规划，用 Cursor 写代码，用 Codex 跑自动化，再偶尔切到 Gemini CLI、Qwen Code、Windsurf 或 Kiro。问题是，每个工具都有自己的配置文件、MCP 格式、Skill 目录和指令文件。
 
 于是每次有一个好用配置，都要重复做几遍：
 
@@ -126,9 +126,13 @@ npm run unlink
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude.json` | `~/.claude/skills/` | partial write |
 | Cursor | `~/.cursor/AGENTS.md` | `~/.cursor/mcp.json` | `~/.cursor/commands/` | symlink or copy |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/config.toml` | `~/.codex/prompts/` | partial write |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/settings.json` | `~/.gemini/skills/` | partial write |
+| Qwen Code | `~/.qwen/QWEN.md` | `~/.qwen/settings.json` | `~/.qwen/skills/` | partial write |
 | Factory Droid | `~/.factory/AGENTS.md` | `~/.factory/mcp.json` | `~/.factory/skills/` | symlink or copy |
 
 Partial write 表示 Plexus 只重写 MCP section，保留同一个文件里由 agent 自己管理的 auth、history、profile 和 settings。
+
+Settings 里还有 Agent Catalog，会列出 Windsurf、Kiro、VS Code Copilot、Cline、Roo Code、Kilo Code、Continue、Aider、Amp、OpenHands、Zed AI 等常见工具。没有 native adapter 的工具会作为 manual preset 展示，用户可以一键把它们注册成 custom agent 来追踪 instruction file。
 
 ## 工作原理
 
@@ -148,7 +152,7 @@ Plexus 把 canonical config 放在 `~/.config/plexus/`：
 
 `team/` 层设计为来自共享 Git repo。`personal/` 层属于本机用户，并且会覆盖同 ID 的 team entry。
 
-对于 Cursor、Factory Droid 这类单用途 MCP 文件，Plexus 会优先使用 symlink。对于 `~/.claude.json` 和 `~/.codex/config.toml` 这种共享原生文件，Plexus 只 partial-write MCP section。
+对于 Cursor、Factory Droid 这类单用途 MCP 文件，Plexus 会优先使用 symlink。对于 `~/.claude.json`、`~/.codex/config.toml`、`~/.gemini/settings.json` 和 `~/.qwen/settings.json` 这种共享原生文件，Plexus 只 partial-write MCP section。
 
 ## CLI
 

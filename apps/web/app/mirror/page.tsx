@@ -14,8 +14,10 @@ export default async function MirrorPage() {
           <span className="text-plexus-text">Cursor</span> and{" "}
           <span className="text-plexus-text">Factory Droid</span> get a single symlink to the
           canonical Plexus copy; <span className="text-plexus-text">Claude Code</span> and{" "}
-          <span className="text-plexus-text">Codex</span> have their MCP section partial-written in
-          place. Skills are symlinked everywhere.
+          <span className="text-plexus-text">Codex</span>, plus settings-based CLIs like{" "}
+          <span className="text-plexus-text">Gemini CLI</span> and{" "}
+          <span className="text-plexus-text">Qwen Code</span>, have their MCP section
+          partial-written in place. Skills are symlinked everywhere.
         </p>
       </header>
       <MirrorPanel

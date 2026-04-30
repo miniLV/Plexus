@@ -10,7 +10,13 @@
  * - Adapters know how to *apply* the merged store to each agent's native config.
  */
 
-export type AgentId = "claude-code" | "cursor" | "codex" | "factory-droid";
+export type AgentId =
+  | "claude-code"
+  | "cursor"
+  | "codex"
+  | "gemini-cli"
+  | "qwen-code"
+  | "factory-droid";
 
 export interface AgentDescriptor {
   id: AgentId;
@@ -54,6 +60,9 @@ export interface MCPServerDef {
   command: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
   /** Free-form description for the dashboard. */
   description?: string;
   /** Layer this item belongs to ("team" or "personal"). */

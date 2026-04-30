@@ -56,6 +56,24 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     // config.toml has [profile], [auth], [mcp_servers], ... — partial-write.
     mcpFileMode: "shared",
   },
+  "gemini-cli": {
+    mcp: true,
+    skills: true,
+    mcpFormat: "json",
+    mcpPath: path.join(home, ".gemini", "settings.json"),
+    skillsDir: path.join(home, ".gemini", "skills"),
+    // settings.json also carries model/UI/privacy fields — partial-write.
+    mcpFileMode: "shared",
+  },
+  "qwen-code": {
+    mcp: true,
+    skills: true,
+    mcpFormat: "json",
+    mcpPath: path.join(home, ".qwen", "settings.json"),
+    skillsDir: path.join(home, ".qwen", "skills"),
+    // settings.json also carries model/UI/privacy fields — partial-write.
+    mcpFileMode: "shared",
+  },
   "factory-droid": {
     mcp: true,
     skills: true,
@@ -71,6 +89,8 @@ export const AGENT_DISPLAY_NAMES: Record<AgentId, string> = {
   "claude-code": "Claude Code",
   cursor: "Cursor",
   codex: "Codex",
+  "gemini-cli": "Gemini CLI",
+  "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
 };
 
@@ -79,7 +99,16 @@ export const AGENT_ROOTS: Record<AgentId, string> = {
   "claude-code": path.join(home, ".claude"),
   cursor: path.join(home, ".cursor"),
   codex: path.join(home, ".codex"),
+  "gemini-cli": path.join(home, ".gemini"),
+  "qwen-code": path.join(home, ".qwen"),
   "factory-droid": path.join(home, ".factory"),
 };
 
-export const ALL_AGENTS: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
+export const ALL_AGENTS: AgentId[] = [
+  "claude-code",
+  "cursor",
+  "codex",
+  "gemini-cli",
+  "qwen-code",
+  "factory-droid",
+];

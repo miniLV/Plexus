@@ -56,6 +56,9 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
     command: string;
     args?: string[];
     env?: Record<string, string>;
+    url?: string;
+    httpUrl?: string;
+    headers?: Record<string, string>;
   }>
 > {
   const caps = AGENT_PATHS[agentId];
@@ -66,13 +69,7 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
     if (caps.mcpFormat === "json") {
       const data = JSON.parse(raw) as { mcpServers?: Record<string, any> };
       const m = data.mcpServers ?? {};
-      return Object.entries(m).map(([id, cfg]) => ({
-        id,
-        command: String(cfg?.command ?? ""),
-        args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
-        env:
-          cfg?.env && typeof cfg.env === "object" ? (cfg.env as Record<string, string>) : undefined,
-      }));
+      return Object.entries(m).map(([id, cfg]) => readJsonMcpEntry(id, cfg));
     }
     const data = TOML.parse(raw) as { mcp_servers?: Record<string, any> };
     const m = data.mcp_servers ?? {};
@@ -86,6 +83,34 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
   } catch {
     return [];
   }
+}
+
+function readJsonRecord(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, String(child)]));
+}
+
+function readJsonMcpEntry(
+  id: string,
+  cfg: any,
+): {
+  id: string;
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
+} {
+  return {
+    id,
+    command: String(cfg?.command ?? ""),
+    args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
+    env: readJsonRecord(cfg?.env),
+    url: typeof cfg?.url === "string" ? cfg.url : undefined,
+    httpUrl: typeof cfg?.httpUrl === "string" ? cfg.httpUrl : undefined,
+    headers: readJsonRecord(cfg?.headers),
+  };
 }
 
 export async function readNativeSkillsFromAgent(agentId: AgentId): Promise<SkillDef[]> {
@@ -158,18 +183,22 @@ export interface BuildImportPreviewArgs {
 }
 
 export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<ImportPreview> {
-  const perAgent: Record<AgentId, { mcp: number; skills: number }> = {
-    "claude-code": { mcp: 0, skills: 0 },
-    cursor: { mcp: 0, skills: 0 },
-    codex: { mcp: 0, skills: 0 },
-    "factory-droid": { mcp: 0, skills: 0 },
-  };
+  const perAgent = Object.fromEntries(
+    ALL_AGENTS.map((agent) => [agent, { mcp: 0, skills: 0 }]),
+  ) as Record<AgentId, { mcp: number; skills: number }>;
 
   // Aggregate native items across all agents, keyed by id.
   const nativeMcp = new Map<
     string,
     {
-      first: { command: string; args?: string[]; env?: Record<string, string> };
+      first: {
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        url?: string;
+        httpUrl?: string;
+        headers?: Record<string, string>;
+      };
       sources: AgentId[];
     }
   >();
@@ -184,7 +213,14 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
         if (!entry.sources.includes(agentId)) entry.sources.push(agentId);
       } else {
         nativeMcp.set(m.id, {
-          first: { command: m.command, args: m.args, env: m.env },
+          first: {
+            command: m.command,
+            args: m.args,
+            env: m.env,
+            url: m.url,
+            httpUrl: m.httpUrl,
+            headers: m.headers,
+          },
           sources: [agentId],
         });
       }
@@ -226,6 +262,9 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
           command: native.first.command,
           args: native.first.args,
           env: native.first.env,
+          url: native.first.url,
+          httpUrl: native.first.httpUrl,
+          headers: native.first.headers,
           layer: "personal",
           enabledAgents: [...native.sources],
         },

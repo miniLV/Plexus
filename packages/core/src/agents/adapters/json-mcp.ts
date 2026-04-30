@@ -14,7 +14,7 @@ import {
 /**
  * Generic JSON-MCP + skill-directory adapter.
  *
- * Used by Claude Code, Cursor, Factory Droid (and any future agent that
+ * Used by Claude Code, Cursor, Gemini CLI, Qwen Code, Factory Droid (and any future agent that
  * stores MCP as `{ "mcpServers": {...} }` JSON and skills as a directory).
  *
  * Two MCP write modes (chosen by AGENT_PATHS[agent].mcpFileMode):
@@ -26,7 +26,7 @@ import {
  *    file holds nothing else (Cursor, Factory Droid).
  *
  *  - "shared" (default): the agent's file holds many other unrelated keys
- *    (Claude Code's ~/.claude.json carries auth/history/settings). We
+ *    (for example Claude Code's ~/.claude.json carries auth/history/settings). We
  *    partial-write only the `mcpServers` section in place and never replace
  *    the whole file.
  *
@@ -202,8 +202,11 @@ async function writeExclusive(
 
 function serializeMcp(s: MCPServerDef): Record<string, unknown> {
   return {
-    command: s.command,
+    ...(s.command ? { command: s.command } : {}),
     ...(s.args ? { args: s.args } : {}),
     ...(s.env ? { env: s.env } : {}),
+    ...(s.url ? { url: s.url } : {}),
+    ...(s.httpUrl ? { httpUrl: s.httpUrl } : {}),
+    ...(s.headers ? { headers: s.headers } : {}),
   };
 }

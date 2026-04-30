@@ -25,6 +25,8 @@ const FILE_MODE_LABEL: Record<string, string> = {
   "claude-code": "partial-write",
   cursor: "symlink",
   codex: "partial-write",
+  "gemini-cli": "partial-write",
+  "qwen-code": "partial-write",
   "factory-droid": "symlink",
 };
 
@@ -297,16 +299,18 @@ export function MirrorPanel({
             </p>
             <p>
               <span className="text-plexus-accent">Claude Code</span> /{" "}
-              <span className="text-plexus-accent">Codex</span>: their files carry unrelated keys
-              (auth, history, settings, [profile], [auth]). Plexus partial-writes the MCP section in
-              place; everything else is preserved verbatim.
+              <span className="text-plexus-accent">Codex</span> /{" "}
+              <span className="text-plexus-accent">Gemini CLI</span> /{" "}
+              <span className="text-plexus-accent">Qwen Code</span>: their files carry unrelated
+              keys (auth, history, settings, [profile], [auth]). Plexus partial-writes the MCP
+              section in place; everything else is preserved verbatim.
             </p>
             <p>
               <span className="text-plexus-accent">Skills</span>: written as symlinks from each
               agent's skill dir to the Plexus personal store. All agents read the same SKILL.md.
             </p>
             <p>
-              Every sync first snapshots all four agents' MCP files into{" "}
+              Every sync first snapshots managed agents' MCP files into{" "}
               <code className="rounded bg-plexus-surface-2 px-1 py-0.5 font-mono text-[11px]">
                 ~/.config/plexus/backups/&lt;timestamp&gt;/
               </code>

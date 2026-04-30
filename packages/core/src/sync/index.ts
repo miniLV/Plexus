@@ -154,7 +154,14 @@ export interface ShareAllReport extends SyncReport {
   backup?: string;
 }
 
-const AGENT_PRIORITY: AgentId[] = ["codex", "claude-code", "cursor", "factory-droid"];
+const AGENT_PRIORITY: AgentId[] = [
+  "codex",
+  "claude-code",
+  "cursor",
+  "gemini-cli",
+  "qwen-code",
+  "factory-droid",
+];
 
 interface Variant<T> {
   item: T;
@@ -221,11 +228,16 @@ function fingerprint(value: unknown): string {
   return JSON.stringify(sortJson(value));
 }
 
-function mcpFingerprint(item: Pick<MCPServerDef, "command" | "args" | "env">): string {
+function mcpFingerprint(
+  item: Pick<MCPServerDef, "command" | "args" | "env" | "url" | "httpUrl" | "headers">,
+): string {
   return fingerprint({
     command: item.command,
     args: item.args ?? [],
     env: item.env ?? {},
+    url: item.url ?? "",
+    httpUrl: item.httpUrl ?? "",
+    headers: item.headers ?? {},
   });
 }
 
@@ -345,6 +357,9 @@ async function collectNativeShareState(targets: AgentId[]): Promise<NativeShareS
         command: server.command,
         args: server.args,
         env: server.env,
+        url: server.url,
+        httpUrl: server.httpUrl,
+        headers: server.headers,
         layer: "personal",
         enabledAgents: [agent],
       };

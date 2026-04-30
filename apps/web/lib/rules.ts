@@ -29,6 +29,8 @@ const AGENT_LABELS: Record<string, string> = {
   "claude-code": "Claude Code",
   cursor: "Cursor",
   codex: "Codex",
+  "gemini-cli": "Gemini CLI",
+  "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
 };
 

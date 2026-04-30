@@ -1,13 +1,12 @@
-import { applySpread, previewSpread } from "@plexus/core";
-import type { AgentId } from "@plexus/core";
+import { ALL_AGENTS, type AgentId, applySpread, previewSpread } from "@plexus/core";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
+const VALID = new Set<string>(ALL_AGENTS);
 
 function isAgentId(v: unknown): v is AgentId {
-  return typeof v === "string" && (VALID as string[]).includes(v);
+  return typeof v === "string" && VALID.has(v);
 }
 
 /** GET /api/spread?from=cursor&to=claude-code → preview */

@@ -21,6 +21,8 @@ const AGENT_LABELS: Record<string, string> = {
   "claude-code": "Claude",
   cursor: "Cursor",
   codex: "Codex",
+  "gemini-cli": "Gemini",
+  "qwen-code": "Qwen",
   "factory-droid": "Droid",
 };
 
@@ -312,8 +314,11 @@ export function McpEditor({
               new entries via the symlink.
             </p>
             <p>
-              <strong className="text-plexus-text">Claude Code / Codex</strong>: their files carry
-              many unrelated keys (auth/history/[profile]…), so Plexus partial-writes only the{" "}
+              <strong className="text-plexus-text">
+                Claude Code / Codex / Gemini CLI / Qwen Code
+              </strong>
+              : their files carry many unrelated keys (auth/history/[profile]…), so Plexus
+              partial-writes only the{" "}
               <code className="rounded bg-plexus-surface-2 px-1 py-0.5 font-mono text-[11px]">
                 mcpServers
               </code>{" "}

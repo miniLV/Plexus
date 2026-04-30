@@ -1,16 +1,15 @@
-import { toggleMcpAgent } from "@plexus/core";
-import type { AgentId } from "@plexus/core";
+import { ALL_AGENTS, type AgentId, toggleMcpAgent } from "@plexus/core";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
+const VALID = new Set<string>(ALL_AGENTS);
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const body = (await req.json()) as { agent?: string; enabled?: boolean };
-    if (!body.agent || !(VALID as string[]).includes(body.agent)) {
+    if (!body.agent || !VALID.has(body.agent)) {
       return NextResponse.json({ ok: false, message: "agent invalid" }, { status: 400 });
     }
     if (typeof body.enabled !== "boolean") {

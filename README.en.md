@@ -10,7 +10,7 @@
 
 <p align="center">
   Stop copying the same rules, MCP servers, and skills into Claude Code,
-  Cursor, Codex, and Factory Droid by hand.
+  Cursor, Codex, Gemini CLI, Qwen Code, and the rest by hand.
 </p>
 
 <p align="center">
@@ -36,9 +36,9 @@
 ## Why Plexus?
 
 Modern AI coding work is multi-agent. One person might use Claude Code for
-planning, Cursor for editing, Codex for automation, and Factory Droid for
-team workflows. Each tool has its own config files, MCP format, skills folder,
-and instruction file.
+planning, Cursor for editing, Codex for automation, then jump into Gemini CLI,
+Qwen Code, Windsurf, or Kiro for specific workflows. Each tool has its own
+config files, MCP format, skills folder, and instruction file.
 
 That means every useful update turns into busywork:
 
@@ -134,10 +134,17 @@ npm run unlink
 | Claude Code | `~/.claude/CLAUDE.md` | `~/.claude.json` | `~/.claude/skills/` | partial write |
 | Cursor | `~/.cursor/AGENTS.md` | `~/.cursor/mcp.json` | `~/.cursor/commands/` | symlink or copy |
 | Codex | `~/.codex/AGENTS.md` | `~/.codex/config.toml` | `~/.codex/prompts/` | partial write |
+| Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/settings.json` | `~/.gemini/skills/` | partial write |
+| Qwen Code | `~/.qwen/QWEN.md` | `~/.qwen/settings.json` | `~/.qwen/skills/` | partial write |
 | Factory Droid | `~/.factory/AGENTS.md` | `~/.factory/mcp.json` | `~/.factory/skills/` | symlink or copy |
 
 Partial write means Plexus rewrites only the MCP section and preserves the
 agent-owned auth, history, profile, and settings data in the same file.
+
+Settings also includes an Agent Catalog for common tools such as Windsurf,
+Kiro, VS Code Copilot, Cline, Roo Code, Kilo Code, Continue, Aider, Amp,
+OpenHands, and Zed AI. Tools without a native Plexus adapter are shown as
+manual presets so users can register a custom instruction file quickly.
 
 ## How It Works
 
@@ -159,8 +166,9 @@ The `team/` layer is intended to come from a shared Git repo. The `personal/`
 layer belongs to the local user and overrides team entries with the same ID.
 
 For single-purpose native MCP files such as Cursor and Factory Droid, Plexus
-uses symlinks when possible. For shared native files such as `~/.claude.json`
-and `~/.codex/config.toml`, Plexus partial-writes only the MCP section.
+uses symlinks when possible. For shared native files such as `~/.claude.json`,
+`~/.codex/config.toml`, `~/.gemini/settings.json`, and `~/.qwen/settings.json`,
+Plexus partial-writes only the MCP section.
 
 ## CLI
 

@@ -19,6 +19,8 @@ import type { AgentId } from "../types.js";
  *       Claude Code → ~/.claude/CLAUDE.md
  *       Cursor       → ~/.cursor/AGENTS.md (and per-project .cursorrules)
  *       Codex        → ~/.codex/AGENTS.md
+ *       Gemini CLI  → ~/.gemini/GEMINI.md
+ *       Qwen Code   → ~/.qwen/QWEN.md
  *       Factory Droid → ~/.factory/AGENTS.md (if user keeps one)
  *    These are simple read/write so the dashboard can offer a textarea.
  */
@@ -162,6 +164,22 @@ export function instructionsForAgent(
           label: "AGENTS.md (user-level)",
           filename: "AGENTS.md",
           abs: path.join(root, "AGENTS.md"),
+        },
+      ];
+    case "gemini-cli":
+      return [
+        {
+          label: "GEMINI.md (user-level)",
+          filename: "GEMINI.md",
+          abs: path.join(root, "GEMINI.md"),
+        },
+      ];
+    case "qwen-code":
+      return [
+        {
+          label: "QWEN.md (user-level)",
+          filename: "QWEN.md",
+          abs: path.join(root, "QWEN.md"),
         },
       ];
     case "factory-droid":

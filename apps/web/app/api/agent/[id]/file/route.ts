@@ -1,12 +1,17 @@
 import os from "node:os";
 import path from "node:path";
-import { readTextFile, snapshotSingleFile, writeTextFile } from "@plexus/core";
-import type { AgentId } from "@plexus/core";
+import {
+  ALL_AGENTS,
+  type AgentId,
+  readTextFile,
+  snapshotSingleFile,
+  writeTextFile,
+} from "@plexus/core";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
+const VALID = new Set<string>(ALL_AGENTS);
 const HOME = os.homedir();
 
 /**
@@ -25,7 +30,7 @@ function safeResolve(absPath: string): string | null {
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!(VALID as string[]).includes(id)) {
+  if (!VALID.has(id)) {
     return NextResponse.json({ ok: false, message: "unknown agent" }, { status: 404 });
   }
   const url = new URL(req.url);
@@ -47,7 +52,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!(VALID as string[]).includes(id)) {
+  if (!VALID.has(id)) {
     return NextResponse.json({ ok: false, message: "unknown agent" }, { status: 404 });
   }
   try {

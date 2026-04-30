@@ -7,6 +7,8 @@ export const adapters: Record<AgentId, AgentAdapter> = {
   "claude-code": makeJsonMcpAdapter("claude-code"),
   cursor: makeJsonMcpAdapter("cursor"),
   codex: codexAdapter,
+  "gemini-cli": makeJsonMcpAdapter("gemini-cli"),
+  "qwen-code": makeJsonMcpAdapter("qwen-code"),
   "factory-droid": makeJsonMcpAdapter("factory-droid"),
 };
 

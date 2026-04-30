@@ -1,9 +1,9 @@
-import { type AgentId, previewShareAll, runShareAll } from "@plexus/core";
+import { ALL_AGENTS, type AgentId, previewShareAll, runShareAll } from "@plexus/core";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const AGENTS = new Set(["claude-code", "cursor", "codex", "factory-droid"]);
+const AGENTS = new Set<string>(ALL_AGENTS);
 
 function normalizeAgent(input?: string | null): AgentId | undefined {
   return AGENTS.has(input ?? "") ? (input as AgentId) : undefined;

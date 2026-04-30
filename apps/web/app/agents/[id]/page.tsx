@@ -1,17 +1,16 @@
 import { AgentDetail } from "@/components/agent-detail";
-import type { AgentId } from "@plexus/core";
-import { inspectAgent } from "@plexus/core";
+import { ALL_AGENTS, type AgentId, inspectAgent } from "@plexus/core";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
+const VALID = new Set<string>(ALL_AGENTS);
 
 export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!(VALID as string[]).includes(id)) notFound();
+  if (!VALID.has(id)) notFound();
   const data = await inspectAgent(id as AgentId);
 
   return (

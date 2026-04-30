@@ -2,17 +2,17 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
 import { pathExists } from "./fs-utils.js";
-import { PLEXUS_PATHS } from "./paths.js";
+import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
 
 /**
  * Custom agents (Lite) — user-defined agents managed only at the
  * "instruction file" (CLAUDE.md / AGENTS.md / etc.) layer. Stored at
  * `<plexus root>/personal/custom-agents.json`.
  *
- * Built-in agents (claude-code, cursor, codex, factory-droid) are NOT
- * stored here; they live in `AGENT_PATHS` and behave as before. Custom
- * agents only surface on the dashboard's Custom Agents card and let users
- * view/edit a single declared instruction file path.
+ * Built-in agents from ALL_AGENTS are NOT stored here; they live in
+ * `AGENT_PATHS` and behave as before. Custom agents surface in the
+ * dashboard's Agent Catalog and let users view/edit a single declared
+ * instruction file path.
  */
 
 export const CustomAgentSchema = z.object({
@@ -40,7 +40,7 @@ const FileSchema = z.object({
 
 const STORE_PATH = path.join(PLEXUS_PATHS.personal, "custom-agents.json");
 
-const RESERVED_IDS = new Set(["claude-code", "cursor", "codex", "factory-droid"]);
+const RESERVED_IDS = new Set<string>(ALL_AGENTS);
 
 async function readRaw(): Promise<{ agents: CustomAgent[] }> {
   if (!(await pathExists(STORE_PATH))) return { agents: [] };

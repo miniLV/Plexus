@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import type { AgentId } from "../src/types.js";
 import { setupSandbox } from "./_setup.js";
 
 const sandbox = await setupSandbox("rules");
@@ -16,12 +17,12 @@ afterAll(() => sandbox.cleanup());
 
 beforeEach(async () => {
   await fs.rm(PLEXUS_PATHS.root, { recursive: true, force: true });
-  for (const dir of [".claude", ".cursor", ".codex", ".factory"]) {
+  for (const dir of [".claude", ".cursor", ".codex", ".gemini", ".qwen", ".factory"]) {
     await fs.rm(path.join(sandbox.home, dir), { recursive: true, force: true });
   }
 });
 
-function instructionPath(agent: "claude-code" | "cursor" | "codex" | "factory-droid"): string {
+function instructionPath(agent: AgentId): string {
   return instructionsForAgent(agent)[0].abs;
 }
 

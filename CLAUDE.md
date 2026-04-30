@@ -23,10 +23,12 @@ Supported built-in agents:
 | Claude Code | `~/.claude.json` | `~/.claude/skills/` | `shared` |
 | Cursor | `~/.cursor/mcp.json` | `~/.cursor/commands/` | `exclusive` |
 | Codex | `~/.codex/config.toml` | `~/.codex/prompts/` | `shared` |
+| Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `shared` |
+| Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 
-The current package version is **0.0.9**. All workspace `package.json` files
-must stay on the same version:
+The current package version is tracked in the root `package.json`. All
+workspace `package.json` files must stay on the same version:
 
 - `package.json`
 - `apps/web/package.json`
@@ -47,7 +49,8 @@ agent-native locations with the smallest reversible write:
   native skill directory.
 - **Rules** are stored once at
   `~/.config/plexus/personal/rules/global.md`, then linked or copied to
-  Claude Code's `CLAUDE.md` and each other built-in agent's `AGENTS.md`.
+  each built-in agent's native instruction file (`CLAUDE.md`, `AGENTS.md`,
+  `GEMINI.md`, or `QWEN.md`).
 - **Backups** are taken before syncs, toggles, and dashboard file edits.
 
 ### Non-Goals
@@ -212,12 +215,12 @@ Important nuance: exclusive mode still preserves native MCP IDs that Plexus
 does not manage by reading the current file first and carrying those entries
 forward.
 
-#### Shared Mode: Claude Code, Codex
+#### Shared Mode: Claude Code, Codex, Gemini CLI, Qwen Code
 
 These files contain auth, history, profiles, and other agent-owned state.
 Plexus must never replace the whole file.
 
-- Claude Code JSON: rewrite only `mcpServers`.
+- Claude Code / Gemini CLI / Qwen Code JSON: rewrite only `mcpServers`.
 - Codex TOML: rewrite only `mcp_servers`.
 - Managed IDs disabled for the agent are removed from that MCP section.
 - Unmanaged native MCP IDs are preserved.
@@ -240,6 +243,8 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - Claude Code target: `~/.claude/skills/<id>`
 - Cursor target: `~/.cursor/commands/<id>`
 - Codex target: `~/.codex/prompts/<id>`
+- Gemini CLI target: `~/.gemini/skills/<id>`
+- Qwen Code target: `~/.qwen/skills/<id>`
 - Factory Droid target: `~/.factory/skills/<id>`
 
 `placeLinkOrCopy()` is the shared helper. If a real file or directory already
@@ -254,6 +259,8 @@ Rules are the product answer to "one instruction file for every AI tool."
 - Claude Code target: `~/.claude/CLAUDE.md`
 - Cursor target: `~/.cursor/AGENTS.md`
 - Codex target: `~/.codex/AGENTS.md`
+- Gemini CLI target: `~/.gemini/GEMINI.md`
+- Qwen Code target: `~/.qwen/QWEN.md`
 - Factory Droid target: `~/.factory/AGENTS.md`
 
 Implementation:
@@ -406,11 +413,13 @@ Still missing:
 
 ### 4.6 Custom Agents
 
-Settings includes a "Custom agents" lite registry.
+Settings includes an Agent Catalog plus a custom-agent lite registry.
 
 Implementation:
 
 - `packages/core/src/store/custom-agents.ts`
+- `packages/core/src/agents/catalog.ts`
+- `GET /api/agent-catalog`
 - `GET/POST /api/custom-agents`
 - `DELETE /api/custom-agents/[id]`
 - `apps/web/components/custom-agents-panel.tsx`
@@ -421,6 +430,9 @@ Scope today:
 
 - add/remove a custom agent record
 - store ID, display name, instruction file path, optional note
+- list common market tools as either `full sync` built-ins or manual presets
+  (Windsurf, Kiro, VS Code Copilot, Cline, Roo Code, Kilo Code, Continue,
+  Aider, Amp, OpenHands, Zed AI)
 
 Out of scope today:
 
@@ -580,8 +592,8 @@ Core source: `packages/core/src/agents/inspect.ts`.
 
 Shows:
 
-- conventional instruction file (`CLAUDE.md` for Claude Code, `AGENTS.md`
-  for Cursor/Codex/Droid)
+- conventional instruction file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, or
+  `QWEN.md` depending on the agent)
 - skill entries with `Plexus-owned` vs `agent-local`
 - MCP file status, mode, size, mtime, symlink target
 
@@ -631,7 +643,8 @@ Component: `apps/web/components/mirror-panel.tsx`.
 
 Single source agent, multiple target agents. The panel calls `/api/spread`
 for each target preview and apply. Target badges show how the target will be
-written: `partial-write` for Claude/Codex, `symlink` for Cursor/Droid.
+written: `partial-write` for Claude/Codex/Gemini/Qwen, `symlink` for
+Cursor/Droid.
 
 ### Backups `/backups`
 
@@ -658,7 +671,7 @@ conflict handling are manual.
 Components:
 
 - `SettingsPanel`: enabled agents, sync strategy, local-only pledge
-- `CustomAgentsPanel`: custom agent lite registry
+- `CustomAgentsPanel`: Agent Catalog and custom agent lite registry
 
 ---
 
@@ -878,6 +891,7 @@ Recently important fixes that must not regress:
 | Debug snapshot | `packages/core/src/debug/index.ts` |
 | CLI | `packages/cli/src/bin.ts` |
 | Sidebar nav and version badge | `apps/web/components/app-sidebar.tsx` |
+| Agent catalog presets | `packages/core/src/agents/catalog.ts` |
 | Agent file edit API | `apps/web/app/api/agent/[id]/file/route.ts` |
 | Rules API | `apps/web/app/api/rules/route.ts` |
 | Rules UI | `apps/web/components/rules-panel.tsx` |
@@ -885,6 +899,6 @@ Recently important fixes that must not regress:
 
 ---
 
-*Last updated for v0.0.9 on 2026-04-30. If you change the sync contract,
+*Last updated for v0.0.14 on 2026-04-30. If you change the sync contract,
 store layout, backup behavior, supported paths, CLI behavior, or UI routes,
 update this file in the same change.*

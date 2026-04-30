@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  ALL_AGENTS,
   type AgentId,
   detectAgents,
   ensureStoreScaffolding,
@@ -41,16 +42,14 @@ async function cmdDetect(): Promise<void> {
   }
 }
 
-const AGENTS = new Set(["claude-code", "cursor", "codex", "factory-droid"]);
+const AGENTS = new Set<string>(ALL_AGENTS);
 
 function preferredAgentFromArgs(args: string[]): AgentId | undefined {
   const idx = args.findIndex((arg) => arg === "--prefer" || arg === "--primary");
   if (idx < 0) return undefined;
   const value = args[idx + 1];
   if (!AGENTS.has(value ?? "")) {
-    console.error(
-      kleur.red("Usage: plexus sync --prefer <claude-code|cursor|codex|factory-droid>"),
-    );
+    console.error(kleur.red(`Usage: plexus sync --prefer <${ALL_AGENTS.join("|")}>`));
     process.exit(1);
   }
   return value as AgentId;

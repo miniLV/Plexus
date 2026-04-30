@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import { FileText, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 
 type CustomAgent = {
@@ -14,8 +14,22 @@ type CustomAgent = {
   createdAt: string;
 };
 
+type CatalogAgent = {
+  id: string;
+  displayName: string;
+  support: "full" | "instructions-only" | "manual";
+  managed: boolean;
+  installed: boolean;
+  rootDir?: string;
+  instructionFile?: string;
+  mcpPath?: string;
+  skillsDir?: string;
+  note: string;
+};
+
 export function CustomAgentsPanel() {
   const [agents, setAgents] = useState<CustomAgent[]>([]);
+  const [catalog, setCatalog] = useState<CatalogAgent[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ id: "", displayName: "", instructionFile: "", note: "" });
@@ -30,9 +44,14 @@ export function CustomAgentsPanel() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/custom-agents");
-      const data = await res.json();
-      setAgents(data.agents ?? []);
+      const [customRes, catalogRes] = await Promise.all([
+        fetch("/api/custom-agents"),
+        fetch("/api/agent-catalog"),
+      ]);
+      const customData = await customRes.json();
+      const catalogData = await catalogRes.json();
+      setAgents(customData.agents ?? []);
+      setCatalog(catalogData.agents ?? []);
     } finally {
       setLoading(false);
     }
@@ -42,9 +61,16 @@ export function CustomAgentsPanel() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/custom-agents");
-        const data = await res.json();
-        if (!cancelled) setAgents(data.agents ?? []);
+        const [customRes, catalogRes] = await Promise.all([
+          fetch("/api/custom-agents"),
+          fetch("/api/agent-catalog"),
+        ]);
+        const customData = await customRes.json();
+        const catalogData = await catalogRes.json();
+        if (!cancelled) {
+          setAgents(customData.agents ?? []);
+          setCatalog(catalogData.agents ?? []);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -84,6 +110,34 @@ export function CustomAgentsPanel() {
     }
   }
 
+  async function addPreset(agent: CatalogAgent) {
+    if (!agent.instructionFile) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/custom-agents", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: agent.id,
+          displayName: agent.displayName,
+          instructionFile: agent.instructionFile,
+          note: agent.note,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(data.error ?? "Failed to add custom agent");
+        return;
+      }
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleRemove(id: string) {
     if (!confirm(`Remove custom agent '${id}'? The instruction file on disk is not deleted.`))
       return;
@@ -96,15 +150,21 @@ export function CustomAgentsPanel() {
     }
   }
 
+  const customIds = new Set(agents.map((agent) => agent.id));
+  const sortedCatalog = [...catalog].sort(
+    (a, b) =>
+      Number(b.installed) - Number(a.installed) || a.displayName.localeCompare(b.displayName),
+  );
+
   return (
     <Card className="p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="plexus-eyebrow mb-1">Custom agents</div>
+          <div className="plexus-eyebrow mb-1">Agent catalog</div>
           <p className="max-w-xl text-xs text-plexus-text-3">
-            Register an AI agent Plexus doesn't know about (e.g. GitHub Copilot CLI, an in-house
-            tool). Lite scope: only its instruction file (CLAUDE.md / AGENTS.md / etc.) is tracked —
-            MCP and Skills sync are not enabled for custom agents yet.
+            Built-in agents sync Rules, MCP, and Skills. Other popular tools are listed as manual
+            presets so users can quickly track an instruction file without waiting for a native
+            adapter.
           </p>
         </div>
         {!adding && (
@@ -114,6 +174,62 @@ export function CustomAgentsPanel() {
           </Button>
         )}
       </div>
+
+      {catalog.length > 0 && (
+        <div className="mt-5 overflow-x-auto rounded border border-plexus-border">
+          <div className="grid min-w-[720px] grid-cols-[1fr_86px_92px_96px] gap-x-4 border-b border-plexus-border bg-plexus-surface-2/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
+            <div>Agent</div>
+            <div className="text-right">Status</div>
+            <div className="text-right">Support</div>
+            <div className="text-right">Action</div>
+          </div>
+          {sortedCatalog.map((agent) => {
+            const alreadyTracked = customIds.has(agent.id);
+            return (
+              <div
+                key={agent.id}
+                className={`grid min-w-[720px] grid-cols-[1fr_86px_92px_96px] gap-x-4 border-b border-plexus-border/60 px-4 py-3 text-sm last:border-0 ${
+                  agent.installed ? "bg-plexus-bg" : "bg-plexus-surface text-plexus-text-3"
+                }`}
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-plexus-text">{agent.displayName}</div>
+                  <div className="font-mono text-[11px] text-plexus-text-3">{agent.id}</div>
+                  <div className="mt-1 truncate font-mono text-[11px] text-plexus-text-2">
+                    {agent.mcpPath ?? agent.instructionFile ?? agent.rootDir}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge variant={agent.installed ? "synced" : "native"}>
+                    {agent.installed ? "installed" : "missing"}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  <Badge variant={agent.managed ? "personal" : "outline"}>
+                    {agent.support === "full" ? "full sync" : "manual"}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  {agent.managed ? (
+                    <Badge variant="synced">built-in</Badge>
+                  ) : alreadyTracked ? (
+                    <Badge variant="native">tracked</Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addPreset(agent)}
+                      disabled={busy || !agent.instructionFile}
+                    >
+                      Track file
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add form */}
       {adding && (
@@ -231,8 +347,8 @@ export function CustomAgentsPanel() {
           </div>
         )}
         {agents.length > 0 && (
-          <div className="overflow-hidden rounded border border-plexus-border">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border bg-plexus-surface-2/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
+          <div className="overflow-x-auto rounded border border-plexus-border">
+            <div className="grid min-w-[720px] grid-cols-[1fr_130px_180px] gap-x-4 border-b border-plexus-border bg-plexus-surface-2/40 px-4 py-2.5 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
               <div>Agent</div>
               <div className="text-right">Lite</div>
               <div className="text-right">Action</div>
@@ -240,7 +356,7 @@ export function CustomAgentsPanel() {
             {agents.map((a) => (
               <div
                 key={a.id}
-                className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border/60 px-4 py-3 text-sm last:border-0"
+                className="grid min-w-[720px] grid-cols-[1fr_130px_180px] gap-x-4 border-b border-plexus-border/60 px-4 py-3 text-sm last:border-0"
               >
                 <div>
                   <div className="font-semibold text-plexus-text">{a.displayName}</div>
@@ -256,7 +372,8 @@ export function CustomAgentsPanel() {
                 <div className="text-right">
                   <Badge variant="native">instructions only</Badge>
                 </div>
-                <div className="text-right">
+                <div className="flex justify-end gap-2 text-right">
+                  <CustomAgentFileButton agent={a} />
                   <Button
                     variant="ghost"
                     size="sm"
@@ -273,5 +390,126 @@ export function CustomAgentsPanel() {
         )}
       </div>
     </Card>
+  );
+}
+
+function CustomAgentFileButton({ agent }: { agent: CustomAgent }) {
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [exists, setExists] = useState(false);
+  const [content, setContent] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || loaded) return;
+    setBusy(true);
+    fetch(`/api/custom-agents/${encodeURIComponent(agent.id)}/file`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) {
+          setMsg(data.message ?? "Failed to read file");
+          return;
+        }
+        setContent(data.content ?? "");
+        setExists(Boolean(data.exists));
+      })
+      .catch((err) => setMsg((err as Error).message))
+      .finally(() => {
+        setLoaded(true);
+        setBusy(false);
+      });
+  }, [open, loaded, agent.id]);
+
+  async function save() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/custom-agents/${encodeURIComponent(agent.id)}/file`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setMsg(data.message ?? "Failed to save file");
+        return;
+      }
+      setExists(true);
+      setMsg(data.backup ? `Saved. Backup: ${data.backup}` : "Saved.");
+    } catch (err) {
+      setMsg((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+        Edit
+      </Button>
+      {open && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex cursor-default items-center justify-center bg-black/70 p-6"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="flex h-[80vh] w-[80vw] max-w-5xl cursor-default flex-col overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-plexus-border px-5 py-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Badge variant={exists ? "synced" : "native"}>
+                    {exists ? "editing" : "new file"}
+                  </Badge>
+                  <span className="text-sm font-semibold text-plexus-text">
+                    {agent.displayName}
+                  </span>
+                </div>
+                <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                  {agent.instructionFile}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setOpen(false)}
+                className="text-plexus-text-3 hover:text-plexus-text"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="border-b border-plexus-border bg-plexus-surface-2/40 px-5 py-2 text-xs text-plexus-text-3">
+              Plexus snapshots the current file before save. Missing files are created on first
+              save.
+            </div>
+            {msg && (
+              <div className="border-b border-plexus-border bg-plexus-surface-2 px-5 py-2 text-xs text-plexus-text-2">
+                {msg}
+              </div>
+            )}
+            <textarea
+              className="flex-1 resize-none bg-plexus-bg p-4 font-mono text-xs text-plexus-text outline-none"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border px-5 py-3">
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                Close
+              </Button>
+              <Button variant="primary" size="sm" onClick={save} disabled={busy}>
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />}
+                {busy ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

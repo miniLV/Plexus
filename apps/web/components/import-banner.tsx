@@ -32,6 +32,8 @@ const AGENT_LABELS: Record<string, string> = {
   "claude-code": "Claude",
   cursor: "Cursor",
   codex: "Codex",
+  "gemini-cli": "Gemini",
+  "qwen-code": "Qwen",
   "factory-droid": "Droid",
 };
 
