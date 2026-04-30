@@ -818,6 +818,11 @@ not be included.
 - Default branch is `master`.
 - Business-logic commits should bump patch versions across all workspace
   packages.
+- After making requested changes, run the relevant validation, stage only the
+  intended files, and create a commit without waiting for a separate prompt.
+- If the work was done in a separate git worktree or feature branch, merge it
+  back into `master` after validation unless the user explicitly asks to keep it
+  separate.
 - Never push without a successful build.
 - Commit messages are short English subjects with this trailer:
 
@@ -885,10 +890,10 @@ ls ~/.cursor        | grep plexus-backup || echo "(clean)"
 ls ~/.factory       | grep plexus-backup || echo "(clean)"
 ```
 
-For doc-only changes to `CLAUDE.md`, at minimum run:
+For doc-only changes to `CLAUDE.md` or `AGENTS.md`, at minimum run:
 
 ```bash
-git diff --check -- CLAUDE.md
+git diff --check -- CLAUDE.md AGENTS.md
 ```
 
 ---

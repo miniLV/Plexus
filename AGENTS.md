@@ -2,6 +2,8 @@
 
 This repo keeps the detailed agent operating guide in [CLAUDE.md](./CLAUDE.md).
 Read that file before changing code.
+Codex uses this file as its project entrypoint; keep it as a thin pointer to
+the current project's `CLAUDE.md` instead of duplicating the full guide here.
 
 Short version:
 
