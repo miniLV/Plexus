@@ -4,11 +4,11 @@
  */
 import fs from "node:fs/promises";
 import path from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { setupSandbox } from "./_setup.js";
 
 const sandbox = await setupSandbox("snapshot-restore");
-const { snapshotAgentConfigs, restoreSnapshot, listBackups } = await import(
+const { snapshotAgentConfigs, restoreSnapshot, listBackups, snapshotSingleFile } = await import(
   "../src/backup/index.js"
 );
 const { AGENT_PATHS, ALL_AGENTS } = await import("../src/store/paths.js");
@@ -60,6 +60,38 @@ describe("snapshot/restore round-trip", () => {
       expect(typeof e.agent).toBe("string");
       expect(typeof e.originalPath).toBe("string");
       expect(typeof e.backupPath).toBe("string");
+    }
+  });
+
+  it("keeps single-file snapshots unique when basenames match in the same millisecond", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-30T12:00:00.000Z"));
+    try {
+      const cursorRules = path.join(sandbox.home, ".cursor", "AGENTS.md");
+      const codexRules = path.join(sandbox.home, ".codex", "AGENTS.md");
+      await fs.mkdir(path.dirname(cursorRules), { recursive: true });
+      await fs.mkdir(path.dirname(codexRules), { recursive: true });
+      await fs.writeFile(cursorRules, "cursor", "utf8");
+      await fs.writeFile(codexRules, "codex", "utf8");
+
+      const cursorBackup = await snapshotSingleFile(cursorRules, "same-ms");
+      const codexBackup = await snapshotSingleFile(codexRules, "same-ms");
+
+      expect(cursorBackup).toBeTruthy();
+      expect(codexBackup).toBeTruthy();
+      expect(cursorBackup).not.toBe(codexBackup);
+
+      const backups = await listBackups();
+      const entries = backups.flatMap((backup) => backup.entries);
+      const cursorEntry = entries.find((entry) => entry.originalPath === cursorRules);
+      const codexEntry = entries.find((entry) => entry.originalPath === codexRules);
+      expect(cursorEntry?.backupPath).toBeTruthy();
+      expect(codexEntry?.backupPath).toBeTruthy();
+      expect(path.basename(cursorEntry!.backupPath)).not.toBe(
+        path.basename(codexEntry!.backupPath),
+      );
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

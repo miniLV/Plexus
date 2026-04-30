@@ -1,5 +1,6 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
+import { snapshotAgentConfigs } from "../backup/index.js";
 import { buildImportPreview } from "../import/from-agents.js";
 import { readConfig } from "../store/config.js";
 import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
@@ -115,6 +116,7 @@ export async function applySpread(opts: {
   mcpAdded: number;
   skillsAdded: number;
   syncResult?: SyncResult;
+  backup?: string;
 }> {
   const { from, to } = opts;
   if (from === to) return { mcpAdded: 0, skillsAdded: 0 };
@@ -214,6 +216,9 @@ export async function applySpread(opts: {
   for (const s of mergedSkills) {
     skillSourcePaths.set(s.id, resolveSkillSourceDir(s.layer, s.id));
   }
+  const backup = await snapshotAgentConfigs({
+    reason: `mirror ${from} to ${to}`,
+  });
   const syncResult = await adapters[to].apply({
     agentId: to,
     mcp: mergedMcp,
@@ -222,7 +227,7 @@ export async function applySpread(opts: {
     syncStrategy: config.syncStrategy ?? "symlink",
   });
 
-  return { mcpAdded, skillsAdded, syncResult };
+  return { mcpAdded, skillsAdded, syncResult, backup: backup.dir };
 }
 
 export const SPREAD_AGENTS: AgentId[] = ALL_AGENTS;

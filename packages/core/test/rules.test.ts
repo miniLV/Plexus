@@ -9,9 +9,8 @@ const { listBackups } = await import("../src/backup/index.js");
 const { instructionsForAgent } = await import("../src/agents/inspect.js");
 const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 const { readEffectiveRules, rulesFile, writePersonalRules } = await import("../src/store/rules.js");
-const { applyRulesToAgents, getRulesStatus, importRulesFromAgent } = await import(
-  "../src/rules/index.js"
-);
+const { applyRulesToAgents, detachRulesFromAgent, getRulesStatus, importRulesFromAgent } =
+  await import("../src/rules/index.js");
 
 afterAll(() => sandbox.cleanup());
 
@@ -105,6 +104,20 @@ describe("applyRulesToAgents", () => {
     ).toBe(true);
   });
 
+  it("materializes a team-only baseline into personal rules before applying", async () => {
+    const teamPath = rulesFile("team");
+    await fs.mkdir(path.dirname(teamPath), { recursive: true });
+    await fs.writeFile(teamPath, "team rules", "utf8");
+    const cursorPath = instructionPath("cursor");
+    await fs.mkdir(path.dirname(cursorPath), { recursive: true });
+
+    const [result] = await applyRulesToAgents(["cursor"]);
+
+    expect(result.applied).toBe(true);
+    expect(await fs.readFile(rulesFile("personal"), "utf8")).toBe("team rules");
+    expect(await fs.readFile(cursorPath, "utf8")).toBe("team rules");
+  });
+
   it("does not touch native MCP files", async () => {
     await writePersonalRules("canonical rules");
     const mcpPath = AGENT_PATHS.cursor.mcpPath;
@@ -114,6 +127,59 @@ describe("applyRulesToAgents", () => {
     await applyRulesToAgents(["cursor"]);
 
     expect(await fs.readFile(mcpPath, "utf8")).toBe('{"mcpServers":{"keep":{"command":"x"}}}');
+  });
+});
+
+describe("detachRulesFromAgent", () => {
+  it("turns a managed symlink into a local instruction file without losing content", async () => {
+    await writePersonalRules("canonical rules");
+    const cursorPath = instructionPath("cursor");
+    await fs.mkdir(path.dirname(cursorPath), { recursive: true });
+    await fs.symlink(rulesFile("personal"), cursorPath, "file");
+
+    const result = await detachRulesFromAgent("cursor");
+
+    expect(result).toMatchObject({
+      agent: "cursor",
+      targetPath: cursorPath,
+      detached: true,
+    });
+    expect(result.snapshotDir).toBeTruthy();
+    expect((await fs.lstat(cursorPath)).isSymbolicLink()).toBe(false);
+    expect(await fs.readFile(cursorPath, "utf8")).toBe("canonical rules");
+
+    const status = await getRulesStatus();
+    expect(status.agents.find((a) => a.agent === "cursor")).toMatchObject({
+      exists: true,
+      isSymlink: false,
+      inSync: true,
+    });
+  });
+
+  it("does not detach a user-owned symlink even when its content matches the baseline", async () => {
+    await writePersonalRules("canonical rules");
+    const externalPath = path.join(sandbox.home, "external-rules.md");
+    await fs.writeFile(externalPath, "canonical rules", "utf8");
+    const cursorPath = instructionPath("cursor");
+    await fs.mkdir(path.dirname(cursorPath), { recursive: true });
+    await fs.symlink(externalPath, cursorPath, "file");
+
+    const status = await getRulesStatus();
+    expect(status.agents.find((a) => a.agent === "cursor")).toMatchObject({
+      exists: true,
+      isSymlink: true,
+      linkTarget: externalPath,
+      inSync: false,
+    });
+
+    const result = await detachRulesFromAgent("cursor");
+
+    expect(result).toMatchObject({
+      detached: false,
+      skipped: true,
+    });
+    expect((await fs.lstat(cursorPath)).isSymbolicLink()).toBe(true);
+    expect(await fs.readlink(cursorPath)).toBe(externalPath);
   });
 });
 

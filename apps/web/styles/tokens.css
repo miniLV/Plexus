@@ -11,30 +11,6 @@
  */
 
 :root,
-[data-theme="dark"] {
-  --plexus-bg: 26 26 23;
-  --plexus-surface: 38 38 36;
-  --plexus-surface-2: 47 47 44;
-  --plexus-border: 58 58 55;
-  --plexus-border-strong: 74 74 69;
-
-  --plexus-text: 245 244 237;
-  --plexus-text-2: 194 191 179;
-  --plexus-text-3: 138 134 120;
-  --plexus-text-mute: 107 103 89;
-
-  --plexus-accent: 204 120 92;
-  --plexus-accent-2: 214 139 115;
-
-  --plexus-ok: 107 153 113;
-  --plexus-warn: 200 164 92;
-  --plexus-err: 196 96 79;
-  --plexus-info: 107 138 168;
-
-  --plexus-code-bg: 31 31 29;
-  --plexus-code-fg: 212 208 196;
-}
-
 [data-theme="light"] {
   --plexus-bg: 245 244 237;
   --plexus-surface: 255 255 255;
@@ -57,6 +33,30 @@
 
   --plexus-code-bg: 240 238 229;
   --plexus-code-fg: 42 42 38;
+}
+
+[data-theme="dark"] {
+  --plexus-bg: 26 26 23;
+  --plexus-surface: 38 38 36;
+  --plexus-surface-2: 47 47 44;
+  --plexus-border: 58 58 55;
+  --plexus-border-strong: 74 74 69;
+
+  --plexus-text: 245 244 237;
+  --plexus-text-2: 194 191 179;
+  --plexus-text-3: 138 134 120;
+  --plexus-text-mute: 107 103 89;
+
+  --plexus-accent: 204 120 92;
+  --plexus-accent-2: 214 139 115;
+
+  --plexus-ok: 107 153 113;
+  --plexus-warn: 200 164 92;
+  --plexus-err: 196 96 79;
+  --plexus-info: 107 138 168;
+
+  --plexus-code-bg: 31 31 29;
+  --plexus-code-fg: 212 208 196;
 }
 
 /* Common, theme-agnostic */

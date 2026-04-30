@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ensureDir, pathExists } from "../store/fs-utils.js";
@@ -40,13 +41,34 @@ export interface BackupSnapshot {
 }
 
 const KEEP = 20;
+const SNAPSHOT_ID_RE = /^\d{4}-\d{2}-\d{2}T/;
+
+async function createSnapshotDir(): Promise<{ id: string; dir: string }> {
+  await ensureDir(PLEXUS_PATHS.backups);
+  const base = new Date().toISOString().replace(/[:.]/g, "-");
+  for (let i = 0; i < 1000; i += 1) {
+    const id = i === 0 ? base : `${base}-${String(i).padStart(3, "0")}`;
+    const dir = path.join(PLEXUS_PATHS.backups, id);
+    try {
+      await fs.mkdir(dir, { recursive: false });
+      return { id, dir };
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+    }
+  }
+  throw new Error(`Could not allocate a unique backup directory for ${base}`);
+}
+
+function backupFileName(filePath: string): string {
+  const parsed = path.parse(filePath);
+  const hash = crypto.createHash("sha256").update(path.resolve(filePath)).digest("hex").slice(0, 8);
+  return `${parsed.name}.${hash}${parsed.ext || ".bak"}`;
+}
 
 export async function snapshotAgentConfigs(opts?: {
   reason?: string;
 }): Promise<BackupSnapshot> {
-  const id = new Date().toISOString().replace(/[:.]/g, "-");
-  const dir = path.join(PLEXUS_PATHS.backups, id);
-  await ensureDir(dir);
+  const { id, dir } = await createSnapshotDir();
 
   if (opts?.reason) {
     await fs.writeFile(path.join(dir, "_reason.txt"), opts.reason, "utf8").catch(() => {});
@@ -102,7 +124,7 @@ async function pruneOldBackups(keep: number): Promise<void> {
   try {
     const ents = await fs.readdir(PLEXUS_PATHS.backups, { withFileTypes: true });
     const dirs = ents
-      .filter((e) => e.isDirectory())
+      .filter((e) => e.isDirectory() && SNAPSHOT_ID_RE.test(e.name))
       .map((e) => e.name)
       .sort()
       .reverse();
@@ -151,13 +173,11 @@ export async function snapshotSingleFile(
   reason?: string,
 ): Promise<string | null> {
   if (!(await pathExists(filePath))) return null;
-  const id = new Date().toISOString().replace(/[:.]/g, "-");
-  const dir = path.join(PLEXUS_PATHS.backups, id);
-  await ensureDir(dir);
+  const { id, dir } = await createSnapshotDir();
   if (reason) {
     await fs.writeFile(path.join(dir, "_reason.txt"), reason, "utf8").catch(() => {});
   }
-  const fname = path.basename(filePath);
+  const fname = backupFileName(filePath);
   const backupPath = path.join(dir, fname);
   try {
     const content = await fs.readFile(filePath);

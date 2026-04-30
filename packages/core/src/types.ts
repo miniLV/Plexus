@@ -123,6 +123,16 @@ export interface RulesApplyResult {
   error?: string;
 }
 
+export interface RulesDetachResult {
+  agent: AgentId;
+  targetPath: string;
+  detached: boolean;
+  skipped?: boolean;
+  reason?: string;
+  snapshotDir?: string | null;
+  error?: string;
+}
+
 export type ConfigLayer = "team" | "personal";
 
 export interface PlexusConfig {

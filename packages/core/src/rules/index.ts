@@ -7,7 +7,13 @@ import { readConfig } from "../store/config.js";
 import { ensureDir } from "../store/fs-utils.js";
 import { AGENT_DISPLAY_NAMES, ALL_AGENTS } from "../store/paths.js";
 import { readEffectiveRules, readRules, rulesFile, writePersonalRules } from "../store/rules.js";
-import type { AgentId, RulesApplyResult, RulesStatus, RulesTargetStatus } from "../types.js";
+import type {
+  AgentId,
+  RulesApplyResult,
+  RulesDetachResult,
+  RulesStatus,
+  RulesTargetStatus,
+} from "../types.js";
 
 function instructionTarget(agentId: AgentId): string {
   const [target] = instructionsForAgent(agentId);
@@ -58,8 +64,10 @@ async function targetStatus(
 
   if (!canonicalPath || canonicalContent === null) return status;
 
-  if (status.linkTarget && path.resolve(status.linkTarget) === path.resolve(canonicalPath)) {
-    status.inSync = true;
+  if (status.isSymlink) {
+    status.inSync = Boolean(
+      status.linkTarget && path.resolve(status.linkTarget) === path.resolve(canonicalPath),
+    );
     return status;
   }
 
@@ -147,7 +155,14 @@ export async function getRulesStatus(): Promise<RulesStatus> {
 export async function applyRulesToAgents(
   agentIds: AgentId[] = ALL_AGENTS,
 ): Promise<RulesApplyResult[]> {
-  const personal = await readRules("personal");
+  let personal = await readRules("personal");
+  if (!personal) {
+    const effective = await readEffectiveRules();
+    if (effective) {
+      await writePersonalRules(effective.content);
+      personal = await readRules("personal");
+    }
+  }
   if (!personal) {
     throw new Error(
       `Cannot apply rules: personal canonical rules file does not exist at ${rulesFile("personal")}`,
@@ -229,4 +244,97 @@ export async function importRulesFromAgent(agentId: AgentId): Promise<void> {
     );
   }
   await writePersonalRules(content);
+}
+
+export async function detachRulesFromAgent(agent: AgentId): Promise<RulesDetachResult> {
+  const targetPath = instructionTarget(agent);
+  const config = await readConfig();
+  const detected = detectAgents();
+  const installed = detected.find((candidate) => candidate.id === agent)?.installed ?? false;
+
+  if (!installed) {
+    return {
+      agent,
+      targetPath,
+      detached: false,
+      skipped: true,
+      reason: `${AGENT_DISPLAY_NAMES[agent]} is not installed.`,
+    };
+  }
+  if (config.agents[agent] === false) {
+    return {
+      agent,
+      targetPath,
+      detached: false,
+      skipped: true,
+      reason: `${AGENT_DISPLAY_NAMES[agent]} is disabled in Plexus settings.`,
+    };
+  }
+
+  try {
+    const lst = await fs.lstat(targetPath);
+    if (!lst.isSymbolicLink()) {
+      return {
+        agent,
+        targetPath,
+        detached: false,
+        skipped: true,
+        reason: `${AGENT_DISPLAY_NAMES[agent]} already has a local instruction file.`,
+      };
+    }
+    const personal = await readRules("personal");
+    if (!personal) {
+      return {
+        agent,
+        targetPath,
+        detached: false,
+        skipped: true,
+        reason: "No personal rules baseline exists for Plexus to detach from.",
+      };
+    }
+    const linkTarget = await readLinkTarget(targetPath);
+    if (!linkTarget || path.resolve(linkTarget) !== path.resolve(personal.path)) {
+      return {
+        agent,
+        targetPath,
+        detached: false,
+        skipped: true,
+        reason: `${AGENT_DISPLAY_NAMES[agent]}'s instruction file is a symlink, but Plexus does not own that link.`,
+      };
+    }
+
+    let content: string;
+    try {
+      content = await fs.readFile(targetPath, "utf8");
+    } catch {
+      content = personal.content;
+    }
+
+    const snapshotDir = await snapshotSingleFile(targetPath, `Detach Plexus rules from ${agent}`);
+    await fs.unlink(targetPath);
+    await fs.writeFile(targetPath, content, "utf8");
+
+    return {
+      agent,
+      targetPath,
+      detached: true,
+      snapshotDir,
+    };
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      return {
+        agent,
+        targetPath,
+        detached: false,
+        skipped: true,
+        reason: `${AGENT_DISPLAY_NAMES[agent]} has no instruction file to detach.`,
+      };
+    }
+    return {
+      agent,
+      targetPath,
+      detached: false,
+      error: (err as Error).message,
+    };
+  }
 }

@@ -9,6 +9,7 @@ type RulesCore = typeof core & {
   writePersonalRules?: (content: string) => Promise<unknown> | unknown;
   applyRulesToAgents?: (agentIds?: AgentId[]) => Promise<unknown> | unknown;
   importRulesFromAgent?: (agentId: AgentId) => Promise<unknown> | unknown;
+  detachRulesFromAgent?: (agentId: AgentId) => Promise<unknown> | unknown;
 };
 
 const rulesCore = core as RulesCore;
@@ -89,7 +90,30 @@ export async function POST(req: Request) {
       return statusAfter(result);
     }
 
-    return NextResponse.json({ error: "action must be apply or import" }, { status: 400 });
+    if (body.action === "detach") {
+      if (!rulesCore.detachRulesFromAgent) return missing("detachRulesFromAgent");
+      const agentId = parseAgentId(body.agentId);
+      if (!agentId) {
+        return NextResponse.json({ error: "agentId must be a known agent id" }, { status: 400 });
+      }
+      const result = await rulesCore.detachRulesFromAgent(agentId);
+      return statusAfter(result);
+    }
+
+    if (body.action === "relink") {
+      if (!rulesCore.applyRulesToAgents) return missing("applyRulesToAgents");
+      const agentId = parseAgentId(body.agentId);
+      if (!agentId) {
+        return NextResponse.json({ error: "agentId must be a known agent id" }, { status: 400 });
+      }
+      const result = await rulesCore.applyRulesToAgents([agentId]);
+      return statusAfter(result);
+    }
+
+    return NextResponse.json(
+      { error: "action must be apply, import, detach, or relink" },
+      { status: 400 },
+    );
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

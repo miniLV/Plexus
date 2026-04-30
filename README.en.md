@@ -1,16 +1,15 @@
 <p align="center">
-  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="920" />
+  <img src="docs/assets/readme/dashboard-en.png" alt="Plexus dashboard" width="920" />
 </p>
 
 <h1 align="center">Plexus</h1>
 
 <p align="center">
-  <strong>One local control plane for every AI coding agent.</strong>
+  <strong>One local dashboard for sharing rules, MCP servers, and skills across your AI coding tools.</strong>
 </p>
 
 <p align="center">
-  Stop copying the same rules, MCP servers, and skills into Claude Code,
-  Cursor, Codex, Gemini CLI, Qwen Code, and the rest by hand.
+  Import what you already have in Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and then share it with the other agents on your machine.
 </p>
 
 <p align="center">
@@ -50,6 +49,12 @@ That means every useful update turns into busywork:
 
 Plexus gives those tools one local source of truth.
 
+## 30-Second Pitch
+
+Use Plexus if you run Claude Code plus Cursor, Codex, Gemini CLI, or Qwen Code and are tired of hand-editing the same config in five places.
+
+Plexus imports what you already have, lets you choose a Primary Agent when configs conflict, stores a local baseline under `~/.config/plexus/`, then projects Rules, MCP servers, and Skills back into each agent's native location. Native files are snapshotted before writes, so you can undo from the Backups page.
+
 ## What It Does
 
 | Capability | What Plexus manages |
@@ -72,16 +77,16 @@ See detected agents, sync state, rules coverage, MCP counts, skills, and
 recent backup activity in one place.
 
 <p align="center">
-  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard showing detected agents and sync counts" width="920" />
+  <img src="docs/assets/readme/dashboard-en.png" alt="Plexus dashboard showing detected agents and sync counts" width="920" />
 </p>
 
 ### One Rules File, Applied Everywhere
 
 Edit one shared baseline and apply it to Claude Code's `CLAUDE.md` plus each
-other agent's `AGENTS.md`.
+other agent's `AGENTS.md`. If one agent needs to keep a local copy, detach it; when you want it back on the shared baseline, re-link it.
 
 <p align="center">
-  <img src="docs/assets/readme/rules.png" alt="Plexus rules page showing linked instruction files" width="920" />
+  <img src="docs/assets/readme/rules-en.png" alt="Plexus rules page showing linked instruction files" width="920" />
 </p>
 
 ### Mirror Config Between Agents
@@ -90,12 +95,24 @@ Pick a source agent, preview what each target is missing, then mirror the
 needed MCP servers and skills.
 
 <p align="center">
-  <img src="docs/assets/readme/mirror.png" alt="Plexus mirror page showing source and target agents" width="920" />
+  <img src="docs/assets/readme/mirror-en.png" alt="Plexus mirror page showing source and target agents" width="920" />
+</p>
+
+### Agent Catalog And Custom Agents
+
+Built-in agents get full sync for Rules, MCP servers, and Skills. For tools Plexus does not fully adapt yet, open **Settings -> Agent Catalog** and click **Track file** or **Add agent** to register one instruction file path.
+
+Custom agents are intentionally lite: Plexus can view/edit that instruction file with backups, but it does not translate MCP or Skills for that tool yet.
+
+<p align="center">
+  <img src="docs/assets/readme/settings-agent-catalog-en.png" alt="Plexus settings page showing agent catalog and custom agent entry" width="920" />
 </p>
 
 ## Quick Start
 
 Requires Node 20.
+
+### Try Plexus from this repo
 
 ```bash
 git clone https://github.com/miniLV/Plexus.git
@@ -108,11 +125,9 @@ Open [http://localhost:7777](http://localhost:7777).
 
 On first run, click **Share config everywhere** in the dashboard:
 
-1. Plexus imports MCP servers and skills already configured in your agents.
-2. If multiple agents have different config, Plexus smart-merges it: unique IDs are preserved, and same-ID conflicts are resolved by the Primary Agent.
-3. It enables those entries for every installed and enabled agent.
-4. If a global Rules baseline exists, it applies it to each agent's `CLAUDE.md` / `AGENTS.md`; Rules conflicts use the same Primary Agent choice.
-5. It syncs the native files and creates backups before writing.
+1. Plexus detects installed agents and imports existing Rules, MCP servers, and Skills.
+2. It shows a smart-merge preview; same-ID conflicts use the selected Primary Agent.
+3. It applies config to enabled agents and snapshots native files before writing.
 
 For a linked local CLI:
 
@@ -145,6 +160,8 @@ Settings also includes an Agent Catalog for common tools such as Windsurf,
 Kiro, VS Code Copilot, Cline, Roo Code, Kilo Code, Continue, Aider, Amp,
 OpenHands, and Zed AI. Tools without a native Plexus adapter are shown as
 manual presets so users can register a custom instruction file quickly.
+
+The manual entry point is **Settings -> Agent Catalog -> Add agent**. Use it when a new tool is not in the built-in list yet, or when your local path differs from the preset.
 
 ## How It Works
 
@@ -189,6 +206,8 @@ plexus help
 - Plexus is local-first.
 - Plexus does not execute MCP servers.
 - Native files are snapshotted before writes.
+- Shared native config files use partial writes: only the Plexus-managed MCP section changes.
+- Dedicated MCP files use symlink/copy mode, with the previous file quarantined first.
 - Debug snapshots return metadata only, not file contents.
 - Imported MCP `env` values are stored as plaintext in the local personal
   store.

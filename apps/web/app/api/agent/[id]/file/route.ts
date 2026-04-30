@@ -1,8 +1,11 @@
+import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  AGENT_PATHS,
   ALL_AGENTS,
   type AgentId,
+  instructionsForAgent,
   readTextFile,
   snapshotSingleFile,
   writeTextFile,
@@ -14,18 +17,40 @@ export const dynamic = "force-dynamic";
 const VALID = new Set<string>(ALL_AGENTS);
 const HOME = os.homedir();
 
-/**
- * Whitelist: only files under the user's home directory and only inside the
- * known agent roots can be read/written via this route. Symlink targets are
- * NOT auto-followed for safety.
- */
-function safeResolve(absPath: string): string | null {
-  const norm = path.resolve(absPath);
-  if (!norm.startsWith(HOME)) return null;
-  // Block obvious sensitive paths.
-  if (norm.startsWith(path.join(HOME, ".ssh"))) return null;
-  if (norm.startsWith(path.join(HOME, ".aws"))) return null;
-  return norm;
+function resolveUserPath(input: string): string {
+  const expanded =
+    input === "~" ? HOME : input.startsWith("~/") ? path.join(HOME, input.slice(2)) : input;
+  return path.resolve(expanded);
+}
+
+function samePath(a: string, b: string): boolean {
+  return path.resolve(a) === path.resolve(b);
+}
+
+function isInside(child: string, parent: string): boolean {
+  const relative = path.relative(path.resolve(parent), path.resolve(child));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function readAllowedPath(agent: AgentId, filePath: string): string | null {
+  const resolved = resolveUserPath(filePath);
+  const instructionPaths = instructionsForAgent(agent).map((instruction) => instruction.abs);
+  if (instructionPaths.some((instructionPath) => samePath(resolved, instructionPath))) {
+    return resolved;
+  }
+  if (samePath(resolved, AGENT_PATHS[agent].mcpPath)) return resolved;
+  if (path.basename(resolved) === "SKILL.md" && isInside(resolved, AGENT_PATHS[agent].skillsDir)) {
+    return resolved;
+  }
+  return null;
+}
+
+function writeAllowedPath(agent: AgentId, filePath: string): string | null {
+  const resolved = resolveUserPath(filePath);
+  const instructionPaths = instructionsForAgent(agent).map((instruction) => instruction.abs);
+  return instructionPaths.some((instructionPath) => samePath(resolved, instructionPath))
+    ? resolved
+    : null;
 }
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +63,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!filePath) {
     return NextResponse.json({ ok: false, message: "missing ?path" }, { status: 400 });
   }
-  const resolved = safeResolve(filePath);
+  const resolved = readAllowedPath(id as AgentId, filePath);
   if (!resolved) {
     return NextResponse.json({ ok: false, message: "path not allowed" }, { status: 403 });
   }
@@ -63,15 +88,24 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         { status: 400 },
       );
     }
-    const resolved = safeResolve(body.path);
+    const resolved = writeAllowedPath(id as AgentId, body.path);
     if (!resolved) {
       return NextResponse.json({ ok: false, message: "path not allowed" }, { status: 403 });
     }
     // Snapshot the exact file being edited so we always have a one-step undo.
-    const backup = await snapshotSingleFile(
-      resolved,
-      `edit ${id}: ${path.basename(resolved)}`,
-    ).catch(() => null);
+    let backup: string | null = null;
+    try {
+      await fs.lstat(resolved);
+      backup = await snapshotSingleFile(resolved, `edit ${id}: ${path.basename(resolved)}`);
+      if (!backup) {
+        return NextResponse.json(
+          { ok: false, message: "backup failed; file was not modified" },
+          { status: 500 },
+        );
+      }
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    }
     await writeTextFile(resolved, body.content);
     return NextResponse.json({ ok: true, backup });
   } catch (err) {
