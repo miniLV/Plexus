@@ -11,5 +11,9 @@ Short version:
 - Keep edits surgical and preserve unrelated worktree changes.
 - Use Node 20 from `.nvmrc`.
 - Run the validation commands in `CLAUDE.md` before committing.
+- After completing a small feature or focused fix, validate it and commit it
+  automatically without waiting for a separate prompt.
+- Multiple Codex conversations may be active at once; stage and commit only
+  the files changed in the current conversation.
 - Treat `~/.config/plexus/` as the only Plexus-owned config root.
 - Snapshot before any write to an agent-native file.
