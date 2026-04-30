@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/readme/dashboard-en.png" alt="Plexus dashboard" width="920" />
+  <img src="docs/assets/readme/dashboard-en.png" alt="Plexus dashboard" width="860" />
 </p>
 
 ---
@@ -69,44 +69,24 @@ Plexus imports what you already have, lets you choose a Primary Agent when confi
 Plexus does not run your MCP servers. It is a local dashboard for safely
 editing and projecting configuration.
 
-## Screenshots
+## The Sync Model In One Image
 
-### One Dashboard For Every Agent
-
-See detected agents, sync state, rules coverage, MCP counts, skills, and
-recent backup activity in one place.
-
-<p align="center">
-  <img src="docs/assets/readme/dashboard-en.png" alt="Plexus dashboard showing detected agents and sync counts" width="920" />
-</p>
-
-### One Rules File, Applied Everywhere
-
-Edit one shared baseline and apply it to Claude Code's `CLAUDE.md` plus each
-other agent's `AGENTS.md`. If one agent needs to keep a local copy, detach it; when you want it back on the shared baseline, re-link it.
+Plexus does not force every AI tool into one invented format. It keeps one
+canonical config on the local machine, then chooses the safest projection
+mechanism for each file type: symlinks for Rules and Skills, cache symlinks for
+exclusive MCP files, and partial writes for shared native config files.
 
 <p align="center">
-  <img src="docs/assets/readme/rules-en.png" alt="Plexus rules page showing linked instruction files" width="920" />
+  <img src="docs/assets/readme/config-sharing-map-en.png" alt="Plexus config sharing architecture map" width="860" />
 </p>
 
-### Mirror Config Between Agents
+You can open the same map from the local dashboard at
+`/architecture/config-sharing-map.html`.
 
-Pick a source agent, preview what each target is missing, then mirror the
-needed MCP servers and skills.
-
-<p align="center">
-  <img src="docs/assets/readme/mirror-en.png" alt="Plexus mirror page showing source and target agents" width="920" />
-</p>
-
-### Agent Catalog And Custom Agents
-
-Built-in agents get full sync for Rules, MCP servers, and Skills. For tools Plexus does not fully adapt yet, open **Settings -> Agent Catalog** and click **Track file** or **Add agent** to register one instruction file path.
-
-Custom agents are intentionally lite: Plexus can view/edit that instruction file with backups, but it does not translate MCP or Skills for that tool yet.
-
-<p align="center">
-  <img src="docs/assets/readme/settings-agent-catalog-en.png" alt="Plexus settings page showing agent catalog and custom agent entry" width="920" />
-</p>
+The manual entry point for new tools is **Settings -> Agent Catalog**. If an AI
+agent is not built in yet, click **Add agent** to register its instruction file;
+Plexus can view, edit, and back it up now, while MCP / Skills adapters can be
+added later.
 
 ## Quick Start
 

@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="920" />
+  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard" width="860" />
 </p>
 
 ---
@@ -65,41 +65,17 @@ Plexus 的目标很简单：给这些工具一个本地的 single source of trut
 
 Plexus 不运行 MCP Server。它只是一个本地 dashboard，用来安全地编辑、同步和回滚配置。
 
-## 截图
+## 一张图看懂同步模型
 
-### 一个 Dashboard，看清所有 Agent
-
-在一个页面里看到已检测的 agent、同步状态、规则覆盖、MCP 数量、skills 和最近备份。
+Plexus 不要求所有 AI 工具改成同一种格式。它只在本机维护一份 canonical config，然后按文件类型选择最合适的投射方式：Rules 和 Skills 优先软链接，MCP 对专用文件使用 cache symlink，对共享文件使用 partial-write。
 
 <p align="center">
-  <img src="docs/assets/readme/dashboard.png" alt="Plexus dashboard showing detected agents and sync counts" width="920" />
+  <img src="docs/assets/readme/config-sharing-map.png" alt="Plexus config sharing architecture map" width="860" />
 </p>
 
-### 一份规则，应用到所有工具
+这张图也可以在本地 dashboard 里打开：`/architecture/config-sharing-map.html`。
 
-编辑一份共享基线，然后应用到 Claude Code 的 `CLAUDE.md` 以及其他 Agent 的 `AGENTS.md`。如果某个 Agent 想保留本地版本，可以随时解除同步；想回到统一基线时再重新链接。
-
-<p align="center">
-  <img src="docs/assets/readme/rules.png" alt="Plexus rules page showing linked instruction files" width="920" />
-</p>
-
-### 在 Agent 之间 Mirror 配置
-
-选择一个 source agent，预览每个 target 缺什么，再把需要的 MCP servers 和 skills 同步过去。
-
-<p align="center">
-  <img src="docs/assets/readme/mirror.png" alt="Plexus mirror page showing source and target agents" width="920" />
-</p>
-
-### Agent Catalog 和手动新增 Agent
-
-内置 Agent 支持 Rules、MCP 和 Skills 的完整同步。其他工具可以在 **Settings -> Agent Catalog** 里点 **Track file**，或点 **Add agent** 手动登记一个 instruction file。
-
-Custom agent 当前是轻量模式：Plexus 可以追踪、查看和编辑这一个指令文件并在保存前备份，但还不会为该工具转换 MCP 或 Skills。
-
-<p align="center">
-  <img src="docs/assets/readme/settings-agent-catalog.png" alt="Plexus settings page showing agent catalog and custom agent entry" width="920" />
-</p>
+Agent Catalog 和手动新增入口在 **Settings -> Agent Catalog**。如果一个新工具还不在内置列表里，可以点 **Add agent** 先登记它的 instruction file；Plexus 会负责查看、编辑和备份，后续再逐步补齐 MCP / Skills adapter。
 
 ## 快速开始
 
