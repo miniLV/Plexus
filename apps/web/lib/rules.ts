@@ -6,6 +6,7 @@ export type RulesAgentStatus = {
     | "linked"
     | "copied"
     | "in sync"
+    | "local only"
     | "drift"
     | "missing"
     | "disabled"
@@ -46,7 +47,10 @@ function boolValue(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
 }
 
-function statusFromCoreAgent(agent: Record<string, unknown>): RulesAgentStatus {
+function statusFromCoreAgent(
+  agent: Record<string, unknown>,
+  opts: { hasBaseline: boolean },
+): RulesAgentStatus {
   const exists = boolValue(agent.exists) ?? false;
   const inSync = boolValue(agent.inSync) ?? false;
   const isSymlink = boolValue(agent.isSymlink) ?? false;
@@ -61,6 +65,8 @@ function statusFromCoreAgent(agent: Record<string, unknown>): RulesAgentStatus {
     status = "disabled";
   } else if (exists && inSync) {
     status = isSymlink ? "linked" : "in sync";
+  } else if (exists && !opts.hasBaseline) {
+    status = "local only";
   } else if (exists) {
     status = "drift";
   }
@@ -76,11 +82,11 @@ function statusFromCoreAgent(agent: Record<string, unknown>): RulesAgentStatus {
   };
 }
 
-function normalizeAgent(value: unknown): RulesAgentStatus | null {
+function normalizeAgent(value: unknown, opts: { hasBaseline: boolean }): RulesAgentStatus | null {
   if (!isRecord(value)) return null;
 
   if ("exists" in value || "inSync" in value || "agent" in value) {
-    return statusFromCoreAgent(value);
+    return statusFromCoreAgent(value, opts);
   }
 
   return {
@@ -108,8 +114,11 @@ export function normalizeRulesStatus(value: unknown): RulesPanelStatus {
   if (isRecord(value.status)) return normalizeRulesStatus(value.status);
 
   const canonical = isRecord(value.canonical) ? value.canonical : undefined;
+  const hasBaseline = Boolean(canonical?.exists) || Boolean(value.content);
   const agents = Array.isArray(value.agents)
-    ? value.agents.map(normalizeAgent).filter((agent): agent is RulesAgentStatus => agent !== null)
+    ? value.agents
+        .map((agent) => normalizeAgent(agent, { hasBaseline }))
+        .filter((agent): agent is RulesAgentStatus => agent !== null)
     : [];
 
   return {

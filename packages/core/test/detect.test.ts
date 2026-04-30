@@ -30,6 +30,14 @@ describe("detectAgents", () => {
     await expect(fs.stat(path.join(home, ".cursor"))).rejects.toMatchObject({ code: "ENOENT" });
   });
 
+  it("does not treat Plexus-created skill directories as native installs", async () => {
+    await fs.mkdir(path.join(home, ".qwen", "skills"), { recursive: true });
+
+    const qwen = detectAgents().find((agent) => agent.id === "qwen-code");
+
+    expect(qwen?.installed).toBe(false);
+  });
+
   it("uses the Codex skills directory rather than legacy prompts", () => {
     expect(AGENT_PATHS.codex.skillsDir).toBe(path.join(home, ".codex", "skills"));
   });

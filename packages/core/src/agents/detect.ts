@@ -55,13 +55,15 @@ function metadataPathHints(id: AgentId): string[] {
   return [AGENT_ROOTS[id], caps.mcpPath, caps.skillsDir];
 }
 
-function nativeInstallHintsEnabled(): boolean {
-  return process.env.PLEXUS_DETECT_CONFIG_ONLY !== "1";
+function useConfigOnlyDetection(): boolean {
+  return process.env.PLEXUS_DETECT_CONFIG_ONLY === "1";
 }
 
 export function isAgentInstalled(id: AgentId): boolean {
-  if (metadataPathHints(id).some((p) => existsSync(p))) return true;
-  if (!nativeInstallHintsEnabled()) return false;
+  if (useConfigOnlyDetection()) {
+    return metadataPathHints(id).some((p) => existsSync(p));
+  }
+
   if (APP_PATH_HINTS[id].some((p) => existsSync(p))) return true;
   return COMMAND_HINTS[id].some((cmd) => commandExistsOnPath(cmd));
 }

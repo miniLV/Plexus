@@ -1,7 +1,7 @@
 {
   "name": "plexus-monorepo",
   "private": true,
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Local AI agent config dashboard: one source of truth for rules, MCP servers, and skills across AI coding tools.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {

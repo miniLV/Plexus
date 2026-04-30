@@ -74,9 +74,14 @@ export default async function DashboardPage() {
   const skillTeamCount = skills.filter((s) => s.authority === "team").length;
   const skillPersonalCount = skills.filter((s) => s.authority === "personal").length;
   const skillNativeOnlyCount = skills.filter((s) => s.authority === "native").length;
+  const rulesLocalCount =
+    rules?.agents.filter((a) =>
+      ["linked", "copied", "in sync", "drift", "local only"].includes(a.status),
+    ).length ?? 0;
   const rulesSyncedCount =
     rules?.agents.filter((a) => ["linked", "copied", "in sync"].includes(a.status)).length ?? 0;
   const rulesDriftCount = rules?.agents.filter((a) => a.status === "drift").length ?? 0;
+  const rulesLocalOnlyCount = rules?.agents.filter((a) => a.status === "local only").length ?? 0;
 
   return (
     <div className="space-y-10">
@@ -111,7 +116,9 @@ export default async function DashboardPage() {
         <span className="text-xs tracking-[0.02em] text-plexus-text-2">{skills.length} skills</span>
         <span className="text-plexus-text-mute">·</span>
         <span className="text-xs tracking-[0.02em] text-plexus-text-2">
-          {rules ? `${rulesSyncedCount}/${rules.agents.length} rules targets` : "rules pending"}
+          {rules
+            ? `${rulesLocalCount} local rule files · ${rulesSyncedCount}/${rules.agents.length} applied`
+            : "rules pending"}
         </span>
         <div className="ml-auto flex items-center gap-2 text-xs tracking-[0.02em] text-plexus-text-3">
           <Clock className="h-4 w-4" strokeWidth={1.5} />
@@ -145,7 +152,7 @@ export default async function DashboardPage() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="plexus-title">Detected agents</h2>
           <span className="text-xs text-plexus-text-3">
-            {installedCount} of {agents.length} supported
+            {installedCount} of {agents.length} supported targets detected
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -182,7 +189,7 @@ export default async function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <span className="plexus-title">{a.displayName}</span>
                         <Badge variant="synced">
-                          <StatusDot tone="ok" /> in sync
+                          <StatusDot tone="ok" /> detected
                         </Badge>
                         <ExternalLink
                           className="h-3.5 w-3.5 text-plexus-text-mute opacity-0 transition-opacity group-hover:opacity-100"
@@ -213,15 +220,16 @@ export default async function DashboardPage() {
           <CardHover className="cursor-pointer px-5 py-5">
             <div className="plexus-eyebrow mb-2">Rules</div>
             <div className="mb-2 flex items-end gap-2">
-              <div className="plexus-display">{rules ? rulesSyncedCount : "—"}</div>
+              <div className="plexus-display">{rules ? rulesLocalCount : "—"}</div>
               <div className="pb-1 text-xs text-plexus-text-3">
-                {rules ? `of ${rules.agents.length} in sync` : "core API pending"}
+                {rules ? `${rulesSyncedCount} applied` : "core API pending"}
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {rules ? (
                 <>
                   <Badge variant="synced">synced {rulesSyncedCount}</Badge>
+                  <Badge variant="outline">local {rulesLocalOnlyCount}</Badge>
                   <Badge variant={rulesDriftCount > 0 ? "divergent" : "native"}>
                     drift {rulesDriftCount}
                   </Badge>

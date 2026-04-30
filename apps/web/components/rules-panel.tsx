@@ -27,6 +27,7 @@ function normalizeStatus(data: ApiResult): RulesStatus {
 function statusTone(status: string): "ok" | "warn" | "mute" | "info" {
   if (status === "linked" || status === "copied" || status === "in sync") return "ok";
   if (status === "drift") return "warn";
+  if (status === "local only") return "info";
   if (status === "missing" || status === "disabled" || status === "not installed") return "mute";
   return "info";
 }
@@ -34,6 +35,7 @@ function statusTone(status: string): "ok" | "warn" | "mute" | "info" {
 function statusVariant(status: string): "synced" | "divergent" | "native" | "outline" {
   if (status === "linked" || status === "copied" || status === "in sync") return "synced";
   if (status === "drift") return "divergent";
+  if (status === "local only") return "outline";
   if (status === "missing" || status === "disabled" || status === "not installed") return "native";
   return "outline";
 }
@@ -256,7 +258,9 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
             Plexus writes the same baseline to Claude Code as{" "}
             <span className="font-mono text-plexus-text-2">CLAUDE.md</span> and to other tools as{" "}
             <span className="font-mono text-plexus-text-2">AGENTS.md</span>. Import replaces the
-            personal baseline with that agent's current rules.
+            personal baseline with that agent's current rules. Existing files show as{" "}
+            <span className="text-plexus-text-2">local only</span> until you import or apply a
+            Plexus baseline.
           </div>
           <div className="mt-3 text-xs text-plexus-text-3">
             Last updated:{" "}
