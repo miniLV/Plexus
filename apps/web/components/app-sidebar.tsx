@@ -108,7 +108,7 @@ export function AppSidebar() {
   const { locale } = useLanguage();
   const copy = COPY[locale];
   return (
-    <aside className="flex w-full shrink-0 flex-col border-plexus-border border-b bg-plexus-surface px-3 py-5 lg:w-[240px] lg:border-r lg:border-b-0">
+    <aside className="flex w-full shrink-0 flex-col border-plexus-border border-b bg-plexus-surface px-3 py-5 lg:sticky lg:top-0 lg:h-screen lg:w-[240px] lg:border-r lg:border-b-0">
       {/* Logo */}
       <div className="mb-6 px-2">
         <div className="flex items-baseline gap-2">
