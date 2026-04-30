@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plexus Config Sharing Map</title>
+    <style>
+      :root {
+        --ink: #1b1a17;
+        --muted: #716c61;
+        --paper: #f6f3ea;
+        --panel: #fffdf8;
+        --line: #ddd7c8;
+        --line-strong: #c9bea9;
+        --accent: #ba613f;
+        --accent-2: #d3896f;
+        --green: #547c58;
+        --blue: #526f93;
+        --amber: #a97a35;
+        --rose: #a95445;
+        --shadow: 0 24px 80px rgba(72, 55, 32, 0.14);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(120deg, rgba(186, 97, 63, 0.08), transparent 38%),
+          radial-gradient(circle at 82% 18%, rgba(82, 111, 147, 0.10), transparent 34%),
+          var(--paper);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      .page {
+        width: min(1440px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 44px 0 56px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+        gap: 24px;
+        align-items: end;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 820px;
+        font-size: clamp(40px, 7vw, 88px);
+        line-height: 0.92;
+        letter-spacing: -0.045em;
+      }
+
+      .lead {
+        margin: 18px 0 0;
+        max-width: 680px;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .decision {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.78);
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .decision strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .decision p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .canvas {
+        position: relative;
+        overflow: hidden;
+        min-height: 820px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background:
+          linear-gradient(rgba(27, 26, 23, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(27, 26, 23, 0.035) 1px, transparent 1px),
+          rgba(255, 253, 248, 0.76);
+        background-size: 28px 28px;
+        box-shadow: var(--shadow);
+      }
+
+      .grid {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 300px minmax(390px, 1fr) 360px;
+        gap: 28px;
+        height: 100%;
+        min-height: 820px;
+        padding: 28px;
+      }
+
+      .lane {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .lane-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 34px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        background: rgba(186, 97, 63, 0.10);
+        color: var(--accent);
+        padding: 5px 9px;
+        font-size: 11px;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.92);
+        box-shadow: 0 12px 30px rgba(72, 55, 32, 0.08);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        padding: 14px 15px;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 760;
+        letter-spacing: -0.02em;
+      }
+
+      .tag {
+        border-radius: 7px;
+        background: #eee8da;
+        color: var(--muted);
+        padding: 4px 7px;
+        white-space: nowrap;
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        font-size: 11px;
+      }
+
+      .card-body {
+        padding: 14px 15px 16px;
+      }
+
+      .path {
+        display: block;
+        overflow-wrap: anywhere;
+        border-radius: 10px;
+        background: #f0eadf;
+        padding: 9px 10px;
+        color: #4b453b;
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .note {
+        margin: 11px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .store {
+        position: relative;
+        margin-top: 22px;
+        border: 1px solid rgba(186, 97, 63, 0.38);
+        border-radius: 22px;
+        background:
+          linear-gradient(180deg, rgba(255, 253, 248, 0.94), rgba(248, 241, 229, 0.94)),
+          var(--panel);
+        box-shadow:
+          0 30px 90px rgba(186, 97, 63, 0.13),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.50);
+        padding: 22px;
+      }
+
+      .store-top {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .store h2 {
+        margin: 0;
+        font-size: 32px;
+        letter-spacing: -0.04em;
+      }
+
+      .store p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .layers {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .layer {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.84);
+        padding: 14px;
+      }
+
+      .layer h3 {
+        margin: 0 0 9px;
+        font-size: 15px;
+      }
+
+      .layer ul,
+      .mechanism ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .layer li,
+      .mechanism li {
+        display: flex;
+        align-items: start;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .layer li + li,
+      .mechanism li + li {
+        margin-top: 6px;
+      }
+
+      .bullet {
+        margin-top: 7px;
+        width: 6px;
+        height: 6px;
+        flex: 0 0 6px;
+        border-radius: 99px;
+        background: var(--accent);
+      }
+
+      .mechanisms {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .mechanism {
+        min-height: 182px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.78);
+        padding: 14px;
+      }
+
+      .mechanism h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px;
+        font-size: 15px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 22px;
+        border-radius: 7px;
+        color: white;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .chip.rules {
+        background: var(--green);
+      }
+
+      .chip.skills {
+        background: var(--blue);
+      }
+
+      .chip.mcp {
+        background: var(--accent);
+      }
+
+      .agents {
+        display: grid;
+        gap: 10px;
+        margin-top: 22px;
+      }
+
+      .agent {
+        display: grid;
+        grid-template-columns: 112px 1fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: rgba(255, 253, 248, 0.84);
+        padding: 10px;
+      }
+
+      .agent strong {
+        font-size: 13px;
+      }
+
+      .agent code {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+        white-space: normal;
+      }
+
+      .backup {
+        margin-top: auto;
+        border-color: rgba(169, 122, 53, 0.38);
+      }
+
+      .backup .card-title {
+        color: var(--amber);
+      }
+
+      svg.links {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .link {
+        fill: none;
+        stroke-linecap: round;
+        stroke-width: 2.6;
+      }
+
+      .link.rules {
+        stroke: rgba(84, 124, 88, 0.58);
+      }
+
+      .link.skills {
+        stroke: rgba(82, 111, 147, 0.58);
+      }
+
+      .link.mcp {
+        stroke: rgba(186, 97, 63, 0.58);
+      }
+
+      .legend {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .legend-item {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 253, 248, 0.78);
+        padding: 12px;
+      }
+
+      .legend-item strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+      }
+
+      .legend-item span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 1100px) {
+        .hero,
+        .grid,
+        .mechanisms,
+        .legend {
+          grid-template-columns: 1fr;
+        }
+
+        .canvas {
+          min-height: 0;
+        }
+
+        .grid {
+          min-height: 0;
+        }
+
+        svg.links {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Plexus architecture</p>
+          <h1>One local source, native files everywhere.</h1>
+          <p class="lead">
+            Plexus keeps rules, skills, and MCP servers in a canonical store, then projects them
+            into each AI agent using the least invasive reversible mechanism for that file type.
+          </p>
+        </div>
+        <aside class="decision">
+          <strong>Is this the optimal solution?</strong>
+          <p>
+            For a local-first, multi-agent workstation: yes as a default. It uses symlinks for
+            single-purpose assets, partial writes for shared agent files, and backups before native
+            paths are touched.
+          </p>
+        </aside>
+      </section>
+
+      <section class="canvas" aria-label="Plexus config sharing diagram">
+        <svg class="links" viewBox="0 0 1440 820" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker
+              id="arrow-rules"
+              markerWidth="10"
+              markerHeight="10"
+              refX="8"
+              refY="5"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="rgba(84,124,88,.72)" />
+            </marker>
+            <marker
+              id="arrow-skills"
+              markerWidth="10"
+              markerHeight="10"
+              refX="8"
+              refY="5"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="rgba(82,111,147,.72)" />
+            </marker>
+            <marker
+              id="arrow-mcp"
+              markerWidth="10"
+              markerHeight="10"
+              refX="8"
+              refY="5"
+              orient="auto"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="rgba(186,97,63,.72)" />
+            </marker>
+          </defs>
+
+          <path class="link rules" marker-end="url(#arrow-rules)" d="M646 350 C515 310 465 220 328 188" />
+          <path class="link rules" marker-end="url(#arrow-rules)" d="M665 354 C492 365 430 412 328 450" />
+          <path class="link skills" marker-end="url(#arrow-skills)" d="M710 455 C510 505 430 584 328 640" />
+          <path class="link skills" marker-end="url(#arrow-skills)" d="M790 455 C960 500 1040 610 1116 682" />
+          <path class="link mcp" marker-end="url(#arrow-mcp)" d="M835 560 C966 540 1040 410 1116 318" />
+          <path class="link mcp" marker-end="url(#arrow-mcp)" d="M825 578 C990 585 1046 200 1116 150" />
+        </svg>
+
+        <div class="grid">
+          <section class="lane">
+            <div class="lane-title">
+              Native import
+              <span class="pill"><span class="dot"></span> optional</span>
+            </div>
+
+            <article class="card">
+              <div class="card-head">
+                <h2 class="card-title">Existing agent files</h2>
+                <span class="tag">read</span>
+              </div>
+              <div class="card-body">
+                <code class="path">~/.claude/CLAUDE.md<br />~/.codex/config.toml<br />~/.cursor/mcp.json</code>
+                <p class="note">
+                  Share config everywhere can import native rules, skills, and MCPs before applying
+                  the merged baseline back to enabled agents.
+                </p>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2 class="card-title">Conflict resolver</h2>
+                <span class="tag">primary</span>
+              </div>
+              <div class="card-body">
+                <code class="path">preferred agent wins identical IDs with different bodies</code>
+                <p class="note">
+                  If Codex and Claude Code both define the same skill or MCP differently, Plexus
+                  uses the selected primary source for one-click mode.
+                </p>
+              </div>
+            </article>
+
+            <article class="card backup">
+              <div class="card-head">
+                <h2 class="card-title">Backup rail</h2>
+                <span class="tag">revert</span>
+              </div>
+              <div class="card-body">
+                <code class="path">~/.config/plexus/backups/</code>
+                <p class="note">
+                  Native files are snapshotted before writes. Real directories that block symlinks
+                  are quarantined under _collisions instead of overwritten in place.
+                </p>
+              </div>
+            </article>
+          </section>
+
+          <section class="lane">
+            <div class="lane-title">
+              Canonical store
+              <span class="pill"><span class="dot"></span> source of truth</span>
+            </div>
+
+            <div class="store">
+              <div class="store-top">
+                <div>
+                  <h2>~/.config/plexus</h2>
+                  <p>
+                    Team and personal layers are merged into one effective view. Personal overrides
+                    team when the same ID exists in both layers.
+                  </p>
+                </div>
+                <span class="tag">local-first</span>
+              </div>
+
+              <div class="layers">
+                <div class="layer">
+                  <h3>Team layer</h3>
+                  <ul>
+                    <li><span class="bullet"></span><span>Subscribed config repository</span></li>
+                    <li><span class="bullet"></span><span>Shared skills and MCP baselines</span></li>
+                    <li><span class="bullet"></span><span>Optional organization rules</span></li>
+                  </ul>
+                </div>
+                <div class="layer">
+                  <h3>Personal layer</h3>
+                  <ul>
+                    <li><span class="bullet"></span><span>User overrides and local additions</span></li>
+                    <li><span class="bullet"></span><span>Imported native agent config</span></li>
+                    <li><span class="bullet"></span><span>Wins over team for duplicate IDs</span></li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mechanisms">
+                <article class="mechanism">
+                  <h3><span class="chip rules">R</span>Rules</h3>
+                  <ul>
+                    <li><span class="bullet"></span><span>Canonical file: rules/global.md</span></li>
+                    <li><span class="bullet"></span><span>Applied to CLAUDE.md, AGENTS.md, GEMINI.md</span></li>
+                    <li><span class="bullet"></span><span>Symlink first, copy fallback</span></li>
+                  </ul>
+                </article>
+
+                <article class="mechanism">
+                  <h3><span class="chip skills">S</span>Skills</h3>
+                  <ul>
+                    <li><span class="bullet"></span><span>Canonical folder: skills/&lt;id&gt;/SKILL.md</span></li>
+                    <li><span class="bullet"></span><span>Per-agent enablement from frontmatter</span></li>
+                    <li><span class="bullet"></span><span>Directory symlink first, copy fallback</span></li>
+                  </ul>
+                </article>
+
+                <article class="mechanism">
+                  <h3><span class="chip mcp">M</span>MCP</h3>
+                  <ul>
+                    <li><span class="bullet"></span><span>Canonical YAML: mcp/servers.yaml</span></li>
+                    <li><span class="bullet"></span><span>Shared native files get partial writes</span></li>
+                    <li><span class="bullet"></span><span>Exclusive native files become cache symlinks</span></li>
+                  </ul>
+                </article>
+              </div>
+            </div>
+          </section>
+
+          <section class="lane">
+            <div class="lane-title">
+              Native projection
+              <span class="pill"><span class="dot"></span> agent-readable</span>
+            </div>
+
+            <article class="card">
+              <div class="card-head">
+                <h2 class="card-title">Rules targets</h2>
+                <span class="tag">symlink</span>
+              </div>
+              <div class="card-body">
+                <code class="path">~/.claude/CLAUDE.md -> rules/global.md<br />~/.codex/AGENTS.md -> rules/global.md</code>
+                <p class="note">
+                  Agents keep reading their official instruction filename, but that path points to
+                  the same Plexus-managed baseline.
+                </p>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2 class="card-title">Skill targets</h2>
+                <span class="tag">dir link</span>
+              </div>
+              <div class="card-body">
+                <code class="path">~/.codex/skills/&lt;id&gt; -> skills/&lt;id&gt;<br />~/.claude/skills/&lt;id&gt; -> skills/&lt;id&gt;</code>
+                <p class="note">
+                  This is the cleanest part of the system: one folder, many native locations, no
+                  format translation.
+                </p>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-head">
+                <h2 class="card-title">MCP targets</h2>
+                <span class="tag">hybrid</span>
+              </div>
+              <div class="card-body">
+                <code class="path">shared: rewrite only mcpServers / mcp_servers<br />exclusive: native file -> .cache/mcp/&lt;agent&gt;.json</code>
+                <p class="note">
+                  Claude Code, Codex, Gemini, and Qwen keep their private config. Cursor and Factory
+                  can safely point to Plexus-owned cache files.
+                </p>
+              </div>
+            </article>
+
+            <div class="agents">
+              <div class="agent">
+                <strong>Claude Code</strong>
+                <code>shared MCP, rule symlink, skill dir symlinks</code>
+              </div>
+              <div class="agent">
+                <strong>Cursor</strong>
+                <code>exclusive MCP symlink, command dir symlinks</code>
+              </div>
+              <div class="agent">
+                <strong>Codex</strong>
+                <code>TOML partial-write, AGENTS.md, skills</code>
+              </div>
+              <div class="agent">
+                <strong>Gemini / Qwen</strong>
+                <code>JSON partial-write, native instruction file, skills</code>
+              </div>
+              <div class="agent">
+                <strong>Factory Droid</strong>
+                <code>exclusive MCP symlink, skills</code>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="legend" aria-label="sync mechanism legend">
+        <div class="legend-item">
+          <strong>Symlink-first</strong>
+          <span>Best for rules and skills because each native path can point to one canonical file or folder.</span>
+        </div>
+        <div class="legend-item">
+          <strong>Partial-write</strong>
+          <span>Best for shared MCP files because auth, profiles, and app state must remain untouched.</span>
+        </div>
+        <div class="legend-item">
+          <strong>Cache symlink</strong>
+          <span>Best for exclusive MCP files because Plexus can own the whole file safely.</span>
+        </div>
+        <div class="legend-item">
+          <strong>Backup first</strong>
+          <span>Every native write is reversible from snapshots or collision quarantine.</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
