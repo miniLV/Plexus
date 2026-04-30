@@ -400,31 +400,166 @@
         color: var(--amber);
       }
 
-      svg.links {
+      .flow-strip {
+        position: relative;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: 1fr 46px 1.25fr 46px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 24px 28px 0;
+      }
+
+      .flow-node {
+        display: flex;
+        min-height: 56px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 253, 248, 0.86);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 760;
+        letter-spacing: 0.11em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .flow-node.primary {
+        border-color: rgba(186, 97, 63, 0.42);
+        background: rgba(186, 97, 63, 0.08);
+        color: var(--accent);
+      }
+
+      .flow-arrow {
+        position: relative;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--line-strong);
+      }
+
+      .flow-arrow::after {
         position: absolute;
-        inset: 0;
+        top: 50%;
+        right: -2px;
+        width: 9px;
+        height: 9px;
+        border-top: 2px solid var(--line-strong);
+        border-right: 2px solid var(--line-strong);
+        content: "";
+        transform: translateY(-50%) rotate(45deg);
+      }
+
+      .channel-map {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .channel-row {
+        display: grid;
+        grid-template-columns: 92px minmax(120px, 1fr) minmax(154px, 0.85fr);
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: rgba(255, 253, 248, 0.78);
+        padding: 10px;
+      }
+
+      .channel-name {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 760;
+      }
+
+      .channel-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .channel-line {
+        position: relative;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .channel-line::before {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        left: 0;
+        z-index: 0;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+        content: "";
+        opacity: 0.34;
+      }
+
+      .channel-line::after {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 8px;
+        height: 8px;
+        border-top: 2px solid currentColor;
+        border-right: 2px solid currentColor;
+        content: "";
+        opacity: 0.60;
+        transform: translateY(-50%) rotate(45deg);
+      }
+
+      .channel-line span {
+        position: relative;
         z-index: 1;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+        padding: 4px 8px;
       }
 
-      .link {
-        fill: none;
-        stroke-linecap: round;
-        stroke-width: 2.6;
+      .channel-target {
+        border-radius: 10px;
+        background: #f0eadf;
+        padding: 8px 9px;
+        color: #4b453b;
+        font-family:
+          ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Consolas,
+          monospace;
+        font-size: 11px;
+        line-height: 1.35;
       }
 
-      .link.rules {
-        stroke: rgba(84, 124, 88, 0.58);
+      .channel-row.rules {
+        color: var(--green);
       }
 
-      .link.skills {
-        stroke: rgba(82, 111, 147, 0.58);
+      .channel-row.skills {
+        color: var(--blue);
       }
 
-      .link.mcp {
-        stroke: rgba(186, 97, 63, 0.58);
+      .channel-row.mcp {
+        color: var(--accent);
       }
 
       .legend {
@@ -469,8 +604,22 @@
           min-height: 0;
         }
 
-        svg.links {
-          display: none;
+        .flow-strip,
+        .channel-row {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-arrow {
+          height: 24px;
+          width: 2px;
+          justify-self: center;
+        }
+
+        .flow-arrow::after {
+          top: auto;
+          right: 50%;
+          bottom: -2px;
+          transform: translateX(50%) rotate(135deg);
         }
       }
     </style>
@@ -497,47 +646,13 @@
       </section>
 
       <section class="canvas" aria-label="Plexus config sharing diagram">
-        <svg class="links" viewBox="0 0 1440 820" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <marker
-              id="arrow-rules"
-              markerWidth="10"
-              markerHeight="10"
-              refX="8"
-              refY="5"
-              orient="auto"
-            >
-              <path d="M0 0 L10 5 L0 10 z" fill="rgba(84,124,88,.72)" />
-            </marker>
-            <marker
-              id="arrow-skills"
-              markerWidth="10"
-              markerHeight="10"
-              refX="8"
-              refY="5"
-              orient="auto"
-            >
-              <path d="M0 0 L10 5 L0 10 z" fill="rgba(82,111,147,.72)" />
-            </marker>
-            <marker
-              id="arrow-mcp"
-              markerWidth="10"
-              markerHeight="10"
-              refX="8"
-              refY="5"
-              orient="auto"
-            >
-              <path d="M0 0 L10 5 L0 10 z" fill="rgba(186,97,63,.72)" />
-            </marker>
-          </defs>
-
-          <path class="link rules" marker-end="url(#arrow-rules)" d="M646 350 C515 310 465 220 328 188" />
-          <path class="link rules" marker-end="url(#arrow-rules)" d="M665 354 C492 365 430 412 328 450" />
-          <path class="link skills" marker-end="url(#arrow-skills)" d="M710 455 C510 505 430 584 328 640" />
-          <path class="link skills" marker-end="url(#arrow-skills)" d="M790 455 C960 500 1040 610 1116 682" />
-          <path class="link mcp" marker-end="url(#arrow-mcp)" d="M835 560 C966 540 1040 410 1116 318" />
-          <path class="link mcp" marker-end="url(#arrow-mcp)" d="M825 578 C990 585 1046 200 1116 150" />
-        </svg>
+        <div class="flow-strip" aria-label="High level flow">
+          <div class="flow-node">Native import</div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+          <div class="flow-node primary">Merge in ~/.config/plexus</div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+          <div class="flow-node">Native projection</div>
+        </div>
 
         <div class="grid">
           <section class="lane">
@@ -653,6 +768,24 @@
                     <li><span class="bullet"></span><span>Exclusive native files become cache symlinks</span></li>
                   </ul>
                 </article>
+              </div>
+
+              <div class="channel-map" aria-label="Sync channels">
+                <div class="channel-row rules">
+                  <div class="channel-name"><span class="channel-dot"></span>Rules</div>
+                  <div class="channel-line"><span>file symlink</span></div>
+                  <div class="channel-target">CLAUDE.md<br />AGENTS.md<br />GEMINI.md</div>
+                </div>
+                <div class="channel-row skills">
+                  <div class="channel-name"><span class="channel-dot"></span>Skills</div>
+                  <div class="channel-line"><span>directory symlink</span></div>
+                  <div class="channel-target">skills/&lt;id&gt;<br />commands/&lt;id&gt;</div>
+                </div>
+                <div class="channel-row mcp">
+                  <div class="channel-name"><span class="channel-dot"></span>MCP</div>
+                  <div class="channel-line"><span>partial-write / cache link</span></div>
+                  <div class="channel-target">mcpServers<br />mcp_servers<br />.cache/mcp</div>
+                </div>
               </div>
             </div>
           </section>
