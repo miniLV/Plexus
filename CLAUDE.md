@@ -25,7 +25,7 @@ Supported built-in agents:
 | Codex | `~/.codex/config.toml` | `~/.codex/prompts/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 
-The current package version is **0.0.8**. All workspace `package.json` files
+The current package version is **0.0.9**. All workspace `package.json` files
 must stay on the same version:
 
 - `package.json`
@@ -73,7 +73,7 @@ Plexus/
 ├── CLAUDE.md                      # this file
 ├── AGENTS.md                      # agent-facing instructions if present
 ├── apps/
-│   └── web/                       # Next.js 14 App Router dashboard
+│   └── web/                       # Next.js App Router dashboard
 │       ├── app/
 │       │   ├── layout.tsx         # shell: sidebar, topbar, theme provider
 │       │   ├── page.tsx           # dashboard
@@ -534,7 +534,7 @@ and this file together.
 
 ## 6. UI Architecture
 
-The app is a local Next.js 14 App Router dashboard.
+The app is a local Next.js App Router dashboard.
 
 Top-level navigation in `apps/web/components/app-sidebar.tsx`:
 
@@ -885,6 +885,6 @@ Recently important fixes that must not regress:
 
 ---
 
-*Last updated for v0.0.8 on 2026-04-30. If you change the sync contract,
+*Last updated for v0.0.9 on 2026-04-30. If you change the sync contract,
 store layout, backup behavior, supported paths, CLI behavior, or UI routes,
 update this file in the same change.*

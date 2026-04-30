@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import TOML from "@iarna/toml";
 import { pathExists } from "../store/fs-utils.js";
-import { AGENT_PATHS, ALL_AGENTS } from "../store/paths.js";
+import { AGENT_PATHS, ALL_AGENTS, PLEXUS_PATHS } from "../store/paths.js";
 import { parseSkillMarkdown } from "../store/skills.js";
 import type { AgentId, MCPServerDef, SkillDef } from "../types.js";
 
@@ -92,12 +92,47 @@ async function readSkillsFromAgent(agentId: AgentId): Promise<SkillDef[]> {
   const caps = AGENT_PATHS[agentId];
   if (!(await pathExists(caps.skillsDir))) return [];
 
+  const plexusRootResolved = path.resolve(PLEXUS_PATHS.root) + path.sep;
+
   try {
     const entries = await fs.readdir(caps.skillsDir, { withFileTypes: true });
     const out: SkillDef[] = [];
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const skillFile = path.join(caps.skillsDir, entry.name, "SKILL.md");
+      const fullPath = path.join(caps.skillsDir, entry.name);
+
+      // Decide whether this entry is a usable skill directory.
+      //
+      // - Real directory  → native skill (existing behavior).
+      // - Symlink to dir inside Plexus's canonical store → this skill is
+      //   already mirrored here for `agentId`. Treat it as "natively present"
+      //   so the import flow can extend `enabledAgents` to include `agentId`.
+      // - Symlink to anything else (user-managed, e.g. ../../.agents/skills/x)
+      //   → leave it alone. Plexus does not claim symlinks it didn't place.
+      // - Broken / file symlink → skip.
+      if (entry.isSymbolicLink()) {
+        let resolved: string;
+        try {
+          const target = await fs.readlink(fullPath);
+          resolved = path.resolve(
+            path.isAbsolute(target) ? target : path.join(caps.skillsDir, target),
+          );
+        } catch {
+          continue;
+        }
+        const inPlexus =
+          resolved === path.resolve(PLEXUS_PATHS.root) || resolved.startsWith(plexusRootResolved);
+        if (!inPlexus) continue;
+        try {
+          const st = await fs.stat(fullPath);
+          if (!st.isDirectory()) continue;
+        } catch {
+          continue;
+        }
+      } else if (!entry.isDirectory()) {
+        continue;
+      }
+
+      const skillFile = path.join(fullPath, "SKILL.md");
       if (!(await pathExists(skillFile))) continue;
       const raw = await fs.readFile(skillFile, "utf8");
       const { frontmatter, body } = parseSkillMarkdown(raw);

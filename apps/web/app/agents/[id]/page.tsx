@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 
 const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
 
-export default async function AgentPage({ params }: { params: { id: string } }) {
-  if (!(VALID as string[]).includes(params.id)) notFound();
-  const data = await inspectAgent(params.id as AgentId);
+export default async function AgentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!(VALID as string[]).includes(id)) notFound();
+  const data = await inspectAgent(id as AgentId);
 
   return (
     <div className="space-y-8">

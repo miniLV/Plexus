@@ -1,129 +1,175 @@
 # Plexus
 
-> Team-shared AI agent config — one source of truth for MCP servers and skills,
-> synced to Claude Code, Cursor, Codex, and Factory Droid.
+Local control panel for keeping AI agent configuration in sync across tools.
 
-Plexus is a local-only web dashboard that lets a team curate their AI agent
-configuration in one place (a Git repo) and push it to every team member's
-installed agents with one click.
+Plexus gives one human or one team a single local source of truth for:
 
-## Why
+- global agent rules (`CLAUDE.md` / `AGENTS.md`)
+- MCP servers
+- skills / prompt bundles
+- backups and restore points before native files are changed
 
-If you use more than one AI coding agent (Claude Code + Cursor + Codex …) you
-quickly hit the same chore in every project: install the same MCP servers four
-times, paste the same review skill four times, then keep them in sync forever.
-
-Plexus solves that by:
-
-1. Keeping a **single store** under `~/.config/plexus/` (`team/` + `personal/`).
-2. **Detecting** the agents installed on your machine.
-3. **Importing** existing MCPs/skills from your installed agents on first run,
-   so you don't start from zero.
-4. **Syncing** the store to each agent's native config (`claude_desktop_config.json`,
-   `~/.cursor/mcp.json`, `~/.codex/config.toml`, `~/.factory/mcp.json`, plus each
-   agent's skills directory) — preferring symlinks so future edits flow through
-   automatically.
-5. **Spread**: copy MCPs / skills directly between any two agents
-   (Cursor → Claude, Claude → Cursor, …) — Plexus computes the diff and copies
-   only what's missing.
-6. Letting a **team** subscribe to a shared Git repo as the team layer.
-   Members get team-blessed MCPs + skills automatically; they can also keep
-   their own additions in the personal layer.
+It is built for people who use more than one coding agent and do not want to
+configure the same MCP server, skill, or operating instruction four times.
 
 ## Status
 
-**Alpha — MVP**. Sync of MCP + skills works for all four supported agents on
-macOS / Linux. Team subscription is implemented as `git clone` + `git pull`.
-Open-a-PR-from-the-dashboard is on the roadmap; for now contributors push
-through the normal GitHub review flow.
+Alpha. The core local workflows are usable on macOS and Linux:
 
-## Quick start
+- detect Claude Code, Cursor, Codex, and Factory Droid
+- import existing user-level MCP servers and skills
+- save one global Rules baseline and apply it to built-in agents
+- sync MCP servers and skills to each agent's native path
+- mirror MCPs/skills from one agent to another
+- snapshot native files before writes and restore from backups
+- join/pull a team config repository as a read-only team layer
 
-Requires **Node ≥ 18.17**.
+Windows and project-scoped MCP files are not verified yet.
+
+## Quick Start
+
+Requires Node 20.
 
 ```bash
-# Clone and install
 git clone https://github.com/miniLV/Plexus.git
 cd Plexus
-npm install
-
-# Build everything and register the `plexus` command globally
-npm run link
-
-# Launch the dashboard
-plexus
-# → http://localhost:7777
+npm ci
+npm run dev
 ```
 
-After `npm run link`, you get a global `plexus` command. To uninstall it:
-`npm run unlink`.
+Open [http://localhost:7777](http://localhost:7777).
 
-In development (auto-reload):
+For a linked local CLI:
 
 ```bash
-npm run dev   # Next.js dev server on :7777
+npm run link
+plexus
 ```
 
-### CLI commands
+To remove the linked CLI:
 
-```
-plexus              start the dashboard (default)
-plexus start -p <port>
-plexus detect       list detected AI agents on this machine
-plexus join <url>   subscribe to a team config repo
-plexus pull         refresh the team layer from upstream
-plexus sync         apply current store to all enabled agents
-plexus status       show subscription / sync status
+```bash
+npm run unlink
 ```
 
-## Supported agents
+## Supported Agents
 
-| Agent | MCP location | Skills location |
-| ---- | ---- | ---- |
-| Claude Code | `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) | `~/.claude/skills/` |
-| Cursor | `~/.cursor/mcp.json` | `~/.cursor/commands/` |
-| Codex | `~/.codex/config.toml` (TOML, auto-converted) | `~/.codex/prompts/` |
-| Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` |
+| Agent | Rules target | MCP target | Skills target | MCP write mode |
+| --- | --- | --- | --- | --- |
+| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude.json` | `~/.claude/skills/` | partial write |
+| Cursor | `~/.cursor/AGENTS.md` | `~/.cursor/mcp.json` | `~/.cursor/commands/` | symlink or copy |
+| Codex | `~/.codex/AGENTS.md` | `~/.codex/config.toml` | `~/.codex/prompts/` | partial write |
+| Factory Droid | `~/.factory/AGENTS.md` | `~/.factory/mcp.json` | `~/.factory/skills/` | symlink or copy |
 
-## Known limitations (MVP)
+Partial write means Plexus rewrites only the MCP section and preserves the
+agent-owned auth, history, profile, and settings data in the same file.
 
-- **Project-scope MCP files are not handled.** Both Claude Code (`<repo>/.mcp.json`)
-  and Cursor (`<repo>/.cursor/mcp.json`) support per-project MCP servers in
-  addition to the user-scope file. Plexus today only manages the user-scope
-  file (`~/.claude.json`, `~/.cursor/mcp.json`, `~/.codex/config.toml`,
-  `~/.factory/mcp.json`). Per-project sync is planned — it requires Plexus
-  to know which directories on disk you treat as "projects".
-- **No secret redaction yet.** When you import an MCP that has tokens in
-  `env`, those tokens land in `~/.config/plexus/personal/mcp/servers.yaml`.
-  Never push the `personal/` layer to a shared Git repo. Promotion-time
-  redaction is on the roadmap.
-- **No Windows verification.** All paths use `os.homedir()` and the symlink
-  fallback handles unprivileged Windows, but the MVP has only been exercised
-  on macOS.
+## What Plexus Stores
 
-## Architecture
+Plexus stores canonical config under `~/.config/plexus/`:
 
-```
-plexus/
-├── apps/
-│   └── web/                     # Next.js dashboard (local only)
-├── packages/
-│   ├── core/
-│   │   └── src/
-│   │       ├── types.ts
-│   │       ├── store/           # ~/.config/plexus/ store: paths, config, mcp, skills, merge
-│   │       ├── agents/          # detection + per-agent adapters
-│   │       │   └── adapters/
-│   │       ├── sync/            # sync engine
-│   │       └── team/            # git-backed team layer
-│   └── cli/                     # `plexus` CLI entry
-└── examples/
-    └── team-config-template/    # starter layout for a team repo
+```text
+~/.config/plexus/
+├── config.yaml
+├── team/
+├── personal/
+│   ├── mcp/servers.yaml
+│   ├── rules/global.md
+│   └── skills/<id>/SKILL.md
+├── .cache/mcp/
+└── backups/
 ```
 
-Per-agent integration lives under `packages/core/src/agents/adapters/`. Adding
-a new agent means writing a new adapter (≤ 80 lines for the JSON-MCP flavor)
-and registering it in `agents/adapters/index.ts`.
+The `team/` layer is intended to come from a shared Git repo. The `personal/`
+layer belongs to the local user and overrides team entries with the same ID.
+
+## Main Workflows
+
+### Rules
+
+Use `/rules` to edit one shared baseline. Plexus saves it to:
+
+```text
+~/.config/plexus/personal/rules/global.md
+```
+
+Then it can apply the same content to each supported agent's instruction file.
+Existing native instruction files are snapshotted before replacement.
+
+### Import
+
+The dashboard import banner scans installed agents and offers to import
+native MCP servers and skills into the personal layer.
+
+Import does not mutate native files. It only writes to `~/.config/plexus/`.
+
+### Sync
+
+`Sync All Agents` and `plexus sync` apply the merged team + personal store to
+all installed, enabled agents.
+
+Before changing native files, Plexus snapshots the current state into
+`~/.config/plexus/backups/`.
+
+### Mirror
+
+`/mirror` copies the effective MCP/skill set from one source agent to one or
+more targets. This is useful when one agent is already configured and another
+is empty.
+
+### Backups
+
+`/backups` lists snapshots and can restore a previous native file state. The
+restore action is intentionally destructive: it puts the selected snapshot
+back over the current native file.
+
+## CLI
+
+```text
+plexus              start the dashboard
+plexus start -p 7777
+plexus detect       list detected agents
+plexus join <url>   clone a team config repo into ~/.config/plexus/team
+plexus pull         pull the configured team repo
+plexus sync         sync MCP servers and skills
+plexus status       show team subscription and sync status
+plexus help
+```
+
+## Development
+
+```bash
+npm ci
+npm run check
+npm run test:core
+npm run build --workspace=@plexus/core
+npm run build --workspace=@plexus/web
+```
+
+For the full local gate:
+
+```bash
+npm run verify
+```
+
+## Security Notes
+
+- Plexus is local-first and does not execute MCP servers.
+- Plexus is not a secrets manager.
+- Imported MCP `env` values are stored as plaintext in the local personal
+  store.
+- Do not push `~/.config/plexus/personal/` to a shared team repo without
+  reviewing and redacting secrets.
+- Debug snapshots intentionally return metadata only, not file contents.
+
+## Limitations
+
+- Project-scoped MCP files are not managed yet.
+- Team subscription can clone, pull, and report status; dashboard PR proposal
+  and conflict resolution are still manual.
+- Custom agents are stored as instruction-file registry records only.
+- Rules apply currently targets built-in agents only.
+- Windows support is unverified.
 
 ## License
 

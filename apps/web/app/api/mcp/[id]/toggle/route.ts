@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 const VALID: AgentId[] = ["claude-code", "cursor", "codex", "factory-droid"];
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const body = (await req.json()) as { agent?: string; enabled?: boolean };
     if (!body.agent || !(VALID as string[]).includes(body.agent)) {
       return NextResponse.json({ ok: false, message: "agent invalid" }, { status: 400 });
@@ -16,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       return NextResponse.json({ ok: false, message: "enabled required" }, { status: 400 });
     }
     const result = await toggleMcpAgent({
-      id: params.id,
+      id,
       agent: body.agent as AgentId,
       enabled: body.enabled,
     });

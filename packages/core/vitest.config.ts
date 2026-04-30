@@ -6,9 +6,6 @@ export default defineConfig({
     include: ["test/**/*.test.ts"],
     testTimeout: 10_000,
     pool: "forks", // each test file gets its own process so per-test HOME isolation works
-    poolOptions: {
-      forks: { singleFork: false },
-    },
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],

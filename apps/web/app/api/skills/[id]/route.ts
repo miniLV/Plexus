@@ -10,14 +10,15 @@ function layerFromQuery(req: Request): ConfigLayer {
   return l === "team" ? "team" : "personal";
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const layer = layerFromQuery(req);
     if (layer === "team") {
       return NextResponse.json({ error: "team-layer skills are read-only here" }, { status: 403 });
     }
     const skills = await readSkills(layer);
-    const skill = skills.find((s) => s.id === params.id);
+    const skill = skills.find((s) => s.id === id);
     if (!skill) {
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }
@@ -47,8 +48,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const layer = layerFromQuery(req);
     if (layer === "team") {
       return NextResponse.json(
@@ -56,7 +58,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         { status: 403 },
       );
     }
-    await deleteSkill("personal", params.id);
+    await deleteSkill("personal", id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

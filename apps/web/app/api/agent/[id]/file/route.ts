@@ -23,8 +23,9 @@ function safeResolve(absPath: string): string | null {
   return norm;
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  if (!(VALID as string[]).includes(params.id)) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!(VALID as string[]).includes(id)) {
     return NextResponse.json({ ok: false, message: "unknown agent" }, { status: 404 });
   }
   const url = new URL(req.url);
@@ -44,8 +45,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  if (!(VALID as string[]).includes(params.id)) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!(VALID as string[]).includes(id)) {
     return NextResponse.json({ ok: false, message: "unknown agent" }, { status: 404 });
   }
   try {
@@ -63,7 +65,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     // Snapshot the exact file being edited so we always have a one-step undo.
     const backup = await snapshotSingleFile(
       resolved,
-      `edit ${params.id}: ${path.basename(resolved)}`,
+      `edit ${id}: ${path.basename(resolved)}`,
     ).catch(() => null);
     await writeTextFile(resolved, body.content);
     return NextResponse.json({ ok: true, backup });

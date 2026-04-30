@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const removed = await removeCustomAgent(params.id);
+    const { id } = await params;
+    const removed = await removeCustomAgent(id);
     if (!removed) {
       return NextResponse.json(
-        { ok: false, error: `No custom agent with id '${params.id}'` },
+        { ok: false, error: `No custom agent with id '${id}'` },
         { status: 404 },
       );
     }

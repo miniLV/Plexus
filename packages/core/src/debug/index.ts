@@ -145,9 +145,7 @@ async function listDir(dir: string): Promise<PathStat[]> {
   } catch {
     return [];
   }
-  const filtered = names
-    .filter((n) => !n.startsWith(".") && !n.includes(".plexus-backup-"))
-    .sort();
+  const filtered = names.filter((n) => !n.startsWith(".") && !n.includes(".plexus-backup-")).sort();
   const out: PathStat[] = [];
   for (const n of filtered) {
     out.push(await statPath(path.join(dir, n)));
@@ -320,7 +318,7 @@ function fmtAgentBlock(a: AgentDebugBlock): string {
 
 function fmtPlexusBlock(p: PlexusStoreBlock): string {
   const lines: string[] = [];
-  lines.push(`[Plexus Store]`);
+  lines.push("[Plexus Store]");
   lines.push(fmtRow(p.root));
   lines.push(fmtRow(p.config));
   lines.push(fmtRow(p.team));
