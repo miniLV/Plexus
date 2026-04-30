@@ -8,15 +8,7 @@ import {
   normalizeLocale,
 } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
-import {
-  type ReactNode,
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
 
 interface LanguageContextValue {
   locale: Locale;
@@ -45,31 +37,30 @@ export function LanguageProvider({
 }) {
   const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
-  const bootstrapped = useRef(false);
 
   useEffect(() => {
-    if (bootstrapped.current) return;
-    bootstrapped.current = true;
     const saved = normalizeLocale(window.localStorage.getItem(LOCALE_STORAGE_KEY));
     const next = saved ?? initialLocale ?? browserLocale();
-    if (next !== locale) {
-      setLocaleState(next);
+
+    if (next !== initialLocale) {
+      persistLocale(next);
       router.refresh();
+      return;
     }
+
     persistLocale(next);
-  }, [initialLocale, locale, router]);
+    setLocaleState(initialLocale);
+  }, [initialLocale, router]);
 
   const value = useMemo<LanguageContextValue>(
     () => ({
       locale,
       setLocale(next) {
-        setLocaleState(next);
         persistLocale(next);
         router.refresh();
       },
       toggleLocale() {
         const next = locale === "zh" ? "en" : "zh";
-        setLocaleState(next);
         persistLocale(next);
         router.refresh();
       },

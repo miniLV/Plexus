@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body>
         <ThemeProvider>
-          <LanguageProvider initialLocale={locale}>
+          <LanguageProvider key={locale} initialLocale={locale}>
             <TooltipProvider delayDuration={250}>
               <div className="flex min-h-screen flex-col lg:flex-row">
                 <AppSidebar />
