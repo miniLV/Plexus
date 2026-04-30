@@ -1,3 +1,4 @@
+import { AgentName } from "@/components/agent-icon";
 import { SyncButton } from "@/components/sync-button";
 import { Badge, StatusDot } from "@/components/ui/badge";
 import { Card, CardHover } from "@/components/ui/card";
@@ -169,7 +170,12 @@ export default async function DashboardPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="plexus-title">{a.displayName}</span>
+                        <AgentName
+                          agentId={a.id}
+                          label={a.displayName}
+                          iconSize="md"
+                          labelClassName="plexus-title"
+                        />
                         <Badge variant="synced">
                           <StatusDot tone="ok" /> detected
                         </Badge>
