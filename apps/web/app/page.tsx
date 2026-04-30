@@ -76,8 +76,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="plexus-display mb-2">Dashboard</h1>
           <p className="max-w-xl text-sm leading-relaxed text-plexus-text-2">
-            One source of truth for rules, MCP servers, skills, and instruction files — synced
-            across every AI agent on your machine.
+            Click once to import existing agent config, make it shared, and apply it across every
+            enabled AI agent on your machine.
           </p>
         </div>
         <SyncButton />

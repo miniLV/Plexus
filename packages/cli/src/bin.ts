@@ -8,7 +8,7 @@ import {
   ensureStoreScaffolding,
   joinTeam,
   pullTeam,
-  runSync,
+  runShareAll,
   teamStatus,
 } from "@plexus/core";
 import kleur from "kleur";
@@ -26,7 +26,7 @@ ${kleur.bold("Usage:")}
   plexus detect       list detected AI agents on this machine
   plexus join <git-url>   subscribe to a team config repo
   plexus pull         refresh the team layer from upstream
-  plexus sync         apply current store to all enabled agents
+  plexus sync         import, share, and apply config to all enabled agents
   plexus status       show subscription / sync status
   plexus help         show this help
 `);
@@ -42,8 +42,25 @@ async function cmdDetect(): Promise<void> {
 
 async function cmdSync(): Promise<void> {
   await ensureStoreScaffolding();
-  console.log(kleur.cyan("→ syncing all enabled agents..."));
-  const report = await runSync();
+  console.log(kleur.cyan("→ sharing config across all enabled agents..."));
+  const report = await runShareAll();
+  console.log(
+    `  ${kleur.green("✓")} imported ${report.imported.mcpWritten + report.imported.mcpExtended} MCP and ${
+      report.imported.skillsWritten + report.imported.skillsExtended
+    } skills`,
+  );
+  console.log(
+    `  ${kleur.green("✓")} enabled ${report.shared.mcp} MCP and ${report.shared.skills} skills`,
+  );
+  if (report.rules.skipped) {
+    console.log(`  ${kleur.yellow("warn")} ${report.rules.skipped}`);
+  } else {
+    console.log(
+      `  ${kleur.green("✓")} applied rules to ${
+        report.rules.applied.filter((r) => r.applied).length
+      } agent files`,
+    );
+  }
   for (const r of report.results) {
     const ok = r.errors.length === 0;
     const head = ok ? kleur.green("✓") : kleur.red("✗");

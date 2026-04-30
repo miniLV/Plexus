@@ -106,6 +106,13 @@ npm run dev
 
 Open [http://localhost:7777](http://localhost:7777).
 
+On first run, click **Share config everywhere** in the dashboard:
+
+1. Plexus imports MCP servers and skills already configured in your agents.
+2. It enables those entries for every installed and enabled agent.
+3. If a global Rules baseline exists, it applies it to each agent's `CLAUDE.md` / `AGENTS.md`.
+4. It syncs the native files and creates backups before writing.
+
 For a linked local CLI:
 
 ```bash
@@ -162,7 +169,7 @@ plexus start -p 7777
 plexus detect       list detected agents
 plexus join <url>   clone a team config repo into ~/.config/plexus/team
 plexus pull         pull the configured team repo
-plexus sync         sync MCP servers and skills
+plexus sync         import, share, and apply config to all enabled agents
 plexus status       show team subscription and sync status
 plexus help
 ```
