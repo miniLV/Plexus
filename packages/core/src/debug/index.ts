@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { isAgentInstalled } from "../agents/detect.js";
+import { instructionsForAgent } from "../agents/inspect.js";
 import { listBackups } from "../backup/index.js";
 import { pathExists } from "../store/fs-utils.js";
 import {
@@ -157,15 +159,11 @@ async function collectAgent(agentId: AgentId): Promise<AgentDebugBlock> {
   const caps = AGENT_PATHS[agentId];
   const root = await statPath(AGENT_ROOTS[agentId]);
 
-  // Instruction file convention.
-  const instructionPath =
-    agentId === "claude-code"
-      ? path.join(AGENT_ROOTS[agentId], "CLAUDE.md")
-      : path.join(AGENT_ROOTS[agentId], "AGENTS.md");
+  const instructionPath = instructionsForAgent(agentId)[0]?.abs ?? null;
 
   const [mcpFile, instructionFile, skillsDir] = await Promise.all([
     statPath(caps.mcpPath),
-    statPath(instructionPath),
+    instructionPath ? statPath(instructionPath) : Promise.resolve(null),
     statPath(caps.skillsDir),
   ]);
 
@@ -174,7 +172,7 @@ async function collectAgent(agentId: AgentId): Promise<AgentDebugBlock> {
   return {
     id: agentId,
     displayName: AGENT_DISPLAY_NAMES[agentId],
-    installed: root.exists,
+    installed: isAgentInstalled(agentId),
     mcpFileMode: caps.mcpFileMode ?? "shared",
     root,
     mcpFile,

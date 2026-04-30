@@ -22,7 +22,7 @@ Supported built-in agents:
 |---|---|---|---|
 | Claude Code | `~/.claude.json` | `~/.claude/skills/` | `shared` |
 | Cursor | `~/.cursor/mcp.json` | `~/.cursor/commands/` | `exclusive` |
-| Codex | `~/.codex/config.toml` | `~/.codex/prompts/` | `shared` |
+| Codex | `~/.codex/config.toml` | `~/.codex/skills/` | `shared` |
 | Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `shared` |
 | Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
@@ -242,7 +242,7 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - Store format: `~/.config/plexus/<layer>/skills/<id>/SKILL.md`
 - Claude Code target: `~/.claude/skills/<id>`
 - Cursor target: `~/.cursor/commands/<id>`
-- Codex target: `~/.codex/prompts/<id>`
+- Codex target: `~/.codex/skills/<id>`
 - Gemini CLI target: `~/.gemini/skills/<id>`
 - Qwen Code target: `~/.qwen/skills/<id>`
 - Factory Droid target: `~/.factory/skills/<id>`

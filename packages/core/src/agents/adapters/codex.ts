@@ -15,7 +15,7 @@ import {
  * Codex adapter.
  *
  * Codex stores MCP servers in TOML at ~/.codex/config.toml under
- * `[mcp_servers.<id>]` tables. Skills go under ~/.codex/prompts.
+ * `[mcp_servers.<id>]` tables. Skills go under ~/.codex/skills.
  */
 export const codexAdapter: AgentAdapter = {
   id: "codex",
@@ -62,7 +62,7 @@ export const codexAdapter: AgentAdapter = {
       result.errors.push(`Codex MCP write failed: ${(err as Error).message}`);
     }
 
-    // ── Skills (prompts directory) ────────────────────────
+    // ── Skills ────────────────────────────────────────────
     try {
       await ensureDir(caps.skillsDir);
       const filtered = ctx.skills.filter((s) => s.enabledAgents.includes("codex"));

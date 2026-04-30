@@ -3,6 +3,7 @@ import path from "node:path";
 import { pathExists } from "../store/fs-utils.js";
 import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS } from "../store/paths.js";
 import type { AgentId } from "../types.js";
+import { isAgentInstalled } from "./detect.js";
 
 /**
  * "Agent inspector": everything the dashboard needs to render the
@@ -196,7 +197,7 @@ export function instructionsForAgent(
 export async function inspectAgent(agentId: AgentId): Promise<AgentInspection> {
   const caps = AGENT_PATHS[agentId];
   const root = AGENT_ROOTS[agentId];
-  const installed = await pathExists(root);
+  const installed = isAgentInstalled(agentId);
 
   const [mcpFile, skillsDir] = await Promise.all([
     statFile(caps.mcpPath),

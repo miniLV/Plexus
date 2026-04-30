@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS, ALL_AGENTS } from "../store/paths.js";
+import { isAgentInstalled } from "./detect.js";
 
 export type AgentCatalogSupport = "full" | "instructions-only" | "manual";
 
@@ -158,7 +159,7 @@ export function listAgentCatalog(): AgentCatalogEntry[] {
       displayName: AGENT_DISPLAY_NAMES[id],
       support: "full",
       managed: true,
-      installed: exists(AGENT_ROOTS[id]),
+      installed: isAgentInstalled(id),
       rootDir: AGENT_ROOTS[id],
       mcpPath: caps.mcpPath,
       skillsDir: caps.skillsDir,

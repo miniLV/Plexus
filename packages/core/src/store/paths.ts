@@ -52,7 +52,7 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     skills: true,
     mcpFormat: "toml",
     mcpPath: path.join(home, ".codex", "config.toml"),
-    skillsDir: path.join(home, ".codex", "prompts"),
+    skillsDir: path.join(home, ".codex", "skills"),
     // config.toml has [profile], [auth], [mcp_servers], ... — partial-write.
     mcpFileMode: "shared",
   },

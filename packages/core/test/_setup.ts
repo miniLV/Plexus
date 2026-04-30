@@ -29,6 +29,9 @@ export async function setupSandbox(label: string): Promise<Sandbox> {
   // Some libs read USERPROFILE on Windows; mirror it in case a contributor
   // runs the suite there even though we don't claim Windows support.
   process.env.USERPROFILE = home;
+  // Keep tests hermetic: installed-agent detection should only consider the
+  // sandbox config paths unless a test explicitly opts into native hints.
+  process.env.PLEXUS_DETECT_CONFIG_ONLY = "1";
   return {
     home,
     cleanup: async () => {
