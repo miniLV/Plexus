@@ -11,6 +11,7 @@ process.env.PATH = bin;
 process.env.PLEXUS_DETECT_CONFIG_ONLY = undefined;
 
 const { detectAgents } = await import("../src/agents/detect.js");
+const { listAgentCatalog } = await import("../src/agents/catalog.js");
 const { AGENT_PATHS } = await import("../src/store/paths.js");
 
 afterAll(async () => {
@@ -40,5 +41,25 @@ describe("detectAgents", () => {
 
   it("uses the Codex skills directory rather than legacy prompts", () => {
     expect(AGENT_PATHS.codex.skillsDir).toBe(path.join(home, ".codex", "skills"));
+  });
+});
+
+describe("listAgentCatalog", () => {
+  it("does not mark manual presets installed from an empty root directory", async () => {
+    await fs.mkdir(path.join(home, ".kiro"), { recursive: true });
+
+    const kiro = listAgentCatalog().find((agent) => agent.id === "kiro");
+
+    expect(kiro?.installed).toBe(false);
+  });
+
+  it("marks manual presets installed when a known config file exists", async () => {
+    const mcpPath = path.join(home, ".kiro", "settings", "mcp.json");
+    await fs.mkdir(path.dirname(mcpPath), { recursive: true });
+    await fs.writeFile(mcpPath, "{}", "utf8");
+
+    const kiro = listAgentCatalog().find((agent) => agent.id === "kiro");
+
+    expect(kiro?.installed).toBe(true);
   });
 });

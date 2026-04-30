@@ -169,7 +169,7 @@ export function listAgentCatalog(): AgentCatalogEntry[] {
 
   const manual = MANUAL_PRESETS.map((entry) => ({
     ...entry,
-    installed: exists(entry.rootDir) || exists(entry.mcpPath) || exists(entry.instructionFile),
+    installed: exists(entry.mcpPath) || exists(entry.instructionFile),
   }));
 
   return [...builtIn, ...manual];
