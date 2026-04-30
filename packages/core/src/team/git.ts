@@ -3,7 +3,10 @@ import fs from "node:fs/promises";
 import { promisify } from "node:util";
 import { readConfig, writeConfig } from "../store/config.js";
 import { pathExists } from "../store/fs-utils.js";
+import { readMCP } from "../store/mcp.js";
 import { PLEXUS_PATHS } from "../store/paths.js";
+import { readRules } from "../store/rules.js";
+import { readSkills } from "../store/skills.js";
 
 const exec = promisify(execFile);
 
@@ -24,6 +27,34 @@ const exec = promisify(execFile);
 
 async function isGitRepo(dir: string): Promise<boolean> {
   return pathExists(`${dir}/.git`);
+}
+
+export interface TeamConfigSummary {
+  mcp: number;
+  skills: number;
+  rules: boolean;
+}
+
+export interface TeamStatus {
+  subscribed: boolean;
+  repoUrl?: string;
+  hasUpstreamUpdate?: boolean;
+  ahead?: number;
+  behind?: number;
+  summary?: TeamConfigSummary;
+}
+
+async function readTeamSummary(): Promise<TeamConfigSummary> {
+  const [mcp, skills, rules] = await Promise.all([
+    readMCP("team"),
+    readSkills("team"),
+    readRules("team"),
+  ]);
+  return {
+    mcp: mcp.length,
+    skills: skills.length,
+    rules: rules !== null,
+  };
 }
 
 export async function joinTeam(repoUrl: string): Promise<{ ok: boolean; message: string }> {
@@ -77,13 +108,7 @@ export async function pullTeam(): Promise<{ ok: boolean; message: string }> {
   }
 }
 
-export async function teamStatus(): Promise<{
-  subscribed: boolean;
-  repoUrl?: string;
-  hasUpstreamUpdate?: boolean;
-  ahead?: number;
-  behind?: number;
-}> {
+export async function teamStatus(): Promise<TeamStatus> {
   const teamDir = PLEXUS_PATHS.team;
   if (!(await isGitRepo(teamDir))) return { subscribed: false };
 
@@ -114,12 +139,15 @@ export async function teamStatus(): Promise<{
       // upstream not set or offline; ignore.
     }
 
+    const summary = await readTeamSummary().catch(() => undefined);
+
     return {
       subscribed: true,
       repoUrl: remoteUrl,
       hasUpstreamUpdate: behind > 0,
       ahead,
       behind,
+      summary,
     };
   } catch {
     return { subscribed: false };

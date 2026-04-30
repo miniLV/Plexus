@@ -187,6 +187,25 @@ uses symlinks when possible. For shared native files such as `~/.claude.json`,
 `~/.codex/config.toml`, `~/.gemini/settings.json`, and `~/.qwen/settings.json`,
 Plexus partial-writes only the MCP section.
 
+## Team Starter Repo
+
+You can use [miniLV/agent-primer](https://github.com/miniLV/agent-primer) as a first team baseline. It includes:
+
+- `rules/global.md`: shared agent behavior rules
+- `skills/<id>/SKILL.md`: reusable team skills
+- `mcp/servers.yaml`: team-approved MCP servers
+
+```bash
+plexus join https://github.com/miniLV/agent-primer.git
+plexus pull
+plexus sync
+```
+
+Note: MCP servers that depend on personal tokens, local paths, or database
+connection strings should stay as placeholders / optional entries in the team
+repo, then be completed or overridden from the user's local
+`~/.config/plexus/personal/` layer.
+
 ## CLI
 
 ```text

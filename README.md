@@ -172,6 +172,22 @@ Plexus 把 canonical config 放在 `~/.config/plexus/`：
 
 对于 Cursor、Factory Droid 这类单用途 MCP 文件，Plexus 会优先使用 symlink。对于 `~/.claude.json`、`~/.codex/config.toml`、`~/.gemini/settings.json` 和 `~/.qwen/settings.json` 这种共享原生文件，Plexus 只 partial-write MCP section。
 
+## Team Starter Repo
+
+可以直接用 [miniLV/agent-primer](https://github.com/miniLV/agent-primer) 作为第一份团队基线。它包含：
+
+- `rules/global.md`：共享的 agent 行为准则
+- `skills/<id>/SKILL.md`：团队可复用 skills
+- `mcp/servers.yaml`：团队认可的 MCP servers
+
+```bash
+plexus join https://github.com/miniLV/agent-primer.git
+plexus pull
+plexus sync
+```
+
+注意：team repo 里的 MCP 如果依赖个人 token、本机路径或数据库连接，应该先在 team repo 中保持 placeholder / optional，再由个人在 `~/.config/plexus/personal/` 里覆盖或补全。
+
 ## CLI
 
 ```text

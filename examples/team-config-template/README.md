@@ -16,6 +16,8 @@ installed AI agent.
 
 ```
 team-plexus-config/
+├── rules/
+│   └── global.md        # Team-wide instruction baseline
 ├── mcp/
 │   └── servers.yaml      # Team-approved MCP servers
 └── skills/
