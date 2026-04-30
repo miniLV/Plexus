@@ -108,14 +108,46 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
                 key={f.status.path}
                 className="border-b border-plexus-border/60 p-4 text-sm last:border-0"
               >
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="font-semibold text-plexus-text">{f.label}</span>
-                  <code className="font-mono text-xs text-plexus-text-3">{f.status.path}</code>
-                  {f.status.exists ? (
-                    <Badge variant="synced">exists</Badge>
-                  ) : (
-                    <Badge variant="native">not yet created</Badge>
-                  )}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="font-semibold text-plexus-text">{f.label}</span>
+                      {f.status.exists ? (
+                        <Badge variant="synced">exists</Badge>
+                      ) : (
+                        <Badge variant="native">not yet created</Badge>
+                      )}
+                    </div>
+                    <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                      {f.status.path}
+                    </code>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {f.status.exists ? (
+                      <>
+                        <FileViewerButton
+                          agentId={data.id}
+                          filePath={f.status.path}
+                          mode="view"
+                          label="View"
+                        />
+                        <FileViewerButton
+                          agentId={data.id}
+                          filePath={f.status.path}
+                          mode="edit"
+                          label="Edit"
+                        />
+                      </>
+                    ) : (
+                      <FileViewerButton
+                        agentId={data.id}
+                        filePath={f.status.path}
+                        mode="edit"
+                        label="Create"
+                        allowCreate
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
