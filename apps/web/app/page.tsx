@@ -67,21 +67,23 @@ export default async function DashboardPage() {
   const team = await teamStatus();
   const rules = await getDashboardRulesStatus();
 
-  const installedCount = agents.filter((a) => a.installed).length;
+  const detectedAgents = agents.filter((a) => a.installed);
   const teamCount = mcp.filter((m) => m.authority === "team").length;
   const personalCount = mcp.filter((m) => m.authority === "personal").length;
   const nativeOnlyCount = mcp.filter((m) => m.authority === "native").length;
   const skillTeamCount = skills.filter((s) => s.authority === "team").length;
   const skillPersonalCount = skills.filter((s) => s.authority === "personal").length;
   const skillNativeOnlyCount = skills.filter((s) => s.authority === "native").length;
-  const rulesLocalCount =
-    rules?.agents.filter((a) =>
-      ["linked", "copied", "in sync", "drift", "local only"].includes(a.status),
-    ).length ?? 0;
-  const rulesSyncedCount =
-    rules?.agents.filter((a) => ["linked", "copied", "in sync"].includes(a.status)).length ?? 0;
-  const rulesDriftCount = rules?.agents.filter((a) => a.status === "drift").length ?? 0;
-  const rulesLocalOnlyCount = rules?.agents.filter((a) => a.status === "local only").length ?? 0;
+  const rulesTargets =
+    rules?.agents.filter((a) => a.installed !== false && a.enabled !== false) ?? [];
+  const rulesLocalCount = rulesTargets.filter((a) =>
+    ["linked", "copied", "in sync", "drift", "local only"].includes(a.status),
+  ).length;
+  const rulesSyncedCount = rulesTargets.filter((a) =>
+    ["linked", "copied", "in sync"].includes(a.status),
+  ).length;
+  const rulesDriftCount = rulesTargets.filter((a) => a.status === "drift").length;
+  const rulesLocalOnlyCount = rulesTargets.filter((a) => a.status === "local only").length;
 
   return (
     <div className="space-y-10">
@@ -104,9 +106,7 @@ export default async function DashboardPage() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-plexus-ok opacity-50" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-plexus-ok" />
           </span>
-          <span className="text-sm font-medium">
-            {installedCount} of {agents.length} agents detected
-          </span>
+          <span className="text-sm font-medium">{detectedAgents.length} agents detected</span>
         </div>
         <span className="text-plexus-text-mute">·</span>
         <span className="text-xs tracking-[0.02em] text-plexus-text-2">
@@ -117,7 +117,7 @@ export default async function DashboardPage() {
         <span className="text-plexus-text-mute">·</span>
         <span className="text-xs tracking-[0.02em] text-plexus-text-2">
           {rules
-            ? `${rulesLocalCount} local rule files · ${rulesSyncedCount}/${rules.agents.length} applied`
+            ? `${rulesLocalCount} local instruction files · ${rulesSyncedCount}/${rulesTargets.length} using baseline`
             : "rules pending"}
         </span>
         <div className="ml-auto flex items-center gap-2 text-xs tracking-[0.02em] text-plexus-text-3">
@@ -152,35 +152,17 @@ export default async function DashboardPage() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="plexus-title">Detected agents</h2>
           <span className="text-xs text-plexus-text-3">
-            {installedCount} of {agents.length} supported targets detected
+            {detectedAgents.length} configured targets
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {agents.map((a) => {
+          {detectedAgents.length === 0 ? (
+            <Card className="col-span-2 px-5 py-8 text-center text-sm text-plexus-text-3">
+              No configured AI agents detected yet.
+            </Card>
+          ) : null}
+          {detectedAgents.map((a) => {
             const meta = AGENT_DISPLAY[a.id];
-            if (!a.installed) {
-              return (
-                <Card key={a.id} className="px-5 py-4 opacity-70">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="plexus-title text-plexus-text-3">{a.displayName}</span>
-                        <Badge variant="native">missing</Badge>
-                      </div>
-                      <div className="mt-1.5 truncate font-mono text-xs text-plexus-text-3">
-                        {meta?.instructionFile ?? a.rootDir}
-                      </div>
-                      {meta?.mcpFile && (
-                        <div className="truncate font-mono text-[11px] text-plexus-text-mute">
-                          mcp · {meta.mcpFile}
-                        </div>
-                      )}
-                    </div>
-                    <span className="shrink-0 text-xs text-plexus-text-3">{meta?.mode}</span>
-                  </div>
-                </Card>
-              );
-            }
             return (
               <Link key={a.id} href={`/agents/${a.id}`} className="group">
                 <CardHover className="cursor-pointer px-5 py-4">
@@ -222,14 +204,16 @@ export default async function DashboardPage() {
             <div className="mb-2 flex items-end gap-2">
               <div className="plexus-display">{rules ? rulesLocalCount : "—"}</div>
               <div className="pb-1 text-xs text-plexus-text-3">
-                {rules ? `${rulesSyncedCount} applied` : "core API pending"}
+                {rules ? "local instruction files" : "core API pending"}
               </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {rules ? (
                 <>
-                  <Badge variant="synced">synced {rulesSyncedCount}</Badge>
-                  <Badge variant="outline">local {rulesLocalOnlyCount}</Badge>
+                  <Badge variant="synced">
+                    baseline {rulesSyncedCount}/{rulesTargets.length}
+                  </Badge>
+                  <Badge variant="outline">local-only {rulesLocalOnlyCount}</Badge>
                   <Badge variant={rulesDriftCount > 0 ? "divergent" : "native"}>
                     drift {rulesDriftCount}
                   </Badge>

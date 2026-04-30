@@ -68,11 +68,14 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
   const [message, setMessage] = useState<string | null>(initial.unavailableReason ?? null);
 
   const dirty = content !== (status.content ?? "");
+  const targetAgents = useMemo(
+    () => status.agents.filter((agent) => agent.installed !== false && agent.enabled !== false),
+    [status.agents],
+  );
   const syncedAgents = useMemo(
     () =>
-      status.agents.filter((agent) => ["linked", "copied", "in sync"].includes(agent.status))
-        .length,
-    [status.agents],
+      targetAgents.filter((agent) => ["linked", "copied", "in sync"].includes(agent.status)).length,
+    [targetAgents],
   );
 
   async function refresh(nextMessage?: string) {
@@ -130,7 +133,7 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
       const next = normalizeStatus((await res.json()) as ApiResult);
       setStatus(next);
       setContent(next.content ?? content);
-      setMessage("Applied rules to all available agents.");
+      setMessage("Applied rules to detected agents.");
     } finally {
       setBusy(null);
     }
@@ -212,7 +215,7 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
               ) : (
                 <SendHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
               )}
-              Apply to all agents
+              Apply to detected agents
             </Button>
           </div>
         </div>
@@ -246,7 +249,7 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
             <div>
               <div className="plexus-eyebrow mb-1">Targets</div>
               <div className="text-sm text-plexus-text-2">
-                {syncedAgents} of {status.agents.length} agent files in sync
+                {syncedAgents} of {targetAgents.length} targets using baseline
               </div>
             </div>
             <Badge variant={dirty ? "divergent" : "synced"}>
@@ -273,12 +276,12 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
             <div>Agent target</div>
             <div>Status</div>
           </div>
-          {status.agents.length === 0 ? (
+          {targetAgents.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-plexus-text-3">
               Rules targets are waiting for the core rules API.
             </div>
           ) : (
-            status.agents.map((agent) => {
+            targetAgents.map((agent) => {
               const importBusy = busy === `import:${agent.agentId}`;
               return (
                 <div
