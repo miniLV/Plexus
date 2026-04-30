@@ -50,7 +50,7 @@ export interface ImportPreview {
   perAgent: Record<AgentId, { mcp: number; skills: number }>;
 }
 
-async function readMcpFromAgent(agentId: AgentId): Promise<
+export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
   Array<{
     id: string;
     command: string;
@@ -88,7 +88,7 @@ async function readMcpFromAgent(agentId: AgentId): Promise<
   }
 }
 
-async function readSkillsFromAgent(agentId: AgentId): Promise<SkillDef[]> {
+export async function readNativeSkillsFromAgent(agentId: AgentId): Promise<SkillDef[]> {
   const caps = AGENT_PATHS[agentId];
   if (!(await pathExists(caps.skillsDir))) return [];
 
@@ -176,7 +176,7 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
   const nativeSkills = new Map<string, { first: SkillDef; sources: AgentId[] }>();
 
   for (const agentId of ALL_AGENTS) {
-    const mcps = await readMcpFromAgent(agentId);
+    const mcps = await readNativeMcpFromAgent(agentId);
     perAgent[agentId].mcp = mcps.length;
     for (const m of mcps) {
       const entry = nativeMcp.get(m.id);
@@ -190,7 +190,7 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
       }
     }
 
-    const skills = await readSkillsFromAgent(agentId);
+    const skills = await readNativeSkillsFromAgent(agentId);
     perAgent[agentId].skills = skills.length;
     for (const s of skills) {
       const entry = nativeSkills.get(s.id);

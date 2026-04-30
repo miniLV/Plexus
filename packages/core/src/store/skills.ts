@@ -28,11 +28,11 @@ export function parseSkillMarkdown(raw: string): {
 
 export function serializeSkillMarkdown(skill: SkillDef): string {
   const fm: Record<string, unknown> = {
+    ...(skill.frontmatter ?? {}),
     name: skill.name,
     description: skill.description ?? "",
     plexus_id: skill.id,
     plexus_enabled_agents: skill.enabledAgents,
-    ...(skill.frontmatter ?? {}),
   };
   return `---\n${YAML.stringify(fm).trim()}\n---\n${skill.body.trimStart()}`;
 }

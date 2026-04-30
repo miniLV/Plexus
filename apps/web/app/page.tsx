@@ -1,4 +1,3 @@
-import { ImportBanner } from "@/components/import-banner";
 import { SyncButton } from "@/components/sync-button";
 import { Badge, StatusDot } from "@/components/ui/badge";
 import { Card, CardHover } from "@/components/ui/card";
@@ -82,9 +81,6 @@ export default async function DashboardPage() {
         </div>
         <SyncButton />
       </section>
-
-      {/* Import banner */}
-      <ImportBanner />
 
       {/* Status pill row */}
       <Card className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4">

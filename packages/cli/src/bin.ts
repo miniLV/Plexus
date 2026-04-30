@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type AgentId,
   detectAgents,
   ensureStoreScaffolding,
   joinTeam,
@@ -26,7 +27,7 @@ ${kleur.bold("Usage:")}
   plexus detect       list detected AI agents on this machine
   plexus join <git-url>   subscribe to a team config repo
   plexus pull         refresh the team layer from upstream
-  plexus sync         import, share, and apply config to all enabled agents
+  plexus sync [--prefer <agent>]  import, share, and apply config to all enabled agents
   plexus status       show subscription / sync status
   plexus help         show this help
 `);
@@ -40,10 +41,31 @@ async function cmdDetect(): Promise<void> {
   }
 }
 
-async function cmdSync(): Promise<void> {
+const AGENTS = new Set(["claude-code", "cursor", "codex", "factory-droid"]);
+
+function preferredAgentFromArgs(args: string[]): AgentId | undefined {
+  const idx = args.findIndex((arg) => arg === "--prefer" || arg === "--primary");
+  if (idx < 0) return undefined;
+  const value = args[idx + 1];
+  if (!AGENTS.has(value ?? "")) {
+    console.error(
+      kleur.red("Usage: plexus sync --prefer <claude-code|cursor|codex|factory-droid>"),
+    );
+    process.exit(1);
+  }
+  return value as AgentId;
+}
+
+async function cmdSync(args: string[]): Promise<void> {
   await ensureStoreScaffolding();
+  const preferredAgent = preferredAgentFromArgs(args);
   console.log(kleur.cyan("→ sharing config across all enabled agents..."));
-  const report = await runShareAll();
+  const report = await runShareAll({ preferredAgent });
+  if (report.preferredAgent && report.conflictsResolved > 0) {
+    console.log(
+      `  ${kleur.green("✓")} resolved ${report.conflictsResolved} conflict(s) with ${report.preferredAgent}`,
+    );
+  }
   console.log(
     `  ${kleur.green("✓")} imported ${report.imported.mcpWritten + report.imported.mcpExtended} MCP and ${
       report.imported.skillsWritten + report.imported.skillsExtended
@@ -139,7 +161,7 @@ async function main(): Promise<void> {
       await cmdDetect();
       return;
     case "sync":
-      await cmdSync();
+      await cmdSync(rest);
       return;
     case "status":
       await cmdStatus();

@@ -3,11 +3,39 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const AGENT_LABELS: Record<string, string> = {
+  "claude-code": "Claude Code",
+  cursor: "Cursor",
+  codex: "Codex",
+  "factory-droid": "Factory Droid",
+};
+
+interface SharePlan {
+  targetAgents: string[];
+  sources: Array<{ agent: string; mcp: number; skills: number; rules: boolean; total: number }>;
+  recommendedPrimaryAgent?: string;
+  selectedPrimaryAgent?: string;
+  conflictCount: number;
+  mcp: {
+    safe: number;
+    conflicts: Array<{ id: string; sources: string[]; preferredAgent?: string }>;
+  };
+  skills: {
+    safe: number;
+    conflicts: Array<{ id: string; sources: string[]; preferredAgent?: string }>;
+  };
+  rules: { sources: string[]; conflict: boolean; preferredAgent?: string };
+  error?: string;
+}
 
 interface SyncReport {
   mode?: "share-all";
   targetAgents?: string[];
+  plan?: SharePlan;
+  preferredAgent?: string;
+  conflictsResolved?: number;
   imported?: {
     mcpWritten: number;
     mcpExtended: number;
@@ -30,17 +58,49 @@ interface SyncReport {
 
 export function SyncButton() {
   const [loading, setLoading] = useState(false);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [plan, setPlan] = useState<SharePlan | null>(null);
+  const [preferredAgent, setPreferredAgent] = useState("");
   const [report, setReport] = useState<SyncReport | null>(null);
+
+  async function refreshPlan(nextPreferredAgent?: string) {
+    setPlanLoading(true);
+    try {
+      const params = nextPreferredAgent ? `?preferredAgent=${nextPreferredAgent}` : "";
+      const res = await fetch(`/api/sync${params}`);
+      const data = (await res.json()) as SharePlan;
+      setPlan(data.error ? null : data);
+      const selected =
+        data.selectedPrimaryAgent ??
+        data.recommendedPrimaryAgent ??
+        data.sources?.find((source) => source.total > 0)?.agent ??
+        "";
+      setPreferredAgent(selected);
+    } catch {
+      setPlan(null);
+    } finally {
+      setPlanLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void refreshPlan();
+  }, []);
 
   async function run() {
     setLoading(true);
     setReport(null);
     try {
-      const res = await fetch("/api/sync", { method: "POST" });
+      const res = await fetch("/api/sync", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ preferredAgent: preferredAgent || undefined }),
+      });
       const data = (await res.json()) as SyncReport;
       setReport(data);
+      if (data.plan) setPlan(data.plan);
       if (!data.error) {
-        setTimeout(() => window.location.reload(), 1200);
+        setTimeout(() => window.location.reload(), 1600);
       }
     } catch (e) {
       setReport({ error: String(e) });
@@ -49,8 +109,47 @@ export function SyncButton() {
     }
   }
 
+  const activeSources = plan?.sources.filter((source) => source.total > 0) ?? [];
+  const showPrimaryPicker = activeSources.length > 1 || (plan?.conflictCount ?? 0) > 0;
+  const safeCount = (plan?.mcp.safe ?? 0) + (plan?.skills.safe ?? 0);
+
   return (
     <div className="flex flex-col items-end gap-2">
+      {(planLoading || plan) && (
+        <div className="flex max-w-[24rem] flex-wrap items-center justify-end gap-2 text-xs text-plexus-text-3">
+          {planLoading ? (
+            <span>Analyzing local agents…</span>
+          ) : plan && showPrimaryPicker ? (
+            <>
+              <span>
+                Smart merge: {safeCount} safe · {plan.conflictCount} conflicts
+              </span>
+              <label className="flex items-center gap-2">
+                <span>Primary</span>
+                <select
+                  className="rounded-md border border-plexus-border bg-white px-2 py-1 text-plexus-text shadow-sm outline-none focus:border-plexus-accent"
+                  value={preferredAgent}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setPreferredAgent(next);
+                    void refreshPlan(next);
+                  }}
+                >
+                  {activeSources.map((source) => (
+                    <option key={source.agent} value={source.agent}>
+                      {AGENT_LABELS[source.agent] ?? source.agent}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : plan && activeSources[0] ? (
+            <span>Source: {AGENT_LABELS[activeSources[0].agent] ?? activeSources[0].agent}</span>
+          ) : (
+            <span>No local source config yet</span>
+          )}
+        </div>
+      )}
       <Button variant="primary" onClick={run} disabled={loading}>
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
@@ -77,6 +176,12 @@ export function SyncButton() {
               {report.shared && (
                 <div className="text-plexus-text-3">
                   enabled {report.shared.mcp} MCP · {report.shared.skills} skills everywhere
+                </div>
+              )}
+              {report.preferredAgent && (report.conflictsResolved ?? 0) > 0 && (
+                <div className="text-plexus-text-3">
+                  resolved {report.conflictsResolved} conflicts with{" "}
+                  {AGENT_LABELS[report.preferredAgent] ?? report.preferredAgent}
                 </div>
               )}
               {report.rules?.skipped ? (

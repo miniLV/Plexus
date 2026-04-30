@@ -101,9 +101,10 @@ npm run dev
 第一次使用时，只需要点 Dashboard 右上角的 **Share config everywhere**：
 
 1. Plexus 会先导入你已经在各个 agent 里配置过的 MCP Servers 和 Skills。
-2. 然后把这些配置启用到所有已安装且 enabled 的 agent。
-3. 如果已经有全局 Rules，就应用到每个 agent 的 `CLAUDE.md` / `AGENTS.md`。
-4. 最后同步原生文件，并在写入前创建 backup。
+2. 如果多个 agent 里有不同配置，Plexus 会智能合并：不同 ID 全部保留，同 ID 冲突才使用 Primary Agent 决定版本。
+3. 然后把这些配置启用到所有已安装且 enabled 的 agent。
+4. 如果已经有全局 Rules，就应用到每个 agent 的 `CLAUDE.md` / `AGENTS.md`；Rules 冲突时同样按 Primary Agent 选择。
+5. 最后同步原生文件，并在写入前创建 backup。
 
 如果想用本地 CLI：
 
@@ -158,6 +159,7 @@ plexus detect       list detected agents
 plexus join <url>   clone a team config repo into ~/.config/plexus/team
 plexus pull         pull the configured team repo
 plexus sync         import, share, and apply config to all enabled agents
+plexus sync --prefer codex
 plexus status       show team subscription and sync status
 plexus help
 ```
