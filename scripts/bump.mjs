@@ -83,6 +83,10 @@ function replaceIfCurrent(holder, key, current, next) {
   }
 }
 
+function manifestToLockPackagePath(path) {
+  return path.replace(/\/package\.json$/, "");
+}
+
 function bumpPackageLock(current, next) {
   const lock = readPkg(LOCKFILE);
 
@@ -90,11 +94,12 @@ function bumpPackageLock(current, next) {
   replaceIfCurrent(lock.packages?.[""], "version", current, next);
 
   for (const { path } of PACKAGES.filter((pkg) => !pkg.isRoot)) {
-    replaceIfCurrent(lock.packages?.[path], "version", current, next);
+    replaceIfCurrent(lock.packages?.[manifestToLockPackagePath(path)], "version", current, next);
   }
 
   for (const path of CORE_DEPENDENTS) {
-    replaceIfCurrent(lock.packages?.[path]?.dependencies, "@plexus/core", current, next);
+    const lockPath = manifestToLockPackagePath(path);
+    replaceIfCurrent(lock.packages?.[lockPath]?.dependencies, "@plexus/core", current, next);
   }
 
   replaceIfCurrent(lock.dependencies?.["@plexus/cli"]?.requires, "@plexus/core", current, next);
