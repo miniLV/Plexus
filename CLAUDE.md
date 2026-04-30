@@ -27,6 +27,9 @@ Supported built-in agents:
 | Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 
+Current release: **v0.0.20** (`9ee17c7`, pushed to `origin/master` with tag
+`v0.0.20`).
+
 The current package version is tracked in the root `package.json`. All
 workspace `package.json` files must stay on the same version:
 
@@ -93,6 +96,7 @@ Plexus/
 │       │   └── api/               # thin route handlers around @plexus/core
 │       │       └── rules/route.ts
 │       ├── components/
+│       │   ├── agent-icon.tsx     # local brand icons + AgentName helper
 │       │   ├── app-sidebar.tsx
 │       │   ├── app-topbar.tsx
 │       │   ├── agent-detail.tsx
@@ -109,6 +113,7 @@ Plexus/
 │       │   ├── team-panel.tsx
 │       │   └── ui/
 │       ├── styles/tokens.css
+│       ├── lib/agent-metadata.ts  # shared display names / short labels
 │       ├── lib/version.ts
 │       └── package.json
 ├── packages/
@@ -148,6 +153,40 @@ Plexus/
 - `packages/core` must stay free of React, Next.js, DOM, or browser-only APIs.
 - Prefer small, surgical changes. Do not refactor adjacent code unless the
   user asked or the change is required for the task.
+
+### Current Release Snapshot
+
+Last completed release: **v0.0.20**.
+
+Recently shipped and verified:
+
+- `v0.0.13`: smart one-click share/import flow with preferred primary source.
+- `v0.0.14`: built-in agent catalog expanded to Claude Code, Cursor, Codex,
+  Gemini CLI, Qwen Code, and Factory Droid.
+- `v0.0.15`-`v0.0.17`: installed-agent detection and dashboard rules metrics
+  were corrected; missing agents are no longer shown on the main detected
+  grid.
+- `v0.0.18`: sync/share result moved to a modal and the Primary picker moved
+  from a native select to a styled popover.
+- `v0.0.19`: agent detail pages can view/edit/create native instruction files
+  through the safe file editor route.
+- `v0.0.20`: fixed the `sync-button.tsx` missing-module build error and added
+  local branded agent icons. Claude Code uses the Claude mark, Codex uses the
+  OpenAI mark, Cursor and Gemini use their Simple Icons marks, and unknown
+  agents fall back to initials.
+
+Verification for `v0.0.20`:
+
+- `npm run check`
+- `npm run test:core`
+- `npm run build --workspace=@plexus/core`
+- `npm run build --workspace=@plexus/web`
+- Playwright screenshot against `http://localhost:7777/`
+
+Known local-dev quirk: running `next dev` may rewrite
+`apps/web/next-env.d.ts` from `.next/types/routes.d.ts` to
+`.next/dev/types/routes.d.ts`. Treat that as generated noise unless the task is
+specifically about Next.js type generation.
 
 ---
 
@@ -305,13 +344,21 @@ safer path: propose changes through the team repo instead.
 
 Entry points:
 
-- `POST /api/sync`
+- `GET /api/sync`: preview the one-click share-all plan
+- `POST /api/sync`: run the one-click share-all flow
 - `plexus sync`
 - Sync button and add-row flows that explicitly call `/api/sync`
 
-Core function: `packages/core/src/sync/index.ts` `runSync()`.
+Core functions in `packages/core/src/sync/index.ts`:
 
-Flow:
+- `runSync()` applies the current Plexus store to selected targets.
+- `previewShareAll()` inspects native MCPs, skills, and rules, then chooses a
+  recommended primary source.
+- `runShareAll()` imports native config into the personal store, resolves
+  conflicts by preferred source, enables imported config for every target, then
+  applies MCP/skills/rules.
+
+`runSync()` flow:
 
 1. Read `~/.config/plexus/config.yaml`.
 2. Detect installed agents.
@@ -320,6 +367,14 @@ Flow:
 5. Read team + personal MCPs and skills.
 6. Merge team + personal.
 7. Apply adapters for enabled, installed targets.
+
+`runShareAll()` is the user-facing foolproof mode. When more than one source
+has native config, the UI lets the user pick the primary source. If the user
+does not pick one, the priority order is:
+
+```text
+codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid
+```
 
 ### 4.2 Import
 
@@ -576,9 +631,11 @@ Server component:
 
 Shows:
 
-- Sync CTA
-- import banner
-- detected built-in agents
+- Sync CTA (`SyncButton`) with smart merge preview, preferred primary source
+  picker, and modal result summary
+- detected built-in agents only; missing supported agents are intentionally
+  hidden from the main dashboard
+- branded agent names through `AgentName` / `AgentIcon`
 - rules target sync count
 - MCP/skill counters by authority
 - team update callout when subscribed and behind
@@ -838,10 +895,48 @@ git diff --check -- CLAUDE.md
 
 ## 10. Known Limitations And Roadmap
 
+### Suggested Next Session Plan
+
+Use this order unless the user asks for a different priority:
+
+1. **Stabilize safety invariants.**
+   - Fix `packages/core/src/spread/index.ts` so Mirror/Spread snapshots before
+     writing target native files.
+   - Add or update a core test that proves a Mirror apply creates a backup.
+   - Verify: `npm run test:core` and core/web builds.
+2. **Tighten agent file edit safety.**
+   - Restrict `apps/web/app/api/agent/[id]/file/route.ts` to known native
+     agent roots and expected instruction/MCP/skill files, or explicitly
+     document and test any broader allowance.
+   - Keep `~/.ssh`, `~/.aws`, and other sensitive roots blocked.
+3. **Resolve the Next dev type-file churn.**
+   - Running `next dev` flips `apps/web/next-env.d.ts` to
+     `.next/dev/types/routes.d.ts`, while build wants `.next/types/routes.d.ts`.
+   - Decide whether to ignore the file, generate it in a stable way, or adjust
+     the Next config so dev/build stop dirtying the worktree.
+4. **Make conflict handling understandable.**
+   - Add a real divergent/conflict preview for MCP and skill entries when the
+     same ID has different native definitions.
+   - Give users two actions: promote native to store, or push store to native.
+5. **Harden public `npx plexus` distribution.**
+   - Decide whether to package `apps/web` as standalone output or keep the
+     monorepo-aware CLI path.
+   - Test from a clean temp directory with `npm pack` / `npx`.
+6. **Finish team mode.**
+   - Add leave/switch team.
+   - Add a PR/proposal workflow for team config updates.
+   - Show team/personal conflict state clearly before pull/apply.
+7. **Expand custom agents from registry to sync targets.**
+   - Start with rules projection for custom agents because they already store
+     instruction file paths.
+   - Only add MCP/skills custom adapters once there is a clear per-agent file
+     contract.
+
 Current limitations:
 
 - Effective view does not compute real `divergent` diffs.
 - Mirror / spread target sync currently bypasses the backup snapshot path.
+- Running `next dev` can dirty `apps/web/next-env.d.ts`.
 - Team subscription can clone/pull/status, but PR proposal and conflict
   workflows are manual.
 - Custom agents are instruction-file registry records only.
@@ -891,6 +986,10 @@ Recently important fixes that must not regress:
 | Debug snapshot | `packages/core/src/debug/index.ts` |
 | CLI | `packages/cli/src/bin.ts` |
 | Sidebar nav and version badge | `apps/web/components/app-sidebar.tsx` |
+| Dashboard | `apps/web/app/page.tsx` |
+| Sync/share CTA | `apps/web/components/sync-button.tsx` |
+| Agent brand icons | `apps/web/components/agent-icon.tsx` |
+| Agent display labels | `apps/web/lib/agent-metadata.ts` |
 | Agent catalog presets | `packages/core/src/agents/catalog.ts` |
 | Agent file edit API | `apps/web/app/api/agent/[id]/file/route.ts` |
 | Rules API | `apps/web/app/api/rules/route.ts` |
@@ -899,6 +998,6 @@ Recently important fixes that must not regress:
 
 ---
 
-*Last updated for v0.0.14 on 2026-04-30. If you change the sync contract,
+*Last updated for v0.0.20 on 2026-04-30. If you change the sync contract,
 store layout, backup behavior, supported paths, CLI behavior, or UI routes,
 update this file in the same change.*
