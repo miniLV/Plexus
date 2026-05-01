@@ -1,6 +1,6 @@
 {
   "name": "plexus-agent-config",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Plexus CLI: launches the dashboard and exposes core commands.",
   "type": "module",
   "license": "Apache-2.0",
@@ -56,8 +56,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
-    "plexus-agent-config-core": "0.0.3",
-    "plexus-agent-config-web": "0.0.3",
+    "plexus-agent-config-core": "0.0.4",
+    "plexus-agent-config-web": "0.0.4",
     "typescript": "^5.4.5"
   }
 }
