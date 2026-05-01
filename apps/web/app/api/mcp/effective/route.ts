@@ -1,5 +1,5 @@
-import { getEffectiveMcp } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { getEffectiveMcp } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

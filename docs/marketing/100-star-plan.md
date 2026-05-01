@@ -36,7 +36,7 @@ High impact:
 
 - The README explains the product well, but there is no short demo asset. A
   45-60 second video or GIF is the biggest missing trust builder.
-- Public install friction is high. `@plexus/cli` is not published on npm, and
+- Public install friction is high. `plexus-agent-config` is not published on npm, and
   the unscoped `plexus` npm name is already taken by an unrelated package.
 - The repo has good topics and screenshots, so discovery metadata is not the
   main bottleneck.

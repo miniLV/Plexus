@@ -1,5 +1,5 @@
-import { addCustomAgent, listCustomAgents } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { addCustomAgent, listCustomAgents } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

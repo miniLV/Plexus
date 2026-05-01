@@ -1,6 +1,6 @@
-import * as core from "@plexus/core";
-import type { AgentId } from "@plexus/core";
 import { NextResponse } from "next/server";
+import * as core from "plexus-agent-config-core";
+import type { AgentId } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ const AGENT_IDS = new Set<string>(core.ALL_AGENTS);
 
 function missing(name: keyof RulesCore) {
   return NextResponse.json(
-    { error: `${name} is not available in @plexus/core yet.` },
+    { error: `${name} is not available in plexus-agent-config-core yet.` },
     { status: 501 },
   );
 }

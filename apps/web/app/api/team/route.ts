@@ -1,5 +1,5 @@
-import { joinTeam, pullTeam, teamStatus } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { joinTeam, pullTeam, teamStatus } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

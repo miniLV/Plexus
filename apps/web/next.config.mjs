@@ -11,7 +11,7 @@ const nextConfig = {
     root: repoRoot,
   },
   // Allow direct import from the workspace package without bundling.
-  transpilePackages: ["@plexus/core"],
+  transpilePackages: ["plexus-agent-config-core"],
 };
 
 export default nextConfig;

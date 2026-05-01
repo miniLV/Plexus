@@ -1,5 +1,5 @@
-import { collectDebugSnapshot, formatDebugSnapshot } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { collectDebugSnapshot, formatDebugSnapshot } from "plexus-agent-config-core";
 import pkg from "../../../package.json";
 
 export const dynamic = "force-dynamic";

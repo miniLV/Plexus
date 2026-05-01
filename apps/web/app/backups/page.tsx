@@ -1,6 +1,6 @@
 import { BackupsPanel } from "@/components/backups-panel";
 import { getServerLocale } from "@/lib/i18n-server";
-import { listBackups } from "@plexus/core";
+import { listBackups } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

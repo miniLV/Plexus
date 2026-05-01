@@ -23,13 +23,13 @@ For focused core work:
 
 ```bash
 npm run test:core
-npm run build --workspace=@plexus/core
+npm run build --workspace=plexus-agent-config-core
 ```
 
 For focused web work:
 
 ```bash
-npm run build --workspace=@plexus/web
+npm run build --workspace=plexus-agent-config-web
 ```
 
 ## Safety Rules

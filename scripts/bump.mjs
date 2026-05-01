@@ -3,7 +3,7 @@
  * scripts/bump.mjs — synchronous version bump for the Plexus monorepo.
  *
  * Per CLAUDE.md: every workspace package.json carries the same version and
- * `apps/web` declares `@plexus/core@<same>`, `packages/cli` likewise.
+ * `apps/web` declares `plexus-agent-config-core@<same>`, `packages/cli` likewise.
  *
  * Usage:
  *   node scripts/bump.mjs              # auto-increment patch (0.0.3 → 0.0.4)
@@ -16,7 +16,7 @@
  *   - packages/core/package.json
  *   - packages/cli/package.json
  *   - package-lock.json
- * And keeps the @plexus/core dependency in apps/web + packages/cli pinned
+ * And keeps the plexus-agent-config-core dependency in apps/web + packages/cli pinned
  * to the new version.
  *
  * Exits non-zero on any inconsistency or write failure.
@@ -36,9 +36,13 @@ const PACKAGES = [
 ];
 
 const LOCKFILE = "package-lock.json";
+const CORE_PACKAGE = "plexus-agent-config-core";
+const CLI_PACKAGE = "plexus-agent-config";
+const WEB_PACKAGE = "plexus-agent-config-web";
 
-// Workspaces that depend on @plexus/core and must stay pinned.
+// Workspaces that depend on plexus-agent-config-core and must stay pinned.
 const CORE_DEPENDENTS = ["apps/web/package.json", "packages/cli/package.json"];
+const WEB_DEPENDENTS = ["packages/cli/package.json"];
 
 function readPkgText(rel) {
   return readFileSync(resolve(ROOT, rel), "utf8");
@@ -68,13 +72,19 @@ function replaceVersionField(text, next) {
 }
 
 /**
- * Replace `"@plexus/core": "X.Y.Z"` inside a dependencies block. Workspace
+ * Replace `"plexus-agent-config-core": "X.Y.Z"` inside a dependencies block. Workspace
  * pins are always exact, so a pinned-semver match is unambiguous.
  */
 function replaceCoreDep(text, next) {
-  const re = /"@plexus\/core"\s*:\s*"\d+\.\d+\.\d+"/;
+  const re = /"plexus-agent-config-core"\s*:\s*"\d+\.\d+\.\d+"/;
   if (!re.test(text)) return text;
-  return text.replace(re, `"@plexus/core": "${next}"`);
+  return text.replace(re, `"${CORE_PACKAGE}": "${next}"`);
+}
+
+function replaceWebDep(text, next) {
+  const re = /"plexus-agent-config-web"\s*:\s*"\d+\.\d+\.\d+"/;
+  if (!re.test(text)) return text;
+  return text.replace(re, `"${WEB_PACKAGE}": "${next}"`);
 }
 
 function replaceIfCurrent(holder, key, current, next) {
@@ -99,11 +109,12 @@ function bumpPackageLock(current, next) {
 
   for (const path of CORE_DEPENDENTS) {
     const lockPath = manifestToLockPackagePath(path);
-    replaceIfCurrent(lock.packages?.[lockPath]?.dependencies, "@plexus/core", current, next);
+    replaceIfCurrent(lock.packages?.[lockPath]?.dependencies, CORE_PACKAGE, current, next);
   }
 
-  replaceIfCurrent(lock.dependencies?.["@plexus/cli"]?.requires, "@plexus/core", current, next);
-  replaceIfCurrent(lock.dependencies?.["@plexus/web"]?.requires, "@plexus/core", current, next);
+  replaceIfCurrent(lock.dependencies?.[CLI_PACKAGE]?.requires, CORE_PACKAGE, current, next);
+  replaceIfCurrent(lock.dependencies?.[CLI_PACKAGE]?.requires, WEB_PACKAGE, current, next);
+  replaceIfCurrent(lock.dependencies?.[WEB_PACKAGE]?.requires, CORE_PACKAGE, current, next);
 
   writeJson(LOCKFILE, lock);
 }
@@ -153,7 +164,10 @@ function main() {
     for (const { path } of PACKAGES) console.log(`  - ${path}: version → ${next}`);
     console.log(`  - ${LOCKFILE}: workspace versions → ${next}`);
     for (const path of CORE_DEPENDENTS) {
-      console.log(`  - ${path}: dependencies["@plexus/core"] → ${next}`);
+      console.log(`  - ${path}: dependencies["plexus-agent-config-core"] → ${next}`);
+    }
+    for (const path of WEB_DEPENDENTS) {
+      console.log(`  - ${path}: dependencies["plexus-agent-config-web"] → ${next}`);
     }
     return;
   }
@@ -163,6 +177,9 @@ function main() {
     text = replaceVersionField(text, next);
     if (CORE_DEPENDENTS.includes(path)) {
       text = replaceCoreDep(text, next);
+    }
+    if (WEB_DEPENDENTS.includes(path)) {
+      text = replaceWebDep(text, next);
     }
     writePkgText(path, text);
   }

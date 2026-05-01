@@ -24,9 +24,9 @@ graph TD
 
     subgraph Plexus["Plexus (single Node process)"]
       direction TB
-      WebApp["Next.js dashboard\n(@plexus/web, App Router)"]
-      Core["@plexus/core\n(pure TS, no DOM)"]
-      CLI["@plexus/cli\n(`npx plexus` entry)"]
+      WebApp["Next.js dashboard\n(plexus-agent-config-web, App Router)"]
+      Core["plexus-agent-config-core\n(pure TS, no DOM)"]
+      CLI["plexus-agent-config\n(`npx plexus` entry)"]
       WebApp --- Core
       CLI -.boots.-> WebApp
     end
@@ -81,13 +81,13 @@ module directly without going through HTTP.
 
 ```mermaid
 graph LR
-    subgraph apps_web["@plexus/web"]
+    subgraph apps_web["plexus-agent-config-web"]
       pages["app/* pages (RSC)"]
       apiroutes["app/api/* routes"]
       components["components/*"]
       lib["lib/*"]
     end
-    subgraph core["@plexus/core"]
+    subgraph core["plexus-agent-config-core"]
       types["types.ts"]
       store["store/*"]
       agents["agents/*"]
@@ -98,7 +98,7 @@ graph LR
       backup["backup/"]
       team["team/"]
     end
-    subgraph cli["@plexus/cli"]
+    subgraph cli["plexus-agent-config"]
       bin["bin/plexus.ts"]
     end
     pages --> core

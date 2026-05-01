@@ -97,7 +97,22 @@ added later.
 
 Requires Node 20.
 
-### Try Plexus from this repo
+### Install from npm
+
+```bash
+npm install -g plexus-agent-config
+plexus
+```
+
+Or run it once:
+
+```bash
+npx plexus-agent-config
+```
+
+Open [http://localhost:7777](http://localhost:7777).
+
+### Run from source
 
 ```bash
 git clone https://github.com/miniLV/Plexus.git
@@ -255,8 +270,8 @@ Focused commands:
 ```bash
 npm run check
 npm run test:core
-npm run build --workspace=@plexus/core
-npm run build --workspace=@plexus/web
+npm run build --workspace=plexus-agent-config-core
+npm run build --workspace=plexus-agent-config-web
 ```
 
 ## Current Status

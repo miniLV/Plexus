@@ -1,6 +1,6 @@
 import { MirrorPanel } from "@/components/mirror-panel";
 import { getServerLocale } from "@/lib/i18n-server";
-import { AGENT_DISPLAY_NAMES, ALL_AGENTS, detectAgents } from "@plexus/core";
+import { AGENT_DISPLAY_NAMES, ALL_AGENTS, detectAgents } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

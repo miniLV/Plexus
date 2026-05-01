@@ -1,6 +1,6 @@
 import { DebugPanel } from "@/components/debug-panel";
 import { getServerLocale } from "@/lib/i18n-server";
-import { collectDebugSnapshot, formatDebugSnapshot } from "@plexus/core";
+import { collectDebugSnapshot, formatDebugSnapshot } from "plexus-agent-config-core";
 import pkg from "../../package.json";
 
 export const dynamic = "force-dynamic";

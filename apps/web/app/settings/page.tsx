@@ -3,9 +3,9 @@ import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getServerLocale } from "@/lib/i18n-server";
-import { AGENT_DISPLAY_NAMES, ALL_AGENTS, readConfig } from "@plexus/core";
 import { ArrowRight, Network } from "lucide-react";
 import Link from "next/link";
+import { AGENT_DISPLAY_NAMES, ALL_AGENTS, readConfig } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

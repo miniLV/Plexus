@@ -1,8 +1,19 @@
 {
-  "name": "@plexus/core",
-  "version": "0.0.25",
+  "name": "plexus-agent-config-core",
+  "version": "0.0.1",
   "description": "Plexus core: agent detection, MCP/skill store, sync engine, adapters.",
   "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/miniLV/Plexus#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miniLV/Plexus.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/miniLV/Plexus/issues"
+  },
+  "keywords": ["ai-agents", "claude-code", "codex", "cursor", "mcp", "model-context-protocol"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -11,7 +22,12 @@
       "import": "./dist/index.js"
     }
   },
+  "files": ["dist/**/*", "package.json"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
+    "prepack": "npm run build",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsc -p tsconfig.json --watch",

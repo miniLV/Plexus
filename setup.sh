@@ -11,8 +11,8 @@ if [[ -f "$HOME/.nvm/nvm.sh" ]]; then
 fi
 
 npm ci
-npm run build --workspace=@plexus/core
-npm run build --workspace=@plexus/web
+npm run build --workspace=plexus-agent-config-core
+npm run build --workspace=plexus-agent-config-web
 
 cat <<'MSG'
 

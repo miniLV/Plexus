@@ -1,5 +1,5 @@
-import { ALL_AGENTS, type AgentId, toggleMcpAgent } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { ALL_AGENTS, type AgentId, toggleMcpAgent } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

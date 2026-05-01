@@ -8,7 +8,7 @@ It uses this same layout and can be subscribed from Plexus directly.
 Members run:
 
 ```bash
-npx @plexus/cli join https://github.com/your-org/team-plexus-config.git
+npx plexus-agent-config join https://github.com/your-org/team-plexus-config.git
 ```
 
 …to clone this repo into `~/.config/plexus/team/`. Plexus then merges

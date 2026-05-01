@@ -1,6 +1,6 @@
-import { readAllMCP, writeMCP } from "@plexus/core";
-import type { MCPServerDef } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { readAllMCP, writeMCP } from "plexus-agent-config-core";
+import type { MCPServerDef } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

@@ -1,5 +1,10 @@
-import { getCustomAgent, readTextFile, snapshotSingleFile, writeTextFile } from "@plexus/core";
 import { NextResponse } from "next/server";
+import {
+  getCustomAgent,
+  readTextFile,
+  snapshotSingleFile,
+  writeTextFile,
+} from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

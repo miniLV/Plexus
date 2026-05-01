@@ -4,10 +4,15 @@ import { Badge, StatusDot } from "@/components/ui/badge";
 import { Card, CardHover } from "@/components/ui/card";
 import { getServerLocale } from "@/lib/i18n-server";
 import { type RulesPanelStatus, normalizeRulesStatus } from "@/lib/rules";
-import { detectAgents, getEffectiveMcp, getEffectiveSkills, teamStatus } from "@plexus/core";
-import * as core from "@plexus/core";
 import { Clock, ExternalLink, ExternalLink as LinkIcon, PanelsTopLeft } from "lucide-react";
 import Link from "next/link";
+import {
+  detectAgents,
+  getEffectiveMcp,
+  getEffectiveSkills,
+  teamStatus,
+} from "plexus-agent-config-core";
+import * as core from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

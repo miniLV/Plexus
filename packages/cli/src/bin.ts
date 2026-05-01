@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import kleur from "kleur";
 import {
   ALL_AGENTS,
   type AgentId,
@@ -12,11 +14,11 @@ import {
   pullTeam,
   runShareAll,
   teamStatus,
-} from "@plexus/core";
-import kleur from "kleur";
+} from "plexus-agent-config-core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
 function help(): void {
   console.log(`
@@ -111,12 +113,22 @@ async function cmdStatus(): Promise<void> {
 }
 
 function findWebDir(): string | null {
-  // When installed: dist/ is co-located near apps/web. Walk up from __dirname.
+  const installedWebDir = (() => {
+    try {
+      return path.dirname(require.resolve("plexus-agent-config-web/package.json"));
+    } catch {
+      return null;
+    }
+  })();
+
   const candidates = [
+    installedWebDir,
+    // Monorepo development / npm link paths.
     path.resolve(__dirname, "../../../apps/web"),
     path.resolve(__dirname, "../../apps/web"),
     path.resolve(process.cwd(), "apps/web"),
-  ];
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
   for (const c of candidates) {
     if (existsSync(path.join(c, "package.json"))) return c;
   }

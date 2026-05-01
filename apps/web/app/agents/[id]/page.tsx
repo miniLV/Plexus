@@ -1,9 +1,9 @@
 import { AgentDetail } from "@/components/agent-detail";
 import { getServerLocale } from "@/lib/i18n-server";
-import { ALL_AGENTS, type AgentId, inspectAgent } from "@plexus/core";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ALL_AGENTS, type AgentId, inspectAgent } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

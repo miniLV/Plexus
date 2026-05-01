@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { NextResponse } from "next/server";
 import {
   AGENT_PATHS,
   ALL_AGENTS,
@@ -9,8 +10,7 @@ import {
   readTextFile,
   snapshotSingleFile,
   writeTextFile,
-} from "@plexus/core";
-import { NextResponse } from "next/server";
+} from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

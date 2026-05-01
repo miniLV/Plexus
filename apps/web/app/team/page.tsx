@@ -1,6 +1,6 @@
 import { TeamPanel } from "@/components/team-panel";
 import { getServerLocale } from "@/lib/i18n-server";
-import { teamStatus } from "@plexus/core";
+import { teamStatus } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

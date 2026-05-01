@@ -1,5 +1,5 @@
-import { detectAgents } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { detectAgents } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

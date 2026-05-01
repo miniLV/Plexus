@@ -93,7 +93,7 @@ Plexus/
 │       │   ├── debug/page.tsx
 │       │   ├── team/page.tsx
 │       │   ├── settings/page.tsx
-│       │   └── api/               # thin route handlers around @plexus/core
+│       │   └── api/               # thin route handlers around plexus-agent-config-core
 │       │       └── rules/route.ts
 │       ├── components/
 │       │   ├── agent-icon.tsx     # local brand icons + AgentName helper
@@ -148,7 +148,7 @@ Plexus/
 
 - TypeScript is strict and ESM-only.
 - Local imports in TS use `.js` extensions.
-- `apps/web` and `packages/cli` depend on `@plexus/core` with an exact version
+- `apps/web` and `packages/cli` depend on `plexus-agent-config-core` with an exact version
   pin matching the monorepo version.
 - `packages/core` must stay free of React, Next.js, DOM, or browser-only APIs.
 - Prefer small, surgical changes. Do not refactor adjacent code unless the
@@ -179,8 +179,8 @@ Verification for `v0.0.20`:
 
 - `npm run check`
 - `npm run test:core`
-- `npm run build --workspace=@plexus/core`
-- `npm run build --workspace=@plexus/web`
+- `npm run build --workspace=plexus-agent-config-core`
+- `npm run build --workspace=plexus-agent-config-web`
 - Playwright screenshot against `http://localhost:7777/`
 
 Known local-dev quirk: running `next dev` may rewrite
@@ -861,8 +861,8 @@ For code or behavior changes, run:
 ```bash
 export PATH="$HOME/.nvm/versions/node/v20.19.6/bin:$PATH"
 cd /path/to/Plexus
-npm run build --workspace=@plexus/core
-npm run build --workspace=@plexus/web
+npm run build --workspace=plexus-agent-config-core
+npm run build --workspace=plexus-agent-config-web
 ```
 
 For broader changes, prefer:

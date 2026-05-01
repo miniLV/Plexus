@@ -1,7 +1,7 @@
 import { RulesPanel, type RulesStatus } from "@/components/rules-panel";
 import { getServerLocale } from "@/lib/i18n-server";
 import { normalizeRulesStatus } from "@/lib/rules";
-import * as core from "@plexus/core";
+import * as core from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 

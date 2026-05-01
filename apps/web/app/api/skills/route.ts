@@ -1,6 +1,6 @@
-import { ALL_AGENTS, readAllSkills, writeSkill } from "@plexus/core";
-import type { AgentId, SkillDef } from "@plexus/core";
 import { NextResponse } from "next/server";
+import { ALL_AGENTS, readAllSkills, writeSkill } from "plexus-agent-config-core";
+import type { AgentId, SkillDef } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 
