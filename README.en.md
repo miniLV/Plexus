@@ -25,6 +25,9 @@
   <a href="https://github.com/miniLV/Plexus/releases">
     <img alt="Release" src="https://img.shields.io/github/v/release/miniLV/Plexus?include_prereleases" />
   </a>
+  <a href="https://www.npmjs.com/package/plexus-agent-config">
+    <img alt="npm" src="https://img.shields.io/npm/v/plexus-agent-config" />
+  </a>
   <a href="./LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/miniLV/Plexus" />
   </a>
@@ -96,6 +99,27 @@ added later.
 ## Quick Start
 
 Requires Node 20.
+
+Plexus ships as one npm package. The internal core and web dashboard are included, so users do not need to install multiple packages.
+
+```bash
+npm install -g plexus-agent-config
+plexus
+```
+
+Open [http://localhost:7777](http://localhost:7777).
+
+Or run it without a global install:
+
+```bash
+npx -y plexus-agent-config@latest start
+```
+
+You can also check which agents Plexus detects first:
+
+```bash
+plexus detect
+```
 
 ### Run from source
 

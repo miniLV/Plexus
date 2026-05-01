@@ -24,6 +24,9 @@
   <a href="https://github.com/miniLV/Plexus/releases">
     <img alt="Release" src="https://img.shields.io/github/v/release/miniLV/Plexus?include_prereleases" />
   </a>
+  <a href="https://www.npmjs.com/package/plexus-agent-config">
+    <img alt="npm" src="https://img.shields.io/npm/v/plexus-agent-config" />
+  </a>
   <a href="./LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/miniLV/Plexus" />
   </a>
@@ -84,6 +87,27 @@ Agent Catalog 和手动新增入口在 **Settings -> Agent Catalog**。如果一
 ## 快速开始
 
 需要 Node 20。
+
+Plexus 现在通过一个 npm 包发布，内部的 core 和 web dashboard 已经随包带上，不需要分别安装多个包。
+
+```bash
+npm install -g plexus-agent-config
+plexus
+```
+
+打开 [http://localhost:7777](http://localhost:7777)。
+
+不想全局安装也可以直接运行：
+
+```bash
+npx -y plexus-agent-config@latest start
+```
+
+也可以先检查 Plexus 能识别哪些 agent：
+
+```bash
+plexus detect
+```
 
 ### 从源码运行
 

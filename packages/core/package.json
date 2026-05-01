@@ -1,6 +1,6 @@
 {
   "name": "plexus-agent-config-core",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Plexus core: agent detection, MCP/skill store, sync engine, adapters.",
   "type": "module",
   "license": "Apache-2.0",

@@ -123,6 +123,7 @@ function findWebDir(): string | null {
 
   const candidates = [
     installedWebDir,
+    path.resolve(__dirname, "../vendor/plexus-agent-config-web"),
     // Monorepo development / npm link paths.
     path.resolve(__dirname, "../../../apps/web"),
     path.resolve(__dirname, "../../apps/web"),

@@ -3,7 +3,8 @@
  * scripts/bump.mjs — synchronous version bump for the Plexus monorepo.
  *
  * Per CLAUDE.md: every workspace package.json carries the same version and
- * `apps/web` declares `plexus-agent-config-core@<same>`, `packages/cli` likewise.
+ * `apps/web` declares `plexus-agent-config-core@<same>`, and `packages/cli`
+ * declares internal workspace packages as dev dependencies for bundling.
  *
  * Usage:
  *   node scripts/bump.mjs              # auto-increment patch (0.0.3 → 0.0.4)
@@ -16,8 +17,7 @@
  *   - packages/core/package.json
  *   - packages/cli/package.json
  *   - package-lock.json
- * And keeps the plexus-agent-config-core dependency in apps/web + packages/cli pinned
- * to the new version.
+ * And keeps the internal workspace pins on the new version.
  *
  * Exits non-zero on any inconsistency or write failure.
  */
@@ -37,7 +37,6 @@ const PACKAGES = [
 
 const LOCKFILE = "package-lock.json";
 const CORE_PACKAGE = "plexus-agent-config-core";
-const CLI_PACKAGE = "plexus-agent-config";
 const WEB_PACKAGE = "plexus-agent-config-web";
 
 // Workspaces that depend on plexus-agent-config-core and must stay pinned.
@@ -110,10 +109,14 @@ function bumpPackageLock(current, next) {
   for (const path of CORE_DEPENDENTS) {
     const lockPath = manifestToLockPackagePath(path);
     replaceIfCurrent(lock.packages?.[lockPath]?.dependencies, CORE_PACKAGE, current, next);
+    replaceIfCurrent(lock.packages?.[lockPath]?.devDependencies, CORE_PACKAGE, current, next);
   }
 
-  replaceIfCurrent(lock.dependencies?.[CLI_PACKAGE]?.requires, CORE_PACKAGE, current, next);
-  replaceIfCurrent(lock.dependencies?.[CLI_PACKAGE]?.requires, WEB_PACKAGE, current, next);
+  for (const path of WEB_DEPENDENTS) {
+    const lockPath = manifestToLockPackagePath(path);
+    replaceIfCurrent(lock.packages?.[lockPath]?.devDependencies, WEB_PACKAGE, current, next);
+  }
+
   replaceIfCurrent(lock.dependencies?.[WEB_PACKAGE]?.requires, CORE_PACKAGE, current, next);
 
   writeJson(LOCKFILE, lock);
@@ -164,10 +167,11 @@ function main() {
     for (const { path } of PACKAGES) console.log(`  - ${path}: version → ${next}`);
     console.log(`  - ${LOCKFILE}: workspace versions → ${next}`);
     for (const path of CORE_DEPENDENTS) {
-      console.log(`  - ${path}: dependencies["plexus-agent-config-core"] → ${next}`);
+      const field = path === "packages/cli/package.json" ? "devDependencies" : "dependencies";
+      console.log(`  - ${path}: ${field}["plexus-agent-config-core"] → ${next}`);
     }
     for (const path of WEB_DEPENDENTS) {
-      console.log(`  - ${path}: dependencies["plexus-agent-config-web"] → ${next}`);
+      console.log(`  - ${path}: devDependencies["plexus-agent-config-web"] → ${next}`);
     }
     return;
   }
