@@ -1,0 +1,46 @@
+name: publish npm
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-npm-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish plexus-agent-config
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node for npm trusted publishing
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate tag matches package version
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${version}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version v${version}" >&2
+            exit 1
+          fi
+
+      - name: Publish to npm
+        run: npm run release:npm

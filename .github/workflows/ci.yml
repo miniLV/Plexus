@@ -35,14 +35,14 @@ jobs:
       - name: Biome check (lint + format)
         run: npx biome check .
 
-      - name: Build @plexus/core
+      - name: Build core
         run: npm run build:core
 
-      - name: Test @plexus/core
+      - name: Test core
         run: npm run test:core
 
-      - name: Build @plexus/web
-        run: npm run build --workspace=@plexus/web
+      - name: Build web
+        run: npm run build -w plexus-agent-config-web
 
       - name: Typecheck workspaces
         run: npm run typecheck
