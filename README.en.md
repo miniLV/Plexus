@@ -14,6 +14,11 @@
 </p>
 
 <p align="center">
+  If Plexus saves you from maintaining the same agent config in five places,
+  a GitHub star helps other multi-agent developers find it.
+</p>
+
+<p align="center">
   <a href="https://github.com/miniLV/Plexus/actions/workflows/ci.yml">
     <img alt="CI" src="https://github.com/miniLV/Plexus/actions/workflows/ci.yml/badge.svg" />
   </a>

@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  如果 Plexus 帮你少维护几份重复的 Agent 配置，欢迎点个 Star，让更多多 Agent 用户看到它。
+</p>
+
+<p align="center">
   <a href="https://github.com/miniLV/Plexus/actions/workflows/ci.yml">
     <img alt="CI" src="https://github.com/miniLV/Plexus/actions/workflows/ci.yml/badge.svg" />
   </a>
