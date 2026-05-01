@@ -5,17 +5,15 @@ Plexus keeps the product name, but the public npm package name is
 The installed binary is still `plexus`. The first public npm release starts at
 `0.0.1`.
 
-## Packages
+## Package
 
-Publish these packages in order:
+Publish one public package:
 
-1. `plexus-agent-config-core`
-2. `plexus-agent-config-web`
-3. `plexus-agent-config`
+- `plexus-agent-config`
 
-The main package depends on the core and web packages. The web package includes
-the built Next.js `.next` output so a global install can start the dashboard
-without cloning the monorepo.
+The CLI package bundles the internal core and web packages. The bundled web
+package includes the built Next.js `.next` output so a global install can start
+the dashboard without cloning the monorepo.
 
 ## Release Commands
 
@@ -45,8 +43,6 @@ Before publishing, the release path should pass:
 
 ```bash
 npm run verify
-npm pack -w plexus-agent-config-core
-npm pack -w plexus-agent-config-web
 npm pack -w plexus-agent-config
 ```
 

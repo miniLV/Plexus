@@ -23,9 +23,9 @@
     "bump:patch": "node scripts/bump.mjs",
     "bump:dry": "node scripts/bump.mjs --dry",
     "release:patch": "npm run verify && npm run bump:patch && node scripts/release-commit.mjs",
-    "pack:npm": "npm run verify && npm pack -w plexus-agent-config-core && npm pack -w plexus-agent-config-web && npm pack -w plexus-agent-config",
-    "publish:npm:dry": "npm run verify && npm publish --dry-run -w plexus-agent-config-core --access public && npm publish --dry-run -w plexus-agent-config-web --access public && npm publish --dry-run -w plexus-agent-config --access public",
-    "publish:npm": "npm run verify && npm publish -w plexus-agent-config-core --access public && npm publish -w plexus-agent-config-web --access public && npm publish -w plexus-agent-config --access public",
+    "pack:npm": "npm run verify && npm pack -w plexus-agent-config",
+    "publish:npm:dry": "npm run verify && npm publish --dry-run -w plexus-agent-config --access public",
+    "publish:npm": "npm run verify && npm publish -w plexus-agent-config --access public",
     "ship": "node scripts/ship.mjs"
   },
   "devDependencies": {
