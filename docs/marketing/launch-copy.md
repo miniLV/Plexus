@@ -67,10 +67,12 @@ The safety model is the main thing I cared about:
 - partial-writes shared config files like ~/.claude.json and ~/.codex/config.toml instead of replacing them
 - supports Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and Factory Droid today
 
-It is still early. The install path is:
+It is still early. The current install path is from source with Node 20:
 
-npm install -g plexus-agent-config
-plexus
+git clone https://github.com/miniLV/Plexus.git
+cd Plexus
+npm ci
+npm run dev
 
 I would especially love feedback on the sync model, backup semantics, and what other AI coding tools should be supported next.
 ```

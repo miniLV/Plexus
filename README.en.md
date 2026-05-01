@@ -97,21 +97,6 @@ added later.
 
 Requires Node 20.
 
-### Install from npm
-
-```bash
-npm install -g plexus-agent-config
-plexus
-```
-
-Or run it once:
-
-```bash
-npx plexus-agent-config
-```
-
-Open [http://localhost:7777](http://localhost:7777).
-
 ### Run from source
 
 ```bash

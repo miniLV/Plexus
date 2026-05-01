@@ -8,7 +8,7 @@
     "build": "npm run build --workspaces --if-present",
     "build:core": "npm run build -w plexus-agent-config-core",
     "build:cli": "npm run build -w plexus-agent-config",
-    "dev": "npm run dev -w plexus-agent-config-web -- -p 7777",
+    "dev": "npm run build:core && npm run dev -w plexus-agent-config-web -- -p 7777",
     "start": "node packages/cli/dist/bin.js",
     "link": "npm run build && cd packages/cli && npm link",
     "unlink": "cd packages/cli && npm unlink -g",

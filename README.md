@@ -85,21 +85,6 @@ Agent Catalog 和手动新增入口在 **Settings -> Agent Catalog**。如果一
 
 需要 Node 20。
 
-### 从 npm 安装
-
-```bash
-npm install -g plexus-agent-config
-plexus
-```
-
-或者临时运行：
-
-```bash
-npx plexus-agent-config
-```
-
-打开 [http://localhost:7777](http://localhost:7777)。
-
 ### 从源码运行
 
 ```bash
