@@ -4,7 +4,7 @@
   "description": "Core library for syncing AI agent rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code.",
   "type": "module",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/miniLV/Plexus#readme",
+  "homepage": "https://minilv.github.io/Plexus/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/miniLV/Plexus.git",

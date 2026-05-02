@@ -4,7 +4,7 @@
   "description": "Local dashboard to sync Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
   "type": "module",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/miniLV/Plexus#readme",
+  "homepage": "https://minilv.github.io/Plexus/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/miniLV/Plexus.git",

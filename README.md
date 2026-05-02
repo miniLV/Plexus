@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="https://github.com/miniLV/Plexus/releases/latest">Latest Release</a> ·
+  <a href="https://minilv.github.io/Plexus/">Homepage</a> ·
   <strong>简体中文</strong> · <a href="./README.en.md">English</a>
 </p>
 

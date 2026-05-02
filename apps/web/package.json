@@ -3,7 +3,7 @@
   "version": "0.0.4",
   "description": "Local Plexus dashboard for syncing AI coding tool rules, MCP servers, and skills.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/miniLV/Plexus#readme",
+  "homepage": "https://minilv.github.io/Plexus/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/miniLV/Plexus.git",
