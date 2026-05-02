@@ -216,7 +216,27 @@
         align-items: center;
       }
 
+      .product {
+        display: grid;
+        grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+        gap: 36px;
+        align-items: center;
+      }
+
+      .product-copy {
+        display: grid;
+        gap: 18px;
+      }
+
       .feature img {
+        width: 100%;
+        height: auto;
+        border: 1px solid #d4cec1;
+        border-radius: 8px;
+        background: #111318;
+      }
+
+      .product img {
         width: 100%;
         height: auto;
         border: 1px solid #d4cec1;
@@ -283,6 +303,7 @@
 
         .grid,
         .feature,
+        .product,
         .split {
           grid-template-columns: 1fr;
         }
@@ -367,6 +388,22 @@
               <p>Share Markdown skill bundles across supported agents through reversible links.</p>
             </article>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap product">
+          <div class="product-copy">
+            <div>
+              <p class="section-kicker">Dashboard</p>
+              <h2>See every agent before you sync anything.</h2>
+            </div>
+            <p class="feature-copy">
+              Plexus detects local agents, imports existing rules, MCP servers, and skills, then
+              previews the share plan before writing back to native files.
+            </p>
+          </div>
+          <img src="assets/readme/dashboard-en.png" alt="Plexus dashboard showing detected agents" />
         </div>
       </section>
 
