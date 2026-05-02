@@ -67,12 +67,9 @@ The safety model is the main thing I cared about:
 - partial-writes shared config files like ~/.claude.json and ~/.codex/config.toml instead of replacing them
 - supports Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and Factory Droid today
 
-It is still early. The current install path is from source with Node 20:
+It is still early. The quickest install path is:
 
-git clone https://github.com/miniLV/Plexus.git
-cd Plexus
-npm ci
-npm run dev
+npx -y plexus-agent-config@latest start
 
 I would especially love feedback on the sync model, backup semantics, and what other AI coding tools should be supported next.
 ```
@@ -102,7 +99,11 @@ The part I spent the most time on is safety:
 
 Repo: https://github.com/miniLV/Plexus
 
-It is early and currently runs from source with Node 20. I would love feedback from people with heavier Claude Code setups: is the sync model right, and what would make you trust this with your config?
+It is early and runs with Node 20:
+
+npx -y plexus-agent-config@latest start
+
+I would love feedback from people with heavier Claude Code setups: is the sync model right, and what would make you trust this with your config?
 ```
 
 ## Reddit: r/cursor
@@ -130,6 +131,9 @@ It snapshots files before writing and can restore from the Backups page.
 
 Repo: https://github.com/miniLV/Plexus
 
+Try it:
+npx -y plexus-agent-config@latest start
+
 Still early, so I am looking for feedback from people with real Cursor MCP setups. What would you expect this to preserve or never touch?
 ```
 
@@ -156,6 +160,9 @@ Plexus is my attempt at a local-first MCP/config control panel:
 - snapshots native files before writes
 
 Repo: https://github.com/miniLV/Plexus
+
+Try it:
+npx -y plexus-agent-config@latest start
 
 It does not run MCP servers and is not a secrets manager. I am looking for feedback on the data model and which clients should be supported next.
 ```

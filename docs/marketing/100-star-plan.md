@@ -1,7 +1,8 @@
 # Plexus 100-Star Growth Plan
 
-Date: 2026-05-01
-Baseline: 3 GitHub stars, 0 forks, Apache-2.0, good repo topics already set.
+Date: 2026-05-02
+Baseline: 5 GitHub stars, 0 forks, Apache-2.0, npm package published, good repo
+topics already set.
 Goal: reach 100 GitHub stars from developers who actually understand the
 multi-agent config pain.
 
@@ -10,8 +11,8 @@ multi-agent config pain.
 - Primary goal is awareness and credible early users, not paid acquisition.
 - The first audience is developers already using at least two of Claude Code,
   Cursor, Codex, Gemini CLI, Qwen Code, or MCP-enabled tools.
-- The best first conversion is a GitHub star or issue. A full install is a
-  stronger signal, but today the install path still requires cloning the repo.
+- The best first conversion is a GitHub star, issue, or clean `npx` install.
+  A working install is the strongest early trust signal.
 - Do not ask communities to upvote. Ask for feedback, be transparent, and let
   stars follow.
 
@@ -36,8 +37,8 @@ High impact:
 
 - The README explains the product well, but there is no short demo asset. A
   45-60 second video or GIF is the biggest missing trust builder.
-- Public install friction is high. `plexus-agent-config` is not published on npm, and
-  the unscoped `plexus` npm name is already taken by an unrelated package.
+- The public install path exists through `plexus-agent-config`, but launch copy
+  must make the `npx -y plexus-agent-config@latest start` path obvious.
 - The repo has good topics and screenshots, so discovery metadata is not the
   main bottleneck.
 - The safest first launch is Hacker News plus niche AI-coding communities,
@@ -57,7 +58,7 @@ Medium impact:
 
 | Milestone | Target | What must be true |
 | --- | ---: | --- |
-| Day 3 | 10 stars | README CTA added, launch copy ready, demo script ready |
+| Day 3 | 10 stars | README CTA added, launch copy refreshed, demo script ready |
 | Day 7 | 25 stars | HN + 2 niche community posts live, active comment replies |
 | Day 14 | 50 stars | Feedback fixes shipped, awesome-list PRs opened |
 | Day 21 | 75 stars | Short demo video circulated, second wave posts |
@@ -67,7 +68,7 @@ Medium impact:
 
 ### Hacker News
 
-Use when the demo is ready and the repo can be tried directly.
+Use when the demo is ready and the repo can be tried directly with `npx`.
 
 - Title: `Show HN: Plexus - one local dashboard for AI coding tool configs`
 - Link: `https://github.com/miniLV/Plexus`
@@ -131,9 +132,10 @@ Before first public post:
 
 - [ ] Record 45-60 second demo: import, preview, sync, backup restore.
 - [ ] Add a short "try it" clip to README or GitHub release assets.
-- [ ] Decide npm package path. Since `plexus` is taken, consider
-  `@minilv/plexus`, `@plexus-local/cli`, or `create-plexus`.
-- [ ] Test the fresh-machine path from a clean checkout.
+- [ ] Re-test the fresh-machine path with
+  `npx -y plexus-agent-config@latest start`.
+- [ ] Keep README, release notes, and launch copy aligned on the npm package
+  name.
 - [ ] Prepare reply snippets for security, secrets, symlinks, and "why not just
   use dotfiles?" questions.
 
@@ -171,7 +173,8 @@ Decision rule:
 - If a channel produces views but no comments, sharpen the hook.
 - If people object to safety, emphasize snapshots, partial writes, and
   local-first more aggressively.
-- If people ask for install, prioritize npm packaging before more promotion.
+- If people ask for install, improve the README/npx onboarding before more
+  promotion.
 
 ## Useful References
 
