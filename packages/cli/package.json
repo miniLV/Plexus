@@ -1,7 +1,7 @@
 {
   "name": "plexus-agent-config",
   "version": "0.0.4",
-  "description": "Plexus CLI: launches the dashboard and exposes core commands.",
+  "description": "Local dashboard to sync Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
   "type": "module",
   "license": "Apache-2.0",
   "homepage": "https://github.com/miniLV/Plexus#readme",
@@ -13,7 +13,20 @@
   "bugs": {
     "url": "https://github.com/miniLV/Plexus/issues"
   },
-  "keywords": ["ai-agents", "claude-code", "codex", "cursor", "mcp", "model-context-protocol"],
+  "keywords": [
+    "ai-agents",
+    "ai-coding-tools",
+    "agent-config",
+    "agent-configuration",
+    "claude-code",
+    "codex",
+    "config-sync",
+    "cursor",
+    "local-first",
+    "mcp",
+    "model-context-protocol",
+    "skills"
+  ],
   "bin": {
     "plexus": "dist/bin.js"
   },

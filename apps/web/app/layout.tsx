@@ -16,9 +16,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Plexus",
+  title: "Plexus Agent Config",
   description:
-    "Team-shared AI agent config — sync MCPs, skills, and CLAUDE.md across every coding agent on your machine.",
+    "Local dashboard for syncing Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
   icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
 };
 

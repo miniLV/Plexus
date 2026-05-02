@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plexus Agent Config - Claude Code, Cursor, Codex MCP and skills sync</title>
+    <meta
+      name="description"
+      content="Plexus Agent Config is a local dashboard for syncing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and other AI coding tools."
+    />
+    <meta
+      name="keywords"
+      content="Plexus Agent Config, Claude Code config, Cursor MCP, Codex AGENTS.md, MCP sync, AI coding tools, agent config, skills sync"
+    />
+    <link rel="canonical" href="https://minilv.github.io/Plexus/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Plexus Agent Config" />
+    <meta
+      property="og:description"
+      content="One local dashboard for sharing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code."
+    />
+    <meta property="og:url" content="https://minilv.github.io/Plexus/" />
+    <meta property="og:image" content="https://minilv.github.io/Plexus/assets/readme/dashboard-en.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Plexus Agent Config" />
+    <meta
+      name="twitter:description"
+      content="Local Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code config sync for rules, MCP servers, and skills."
+    />
+    <meta name="twitter:image" content="https://minilv.github.io/Plexus/assets/readme/dashboard-en.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f1115;
+        --surface: #171a21;
+        --surface-2: #20252e;
+        --text: #f3f1eb;
+        --muted: #b9b6ad;
+        --line: #333946;
+        --green: #76b782;
+        --blue: #84a8d8;
+        --amber: #d7ac62;
+        --ink: #0b0c10;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .hero {
+        position: relative;
+        min-height: 92vh;
+        display: grid;
+        align-items: end;
+        overflow: hidden;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(15, 17, 21, 0.97) 0%, rgba(15, 17, 21, 0.82) 46%, rgba(15, 17, 21, 0.24) 100%),
+          url("assets/readme/dashboard-en.png") center right / min(980px, 72vw) auto no-repeat,
+          #0f1115;
+      }
+
+      .wrap {
+        width: min(1120px, calc(100vw - 40px));
+        margin: 0 auto;
+      }
+
+      .hero-content {
+        position: relative;
+        padding: 88px 0 72px;
+        max-width: 690px;
+      }
+
+      .eyebrow {
+        margin: 0 0 18px;
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 660px;
+        font-size: clamp(44px, 7vw, 78px);
+        line-height: 0.96;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        margin: 24px 0 0;
+        max-width: 610px;
+        color: var(--muted);
+        font-size: clamp(18px, 2vw, 22px);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 34px;
+      }
+
+      .button {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        padding: 0 18px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .button.primary {
+        background: var(--green);
+        border-color: var(--green);
+        color: var(--ink);
+      }
+
+      .button.secondary {
+        background: rgba(23, 26, 33, 0.72);
+      }
+
+      .install {
+        width: min(100%, 620px);
+        margin-top: 20px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(11, 12, 16, 0.74);
+        padding: 14px 16px;
+        color: #e8e4da;
+        font-size: 14px;
+      }
+
+      main {
+        background: #f3f1eb;
+        color: #171a21;
+      }
+
+      section {
+        padding: 72px 0;
+        border-bottom: 1px solid #d8d3c8;
+      }
+
+      .section-kicker {
+        margin: 0 0 10px;
+        color: #5b7d60;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 0;
+        max-width: 780px;
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 32px;
+      }
+
+      .card {
+        border: 1px solid #d4cec1;
+        border-radius: 8px;
+        background: #fbfaf6;
+        padding: 22px;
+      }
+
+      .card strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #111318;
+        font-size: 17px;
+      }
+
+      .card p,
+      .feature-copy {
+        margin: 0;
+        color: #555149;
+      }
+
+      .feature {
+        display: grid;
+        grid-template-columns: 0.86fr 1.14fr;
+        gap: 36px;
+        align-items: center;
+      }
+
+      .feature img {
+        width: 100%;
+        height: auto;
+        border: 1px solid #d4cec1;
+        border-radius: 8px;
+        background: #111318;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 28px;
+        margin-top: 32px;
+      }
+
+      ul {
+        margin: 14px 0 0;
+        padding-left: 20px;
+        color: #555149;
+      }
+
+      li + li {
+        margin-top: 8px;
+      }
+
+      .final {
+        background: #171a21;
+        color: var(--text);
+      }
+
+      .final p {
+        color: var(--muted);
+      }
+
+      footer {
+        padding: 28px 0;
+        background: #0f1115;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      footer .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      @media (max-width: 820px) {
+        .hero {
+          min-height: auto;
+        }
+
+        .hero::before {
+          background:
+            linear-gradient(180deg, rgba(15, 17, 21, 0.96) 0%, rgba(15, 17, 21, 0.86) 58%, rgba(15, 17, 21, 0.72) 100%),
+            url("assets/readme/dashboard-en.png") center top 34px / 780px auto no-repeat,
+            #0f1115;
+        }
+
+        .hero-content {
+          padding: 360px 0 48px;
+        }
+
+        .grid,
+        .feature,
+        .split {
+          grid-template-columns: 1fr;
+        }
+
+        section {
+          padding: 54px 0;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .wrap {
+          width: min(100vw - 28px, 1120px);
+        }
+
+        .hero-content {
+          padding-top: 300px;
+        }
+
+        h1 {
+          font-size: 40px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        .button {
+          width: 100%;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Plexus Agent Config",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "macOS, Linux",
+        "softwareVersion": "0.0.4",
+        "description": "Local dashboard for syncing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and other AI coding tools.",
+        "codeRepository": "https://github.com/miniLV/Plexus",
+        "downloadUrl": "https://www.npmjs.com/package/plexus-agent-config",
+        "license": "https://github.com/miniLV/Plexus/blob/master/LICENSE"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap hero-content">
+        <p class="eyebrow">Plexus Agent Config</p>
+        <h1>Local config sync for AI coding tools.</h1>
+        <p class="lead">
+          Share rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI,
+          Qwen Code, and other agents without replacing their native files.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/miniLV/Plexus">View on GitHub</a>
+          <a class="button secondary" href="https://www.npmjs.com/package/plexus-agent-config"
+            >npm package</a
+          >
+        </div>
+        <pre class="install"><code>npx -y plexus-agent-config@latest start</code></pre>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <div class="wrap">
+          <p class="section-kicker">Why it exists</p>
+          <h2>Claude Code, Cursor, Codex, and Gemini CLI all have different config homes.</h2>
+          <div class="grid">
+            <article class="card">
+              <strong>Rules drift</strong>
+              <p>Keep CLAUDE.md, AGENTS.md, GEMINI.md, and QWEN.md aligned from one baseline.</p>
+            </article>
+            <article class="card">
+              <strong>MCP duplication</strong>
+              <p>Import existing MCP servers, resolve conflicts, and write back in native formats.</p>
+            </article>
+            <article class="card">
+              <strong>Skills spread out</strong>
+              <p>Share Markdown skill bundles across supported agents through reversible links.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap feature">
+          <div>
+            <p class="section-kicker">Safety model</p>
+            <h2>One local source of truth, native files everywhere.</h2>
+            <p class="feature-copy">
+              Plexus stores canonical config under ~/.config/plexus, previews what will change, then
+              projects config back into each agent. Shared files use partial writes so auth, history,
+              profiles, and unrelated settings stay intact.
+            </p>
+            <ul>
+              <li>Local-first and telemetry-free.</li>
+              <li>Snapshots native files before writes.</li>
+              <li>Does not execute MCP servers.</li>
+              <li>Rollback from the Backups page.</li>
+            </ul>
+          </div>
+          <img
+            src="assets/readme/config-sharing-map-en.png"
+            alt="Plexus config sharing architecture map"
+          />
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <p class="section-kicker">Supported today</p>
+          <h2>Built for developers who already use more than one coding agent.</h2>
+          <div class="split">
+            <div>
+              <h3>Native adapters</h3>
+              <ul>
+                <li>Claude Code</li>
+                <li>Cursor</li>
+                <li>OpenAI Codex</li>
+                <li>Gemini CLI</li>
+                <li>Qwen Code</li>
+                <li>Factory Droid</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Manual catalog</h3>
+              <ul>
+                <li>Windsurf, Kiro, Cline, Roo Code, Kilo Code, Continue, Aider, Amp</li>
+                <li>Track custom instruction files now and add deeper adapters over time.</li>
+                <li>Team layer support through a Git repo under ~/.config/plexus/team.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="final">
+        <div class="wrap">
+          <p class="section-kicker">Try it</p>
+          <h2>Install once, open the local dashboard, and preview before syncing.</h2>
+          <p>
+            Plexus is early alpha software. The fastest path is npm or npx, and the source is Apache-2.0.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="https://github.com/miniLV/Plexus">Star on GitHub</a>
+            <a class="button secondary" href="https://github.com/miniLV/Plexus#quick-start"
+              >Quick start</a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <span>Plexus Agent Config</span>
+        <span>Local-first AI agent configuration for developers.</span>
+      </div>
+    </footer>
+  </body>
+</html>

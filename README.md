@@ -1,6 +1,10 @@
 <h1 align="center">Plexus</h1>
 
 <p align="center">
+  <strong>Plexus Agent Config - local Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code config sync.</strong>
+</p>
+
+<p align="center">
   <strong>一个本地控制台，把 Rules、MCP Servers 和 Skills 同步到你常用的 AI 编程工具。</strong>
 </p>
 

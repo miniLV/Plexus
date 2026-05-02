@@ -1,7 +1,7 @@
 {
   "name": "plexus-agent-config-core",
   "version": "0.0.4",
-  "description": "Plexus core: agent detection, MCP/skill store, sync engine, adapters.",
+  "description": "Core library for syncing AI agent rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code.",
   "type": "module",
   "license": "Apache-2.0",
   "homepage": "https://github.com/miniLV/Plexus#readme",
@@ -13,7 +13,20 @@
   "bugs": {
     "url": "https://github.com/miniLV/Plexus/issues"
   },
-  "keywords": ["ai-agents", "claude-code", "codex", "cursor", "mcp", "model-context-protocol"],
+  "keywords": [
+    "ai-agents",
+    "ai-coding-tools",
+    "agent-config",
+    "agent-configuration",
+    "claude-code",
+    "codex",
+    "config-sync",
+    "cursor",
+    "local-first",
+    "mcp",
+    "model-context-protocol",
+    "skills"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

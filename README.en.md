@@ -1,7 +1,7 @@
 <h1 align="center">Plexus</h1>
 
 <p align="center">
-  <strong>One local dashboard for sharing rules, MCP servers, and skills across your AI coding tools.</strong>
+  <strong>Plexus Agent Config - one local dashboard for sharing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code.</strong>
 </p>
 
 <p align="center">
