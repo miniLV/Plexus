@@ -1,7 +1,7 @@
 {
   "name": "plexus-agent-config-monorepo",
   "private": true,
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Plexus Agent Config: local dashboard for syncing Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
