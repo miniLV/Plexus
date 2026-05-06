@@ -3,31 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>How to keep CLAUDE.md and AGENTS.md in sync across AI coding tools</title>
+    <title>How to share MCP servers across Claude Code, Cursor, and Codex safely</title>
     <meta
       name="description"
-      content="A practical guide to keeping CLAUDE.md and AGENTS.md aligned across Claude Code, Codex, Cursor, and other AI coding tools."
+      content="A practical guide to sharing MCP servers across Claude Code, Cursor, and Codex without overwriting native config files or losing tool-specific state."
     />
     <link
       rel="canonical"
-      href="https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html"
+      href="https://minilv.github.io/Plexus/how-to-share-mcp-servers-across-claude-code-cursor-codex.html"
     />
     <meta property="og:type" content="article" />
     <meta
       property="og:title"
-      content="How to keep CLAUDE.md and AGENTS.md in sync across AI coding tools"
+      content="How to share MCP servers across Claude Code, Cursor, and Codex safely"
     />
     <meta
       property="og:description"
-      content="Keep CLAUDE.md and AGENTS.md aligned across Claude Code, Codex, Cursor, and other AI coding tools without maintaining duplicate files by hand."
+      content="Keep MCP servers aligned across Claude Code, Cursor, and Codex while preserving each tool's native config format."
     />
     <meta
       property="og:url"
-      content="https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html"
+      content="https://minilv.github.io/Plexus/how-to-share-mcp-servers-across-claude-code-cursor-codex.html"
     />
     <meta
       property="og:image"
-      content="https://minilv.github.io/Plexus/assets/readme/rules-en.png"
+      content="https://minilv.github.io/Plexus/assets/readme/config-sharing-map-en.png"
     />
     <style>
       :root {
@@ -197,8 +197,8 @@
       {
         "@context": "https://schema.org",
         "@type": "TechArticle",
-        "headline": "How to keep CLAUDE.md and AGENTS.md in sync across AI coding tools",
-        "description": "A practical guide to keeping CLAUDE.md and AGENTS.md aligned across Claude Code, Codex, Cursor, and other AI coding tools.",
+        "headline": "How to share MCP servers across Claude Code, Cursor, and Codex safely",
+        "description": "A practical guide to sharing MCP servers across Claude Code, Cursor, and Codex without overwriting native config files or losing tool-specific state.",
         "author": {
           "@type": "Person",
           "name": "miniLV"
@@ -207,7 +207,7 @@
           "@type": "Organization",
           "name": "Plexus Agent Config"
         },
-        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html"
+        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-share-mcp-servers-across-claude-code-cursor-codex.html"
       }
     </script>
   </head>
@@ -215,10 +215,10 @@
     <header>
       <div class="wrap">
         <p class="eyebrow">Plexus Guide</p>
-        <h1>How to keep CLAUDE.md and AGENTS.md in sync across AI coding tools</h1>
+        <h1>How to share MCP servers across Claude Code, Cursor, and Codex safely</h1>
         <p class="lede">
-          If you use Claude Code plus Codex, Cursor, Gemini CLI, or Qwen Code, instruction drift is
-          often the first thing that breaks your workflow.
+          Sharing MCP servers across AI coding tools sounds simple until each tool stores config in
+          a different native file and some of those files contain state you should not overwrite.
         </p>
       </div>
     </header>
@@ -226,61 +226,64 @@
     <main>
       <div class="wrap">
         <p>
-          Claude Code expects <code>CLAUDE.md</code>. Most other AI coding tools expect
-          <code>AGENTS.md</code> or another tool-specific instruction file. The files are different
-          enough that teams often duplicate them, then slowly drift as prompts, coding standards,
-          or review expectations change over time.
+          Claude Code, Cursor, and Codex can all use the same MCP servers, but they do not store
+          those server definitions in the same place. Claude Code uses a shared native config file.
+          Cursor keeps a dedicated <code>mcp.json</code>. Codex keeps MCP inside
+          <code>config.toml</code>. Once one tool gets the better MCP setup, manual copy-paste
+          becomes the fragile part of the workflow.
         </p>
 
-        <h2>Why this drift matters</h2>
+        <h2>Why manual MCP sharing breaks down</h2>
         <ul>
-          <li>The same repo behaves differently depending on which agent you use.</li>
-          <li>A fix in one instruction file does not automatically reach the others.</li>
-          <li>Team rules become unreliable because each tool reads a slightly different baseline.</li>
+          <li>You add one server in Cursor and forget Claude Code or Codex.</li>
+          <li>You want the same MCP toolset, but each agent expects a different file shape.</li>
+          <li>Some native files also contain auth, history, or other tool-owned settings.</li>
+          <li>Replacing a whole file just to keep MCP aligned can remove unrelated local state.</li>
         </ul>
 
         <div class="panel">
-          <strong>Most instruction drift is boring, not obvious.</strong>
+          <strong>The real risk is not the server list.</strong>
           <p>
-            It is usually one missing paragraph, one stale command, or one different wording about
-            testing. That is enough to create inconsistent behavior across tools.
+            The risky part is how you write the server list back. A safe setup keeps one canonical
+            MCP source of truth, then projects it into each tool's native config without clobbering
+            the rest of that file.
           </p>
         </div>
 
-        <h2>A cleaner model for instruction files</h2>
+        <h2>What a safer MCP sharing model looks like</h2>
+        <ul>
+          <li>One canonical MCP server list in a local store.</li>
+          <li>Import from the agent configs you already have on disk.</li>
+          <li>Partial writes for shared native files such as Claude Code and Codex.</li>
+          <li>Generated or linked dedicated files for tools like Cursor.</li>
+          <li>Backups before any native write.</li>
+        </ul>
+
         <p>
-          The practical model is one baseline for rules, then projection into each tool's native
-          instruction file. Instead of editing <code>CLAUDE.md</code> and <code>AGENTS.md</code> by
-          hand in parallel, you maintain one source of truth and let a local tool render or link
-          it into the right location for each agent.
+          That is the model Plexus uses. It imports MCP definitions from the tools already on your
+          machine, keeps the shared copy under <code>~/.config/plexus/</code>, then writes back to
+          each agent in its own expected format. Shared configs get partial writes. Exclusive MCP
+          files can be rendered into a dedicated file and linked back into the agent path.
         </p>
 
         <img
-          src="assets/readme/rules-en.png"
-          alt="Plexus rules page showing one baseline projected into different agent instruction files"
+          src="assets/readme/config-sharing-map-en.png"
+          alt="Plexus architecture for sharing MCP config across AI coding tools"
         />
 
-        <p>
-          Plexus stores that baseline under <code>~/.config/plexus/personal/rules/global.md</code>,
-          then projects it into Claude Code as <code>CLAUDE.md</code> and into other tools as
-          their native instruction files. It snapshots before writes and lets you detach or restore
-          if a tool needs a local override.
-        </p>
-
-        <h2>What this gives you</h2>
+        <h2>What to avoid</h2>
         <ul>
-          <li>One place to update shared coding rules and agent behavior.</li>
-          <li>Less risk of Claude Code and Codex drifting apart on the same repo.</li>
-          <li>A clearer review model when the team wants to inspect rule changes.</li>
-          <li>Backups before rewriting native instruction files.</li>
+          <li>Copying one tool's entire config file over another tool's native file.</li>
+          <li>Keeping three separate MCP lists and hoping they stay aligned by memory.</li>
+          <li>Editing shared files without a backup or preview step.</li>
         </ul>
 
         <h2>Quick start</h2>
         <pre><code>npx -y plexus-agent-config@latest start</code></pre>
         <p>
-          Start the local dashboard, open the rules view, set the global baseline once, then sync
-          it to the agents you already use. Plexus will project the same baseline into each native
-          instruction file instead of making you edit duplicates by hand.
+          Open the local dashboard, let Plexus detect Claude Code, Cursor, and Codex, choose the
+          primary source when multiple MCP lists disagree, preview the result, then sync the
+          canonical server list back into the native files.
         </p>
 
         <h2>Related guides</h2>
@@ -293,12 +296,6 @@
           <li>
             <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
               >How to sync Claude Code and Codex skills and MCP without replacing native files</a
-            >
-          </li>
-          <li>
-            <a
-              href="https://minilv.github.io/Plexus/how-to-share-mcp-servers-across-claude-code-cursor-codex.html"
-              >How to share MCP servers across Claude Code, Cursor, and Codex safely</a
             >
           </li>
           <li>
@@ -315,8 +312,8 @@
 
     <footer>
       <div class="wrap">
-        Plexus Agent Config: keep CLAUDE.md and AGENTS.md aligned across AI coding tools from one
-        local baseline.
+        Plexus Agent Config: share MCP servers across Claude Code, Cursor, Codex, and other AI
+        coding tools without overwriting native config.
       </div>
     </footer>
   </body>
