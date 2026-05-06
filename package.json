@@ -5,7 +5,7 @@
   "description": "Plexus Agent Config: local dashboard for syncing Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build:core && npm run build -w plexus-agent-config-web && npm run build:cli",
     "build:core": "npm run build -w plexus-agent-config-core",
     "build:cli": "npm run build -w plexus-agent-config",
     "dev": "npm run build:core && npm run dev -w plexus-agent-config-web -- -p 7777",
