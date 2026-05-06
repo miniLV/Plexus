@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://minilv.github.io/Plexus/sitemap.xml
