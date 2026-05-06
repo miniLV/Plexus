@@ -3,27 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>How to sync Claude Code, Cursor, and Codex config without drift</title>
+    <title>How to sync Claude Code and Codex skills and MCP without replacing native files</title>
     <meta
       name="description"
-      content="A practical guide to keeping Claude Code, Cursor, and Codex rules, MCP servers, and skills in sync without overwriting native files."
+      content="A practical guide to syncing Claude Code and Codex skills, MCP servers, and instruction files while preserving native config files."
     />
     <link
       rel="canonical"
-      href="https://minilv.github.io/Plexus/how-to-sync-claude-code-cursor-codex-configs.html"
+      href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
     />
     <meta property="og:type" content="article" />
     <meta
       property="og:title"
-      content="How to sync Claude Code, Cursor, and Codex config without drift"
+      content="How to sync Claude Code and Codex skills and MCP without replacing native files"
     />
     <meta
       property="og:description"
-      content="Keep rules, MCP servers, and skills aligned across Claude Code, Cursor, and Codex while preserving each tool's native files."
+      content="Keep Claude Code and Codex skills, MCP servers, and instruction files aligned without overwriting native config."
     />
     <meta
       property="og:url"
-      content="https://minilv.github.io/Plexus/how-to-sync-claude-code-cursor-codex-configs.html"
+      content="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
     />
     <meta
       property="og:image"
@@ -123,8 +123,8 @@
       code,
       pre {
         font-family:
-          ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-          "Courier New", monospace;
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
       }
 
       pre {
@@ -197,8 +197,8 @@
       {
         "@context": "https://schema.org",
         "@type": "TechArticle",
-        "headline": "How to sync Claude Code, Cursor, and Codex config without drift",
-        "description": "A practical guide to keeping Claude Code, Cursor, and Codex rules, MCP servers, and skills in sync without overwriting native files.",
+        "headline": "How to sync Claude Code and Codex skills and MCP without replacing native files",
+        "description": "A practical guide to syncing Claude Code and Codex skills, MCP servers, and instruction files while preserving native config files.",
         "author": {
           "@type": "Person",
           "name": "miniLV"
@@ -207,7 +207,7 @@
           "@type": "Organization",
           "name": "Plexus Agent Config"
         },
-        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-sync-claude-code-cursor-codex-configs.html"
+        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
       }
     </script>
   </head>
@@ -215,10 +215,10 @@
     <header>
       <div class="wrap">
         <p class="eyebrow">Plexus Guide</p>
-        <h1>How to sync Claude Code, Cursor, and Codex config without drift</h1>
+        <h1>How to sync Claude Code and Codex skills and MCP without replacing native files</h1>
         <p class="lede">
-          If you use more than one AI coding tool, the problem usually is not setup. It is keeping
-          rules, MCP servers, and skills aligned after the first good configuration appears.
+          Claude Code and Codex are close enough to share intent, but different enough that manual
+          copy-paste of skills and MCP config drifts almost immediately.
         </p>
       </div>
     </header>
@@ -226,90 +226,75 @@
     <main>
       <div class="wrap">
         <p>
-          Claude Code, Cursor, and Codex each expect different native files. Claude Code reads
-          <code>CLAUDE.md</code> and <code>~/.claude.json</code>. Cursor has
-          <code>AGENTS.md</code>, <code>~/.cursor/mcp.json</code>, and its commands directory.
-          Codex uses <code>AGENTS.md</code>, <code>config.toml</code>, and a separate skills
-          directory. Once you add one useful MCP server or one strong instruction file, config
-          drift starts immediately.
+          A common setup is Claude Code for planning and Codex for automation. The moment one of
+          them gets a better MCP server list, cleaner instruction file, or a new skill, you now
+          have two places to maintain. Claude Code and Codex do not store everything in the same
+          shape, so the naive answer is usually to copy files by hand and hope nothing important
+          gets overwritten.
         </p>
 
-        <h2>Why config drift gets annoying so quickly</h2>
+        <h2>What usually needs to stay aligned</h2>
         <ul>
-          <li>You update one rule in Claude Code and forget the Codex copy.</li>
-          <li>You add an MCP server in Cursor and now three tools disagree.</li>
-          <li>You want to share skills across tools, but each one stores them differently.</li>
-          <li>
-            Some native files also contain auth, history, or profile data, so replacing the whole
-            file is risky.
-          </li>
+          <li><code>CLAUDE.md</code> and <code>AGENTS.md</code> level behavior instructions</li>
+          <li>MCP server definitions in native config files</li>
+          <li>skills or reusable prompt bundles in each tool's own directory</li>
         </ul>
 
         <div class="panel">
-          <strong>The hard part is not copying config once.</strong>
+          <strong>The subtle risk:</strong>
           <p>
-            The hard part is keeping native tools in sync without breaking the parts of those files
-            that the tools manage themselves.
+            Codex and Claude Code native config files can contain more than the MCP section. If
+            you replace the whole file just to keep MCP servers aligned, you risk clobbering auth,
+            history, or unrelated local settings.
           </p>
         </div>
 
-        <h2>A safer sync model</h2>
+        <h2>A better way to sync skills and MCP</h2>
         <p>
-          The practical approach is to keep one local source of truth, then project that config
-          back into each tool's native format. For AI coding tools, that usually means:
-        </p>
-        <ul>
-          <li>one baseline for rules</li>
-          <li>one canonical MCP server list</li>
-          <li>one shared skills store</li>
-          <li>backups before every native write</li>
-          <li>partial writes for shared native config files</li>
-        </ul>
-
-        <p>
-          That is the model Plexus uses. It imports the config you already have, lets you choose a
-          primary source when multiple agents disagree, stores the canonical copy under
-          <code>~/.config/plexus/</code>, and writes back into Claude Code, Cursor, and Codex in
-          their own expected shapes.
+          The safer pattern is to keep one local canonical store, then project the shared config
+          back into each tool's native layout. That means one baseline for rules, one MCP server
+          source of truth, one skill bundle store, and backups before every native write.
         </p>
 
         <img
           src="assets/readme/dashboard-en.png"
-          alt="Plexus dashboard showing multiple detected AI coding agents"
+          alt="Plexus dashboard showing Claude Code and Codex alongside other local agents"
         />
 
-        <h2>What Plexus preserves</h2>
+        <p>
+          Plexus follows that model. It imports existing Claude Code and Codex config from your
+          machine, stores the canonical copy under <code>~/.config/plexus/</code>, then writes the
+          result back to each tool in its own expected format. Shared files use partial writes so
+          unrelated data stays intact. Skills are linked or copied from one shared source instead
+          of duplicated by hand.
+        </p>
+
+        <h2>What this solves in practice</h2>
         <ul>
-          <li>It does not run MCP servers.</li>
-          <li>It snapshots native files before writes.</li>
-          <li>It partial-writes shared files instead of replacing them wholesale.</li>
-          <li>It keeps the canonical store local and telemetry-free.</li>
+          <li>You can add or remove an MCP server once and sync it to both tools.</li>
+          <li>You can keep instructions aligned without maintaining parallel markdown files.</li>
+          <li>You can share the same skills across Claude Code and Codex from one local bundle.</li>
+          <li>You can restore native files from backups if you do not like the result.</li>
         </ul>
 
         <h2>Quick start</h2>
         <pre><code>npx -y plexus-agent-config@latest start</code></pre>
         <p>
-          Then open the local dashboard, import the agents already on your machine, choose the
-          primary config when there is a conflict, and preview the result before syncing.
-        </p>
-
-        <h2>When this is a better fit than dotfiles</h2>
-        <p>
-          Dotfiles are great when every target file is fully yours. Plexus is aimed at the messier
-          case: multiple AI tools, mixed file formats, and native config files that contain data
-          you should not overwrite just to keep MCP servers and instruction files aligned.
+          Open the local dashboard, let Plexus detect Claude Code and Codex, choose the primary
+          source when there is a conflict, preview the changes, then sync rules, MCP servers, and
+          skills back into the native files.
         </p>
 
         <h2>Related guides</h2>
         <ul>
           <li>
-            <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
-              >How to sync Claude Code and Codex skills and MCP without replacing native files</a
+            <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-cursor-codex-configs.html"
+              >How to sync Claude Code, Cursor, and Codex config without drift</a
             >
           </li>
           <li>
             <a href="https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html"
-              >How to keep CLAUDE.md and AGENTS.md in sync across AI coding tools</a
+              >How to keep CLAUDE.md and AGENTS.md in sync across tools</a
             >
           </li>
         </ul>
@@ -323,7 +308,7 @@
 
     <footer>
       <div class="wrap">
-        Plexus Agent Config: local config sync for Claude Code, Cursor, Codex, Gemini CLI, and
+        Plexus Agent Config: local config sync for Claude Code, Codex, Cursor, Gemini CLI, and
         other AI coding tools.
       </div>
     </footer>
