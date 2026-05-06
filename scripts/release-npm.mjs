@@ -353,9 +353,19 @@ async function startDashboard(bin, projectDir, label) {
 async function smokeInstall(spec, projectDir, label) {
   log(`smoke testing ${label}: ${spec}`);
   npmInit(projectDir);
-  run(["npm", "install", spec, "--registry", REGISTRY, "--loglevel", "warn"], { cwd: projectDir });
+  run(["npm", "install", spec, "--registry", REGISTRY, "--prefer-online", "--loglevel", "warn"], {
+    cwd: projectDir,
+  });
   const bin = binPath(projectDir);
   assert(existsSync(bin), `${label} install did not create plexus binary`);
+  const installedManifest = JSON.parse(
+    readFileSync(join(projectDir, "node_modules", PACKAGE_NAME, "package.json"), "utf8"),
+  );
+  const version = readJson("package.json").version;
+  assert(
+    installedManifest.version === version,
+    `${label} installed ${PACKAGE_NAME}@${installedManifest.version}, expected ${version}`,
+  );
   run([bin, "help"], { cwd: projectDir });
   run([bin, "detect"], { cwd: projectDir });
   await startDashboard(bin, projectDir, label);
@@ -376,20 +386,42 @@ function publishTarball(tarball) {
   ]);
 }
 
-function verifyRegistry(version) {
+async function verifyRegistry(version) {
   log("checking npm registry metadata");
-  const latest = output(["npm", "view", PACKAGE_NAME, "dist-tags.latest", "--registry", REGISTRY]);
-  assert(latest === version, `npm latest is ${latest}, expected ${version}`);
-  run([
-    "npm",
-    "view",
-    `${PACKAGE_NAME}@${version}`,
-    "version",
-    "dist.unpackedSize",
-    "dist.fileCount",
-    "--registry",
-    REGISTRY,
-  ]);
+  const deadline = Date.now() + 120_000;
+  let last = "";
+
+  while (Date.now() < deadline) {
+    const latest = output(
+      ["npm", "view", PACKAGE_NAME, "dist-tags.latest", "--registry", REGISTRY, "--prefer-online"],
+      { allowFail: true },
+    );
+    const details = output(
+      [
+        "npm",
+        "view",
+        `${PACKAGE_NAME}@${version}`,
+        "version",
+        "dist.unpackedSize",
+        "dist.fileCount",
+        "--registry",
+        REGISTRY,
+        "--prefer-online",
+      ],
+      { allowFail: true },
+    );
+
+    if (latest === version && details) {
+      console.log(details);
+      return;
+    }
+
+    last = `latest=${latest ?? "<missing>"}, details=${details ? "ok" : "missing"}`;
+    log(`registry not ready yet (${last}); retrying`);
+    await sleep(5_000);
+  }
+
+  fail(`npm registry did not expose ${PACKAGE_NAME}@${version} in time (${last})`);
 }
 
 async function main() {
@@ -412,7 +444,7 @@ async function main() {
 
     if (publish) {
       publishTarball(tarball);
-      verifyRegistry(version);
+      await verifyRegistry(version);
       if (!skipRegistrySmoke) {
         await smokeInstall(`${PACKAGE_NAME}@latest`, registryProject, "npm registry");
       }
