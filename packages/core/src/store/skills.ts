@@ -12,6 +12,38 @@ function skillsRoot(layer: ConfigLayer): string {
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
+function hasFrontmatter(parsed: { frontmatter: Record<string, unknown>; body: string }): boolean {
+  return Object.keys(parsed.frontmatter).length > 0;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function descriptionValue(value: unknown): string | undefined {
+  const direct = stringValue(value);
+  if (direct) return direct;
+  if (!Array.isArray(value)) return undefined;
+  const parts = value
+    .map((part) => stringValue(part))
+    .filter((part): part is string => Boolean(part));
+  return parts.length > 0 ? parts.join(" ") : undefined;
+}
+
+function parseLooseFrontmatter(raw: string): Record<string, unknown> {
+  const frontmatter: Record<string, unknown> = {};
+  for (const line of raw.split("\n")) {
+    const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!match) continue;
+    const [, key, rawValue] = match;
+    if (!key || rawValue === undefined) continue;
+    const value = rawValue.trim();
+    if (!value) continue;
+    frontmatter[key] = value.replace(/^(['"])(.*)\1$/, "$2");
+  }
+  return frontmatter;
+}
+
 export function parseSkillMarkdown(raw: string): {
   frontmatter: Record<string, unknown>;
   body: string;
@@ -22,19 +54,34 @@ export function parseSkillMarkdown(raw: string): {
     const fm = YAML.parse(m[1]) ?? {};
     return { frontmatter: fm as Record<string, unknown>, body: m[2] };
   } catch {
-    return { frontmatter: {}, body: raw };
+    return { frontmatter: parseLooseFrontmatter(m[1]), body: m[2] };
   }
 }
 
 export function serializeSkillMarkdown(skill: SkillDef): string {
+  const nested = parseSkillMarkdown(skill.body);
+  const nestedFrontmatter = hasFrontmatter(nested) ? nested.frontmatter : {};
+  const body = hasFrontmatter(nested) ? nested.body : skill.body;
+  const name =
+    stringValue(skill.name) ??
+    stringValue(skill.frontmatter?.name) ??
+    stringValue(nestedFrontmatter.name) ??
+    skill.id;
+  const nestedDescription = descriptionValue(nestedFrontmatter.description);
+  const description =
+    nestedDescription ??
+    descriptionValue(skill.description) ??
+    descriptionValue(skill.frontmatter?.description) ??
+    name;
   const fm: Record<string, unknown> = {
+    ...nestedFrontmatter,
     ...(skill.frontmatter ?? {}),
-    name: skill.name,
-    description: skill.description ?? "",
+    name,
+    description,
     plexus_id: skill.id,
     plexus_enabled_agents: skill.enabledAgents,
   };
-  return `---\n${YAML.stringify(fm).trim()}\n---\n${skill.body.trimStart()}`;
+  return `---\n${YAML.stringify(fm).trim()}\n---\n${body.trimStart()}`;
 }
 
 export async function readSkills(layer: ConfigLayer): Promise<SkillDef[]> {
@@ -49,15 +96,21 @@ export async function readSkills(layer: ConfigLayer): Promise<SkillDef[]> {
     if (!(await pathExists(skillFile))) continue;
     const raw = await fs.readFile(skillFile, "utf8");
     const { frontmatter, body } = parseSkillMarkdown(raw);
+    const nested = parseSkillMarkdown(body);
+    const nestedFrontmatter = hasFrontmatter(nested) ? nested.frontmatter : {};
+    const normalizedBody = hasFrontmatter(nested) ? nested.body : body;
     const enabledFromFm = Array.isArray(frontmatter.plexus_enabled_agents)
       ? (frontmatter.plexus_enabled_agents as string[])
       : ALL_AGENTS;
+    const id = stringValue(frontmatter.plexus_id) ?? entry.name;
+    const name = stringValue(frontmatter.name) ?? stringValue(nestedFrontmatter.name) ?? entry.name;
+    const nestedDescription = descriptionValue(nestedFrontmatter.description);
     skills.push({
-      id: (frontmatter.plexus_id as string) ?? entry.name,
-      name: (frontmatter.name as string) ?? entry.name,
-      description: (frontmatter.description as string) ?? undefined,
-      body,
-      frontmatter,
+      id,
+      name,
+      description: nestedDescription ?? descriptionValue(frontmatter.description),
+      body: normalizedBody,
+      frontmatter: { ...nestedFrontmatter, ...frontmatter },
       layer,
       enabledAgents: enabledFromFm.filter((a): a is any => ALL_AGENTS.includes(a as any)),
     });

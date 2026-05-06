@@ -26,6 +26,31 @@ async function writeSkill(dir: string, name: string): Promise<void> {
 }
 
 describe("buildImportPreview", () => {
+  it("preserves Codex URL MCP servers when importing native config", async () => {
+    const codexConfig = [
+      "[mcp_servers.remote-figma]",
+      'url = "https://mcp.figma.com/mcp"',
+      'http_headers = { Authorization = "Bearer token" }',
+      "",
+    ].join("\n");
+    await fs.mkdir(path.dirname(AGENT_PATHS.codex.mcpPath), { recursive: true });
+    await fs.writeFile(AGENT_PATHS.codex.mcpPath, codexConfig, "utf8");
+
+    const preview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
+
+    expect(preview.mcp).toEqual([
+      expect.objectContaining({
+        kind: "new",
+        item: expect.objectContaining({
+          id: "remote-figma",
+          command: "",
+          url: "https://mcp.figma.com/mcp",
+          headers: { Authorization: "Bearer token" },
+        }),
+      }),
+    ]);
+  });
+
   it("counts Plexus-owned skill symlinks but ignores user-owned external symlinks", async () => {
     const cursorSkillsDir = AGENT_PATHS.cursor.skillsDir;
     await fs.mkdir(cursorSkillsDir, { recursive: true });

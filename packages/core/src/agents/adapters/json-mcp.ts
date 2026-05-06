@@ -46,12 +46,17 @@ export function makeJsonMcpAdapter(agentId: AgentId): AgentAdapter {
           await ensureDir(path.dirname(caps.mcpPath));
 
           const enabledForAgent = ctx.mcp.filter((s) => s.enabledAgents.includes(agentId));
-          if (mode === "exclusive") {
-            await writeExclusive(agentId, ctx.mcp, enabledForAgent, ctx.syncStrategy);
-          } else {
-            await writeShared(caps.mcpPath, ctx.mcp, enabledForAgent);
+          const writableForAgent = enabledForAgent.filter((s) => hasMcpTransport(s));
+          for (const s of enabledForAgent) {
+            if (!hasMcpTransport(s))
+              result.warnings.push(`Skipping MCP ${s.id}: missing command or url`);
           }
-          result.applied.mcp = enabledForAgent.length;
+          if (mode === "exclusive") {
+            await writeExclusive(agentId, ctx.mcp, writableForAgent, ctx.syncStrategy);
+          } else {
+            await writeShared(caps.mcpPath, ctx.mcp, writableForAgent);
+          }
+          result.applied.mcp = writableForAgent.length;
         } catch (err) {
           result.errors.push(`MCP write failed: ${(err as Error).message}`);
         }
@@ -209,4 +214,8 @@ function serializeMcp(s: MCPServerDef): Record<string, unknown> {
     ...(s.httpUrl ? { httpUrl: s.httpUrl } : {}),
     ...(s.headers ? { headers: s.headers } : {}),
   };
+}
+
+function hasMcpTransport(s: MCPServerDef): boolean {
+  return Boolean(s.command.trim() || s.url?.trim() || s.httpUrl?.trim());
 }

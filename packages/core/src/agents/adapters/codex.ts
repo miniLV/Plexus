@@ -28,6 +28,11 @@ export const codexAdapter: AgentAdapter = {
       await ensureDir(path.dirname(caps.mcpPath));
 
       const enabledForAgent = ctx.mcp.filter((s) => s.enabledAgents.includes("codex"));
+      const writableForAgent = enabledForAgent.filter((s) => hasMcpTransport(s));
+      for (const s of enabledForAgent) {
+        if (!hasMcpTransport(s))
+          result.warnings.push(`Skipping MCP ${s.id}: missing command or url`);
+      }
       const enabledIds = new Set(enabledForAgent.map((s) => s.id));
       const disabledManagedIds = new Set(
         ctx.mcp.filter((s) => !s.enabledAgents.includes("codex")).map((s) => s.id),
@@ -48,16 +53,12 @@ export const codexAdapter: AgentAdapter = {
         preserved[k] = v;
       }
       const nextServers: Record<string, any> = { ...preserved };
-      for (const s of enabledForAgent) {
-        nextServers[s.id] = {
-          command: s.command,
-          ...(s.args ? { args: s.args } : {}),
-          ...(s.env ? { env: s.env } : {}),
-        };
+      for (const s of writableForAgent) {
+        nextServers[s.id] = serializeCodexMcp(s);
       }
       existing.mcp_servers = nextServers;
       await fs.writeFile(caps.mcpPath, TOML.stringify(existing), "utf8");
-      result.applied.mcp = enabledForAgent.length;
+      result.applied.mcp = writableForAgent.length;
     } catch (err) {
       result.errors.push(`Codex MCP write failed: ${(err as Error).message}`);
     }
@@ -102,3 +103,28 @@ export const codexAdapter: AgentAdapter = {
     return result;
   },
 };
+
+function hasMcpTransport(s: { command: string; url?: string; httpUrl?: string }): boolean {
+  return Boolean(s.command.trim() || s.url?.trim() || s.httpUrl?.trim());
+}
+
+function hasEntries(value: Record<string, string> | undefined): value is Record<string, string> {
+  return Boolean(value && Object.keys(value).length > 0);
+}
+
+function serializeCodexMcp(s: {
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
+}): Record<string, unknown> {
+  return {
+    ...(s.command.trim() ? { command: s.command } : {}),
+    ...(s.args ? { args: s.args } : {}),
+    ...(hasEntries(s.env) ? { env: s.env } : {}),
+    ...(s.url?.trim() || s.httpUrl?.trim() ? { url: s.url?.trim() || s.httpUrl?.trim() } : {}),
+    ...(hasEntries(s.headers) ? { http_headers: s.headers } : {}),
+  };
+}

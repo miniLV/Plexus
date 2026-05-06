@@ -79,6 +79,9 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
       args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
       env:
         cfg?.env && typeof cfg.env === "object" ? (cfg.env as Record<string, string>) : undefined,
+      url: typeof cfg?.url === "string" ? cfg.url : undefined,
+      httpUrl: typeof cfg?.httpUrl === "string" ? cfg.httpUrl : undefined,
+      headers: readJsonRecord(cfg?.http_headers ?? cfg?.headers),
     }));
   } catch {
     return [];

@@ -115,4 +115,29 @@ describe("Claude Code partial-write", () => {
     // Auth still there.
     expect(after.authToken).toBe("sk-very-secret-do-not-touch");
   });
+
+  it("skips managed entries without a command or URL transport", async () => {
+    const adapter = makeJsonMcpAdapter("claude-code");
+    const result = await adapter.apply({
+      agentId: "claude-code",
+      mcp: [
+        {
+          id: "empty",
+          command: "",
+          layer: "personal",
+          enabledAgents: ["claude-code"],
+        },
+      ],
+      skills: [],
+      skillSourcePaths: new Map(),
+      syncStrategy: "symlink",
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.applied.mcp).toBe(0);
+    expect(result.warnings).toEqual(["Skipping MCP empty: missing command or url"]);
+
+    const after = JSON.parse(await fs.readFile(claudePath, "utf8")) as Record<string, unknown>;
+    expect(after.mcpServers as Record<string, unknown>).not.toHaveProperty("empty");
+  });
 });
