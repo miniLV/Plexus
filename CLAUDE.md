@@ -27,9 +27,6 @@ Supported built-in agents:
 | Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 
-Current release: **v0.0.20** (`9ee17c7`, pushed to `origin/master` with tag
-`v0.0.20`).
-
 The current package version is tracked in the root `package.json`. All
 workspace `package.json` files must stay on the same version:
 
@@ -37,6 +34,9 @@ workspace `package.json` files must stay on the same version:
 - `apps/web/package.json`
 - `packages/core/package.json`
 - `packages/cli/package.json`
+
+Use Git tags / releases and the workspace `package.json` files as the version
+source of truth. Do not treat this file as a release ledger.
 
 ### Product Contract
 
@@ -153,35 +153,6 @@ Plexus/
 - `packages/core` must stay free of React, Next.js, DOM, or browser-only APIs.
 - Prefer small, surgical changes. Do not refactor adjacent code unless the
   user asked or the change is required for the task.
-
-### Current Release Snapshot
-
-Last completed release: **v0.0.20**.
-
-Recently shipped and verified:
-
-- `v0.0.13`: smart one-click share/import flow with preferred primary source.
-- `v0.0.14`: built-in agent catalog expanded to Claude Code, Cursor, Codex,
-  Gemini CLI, Qwen Code, and Factory Droid.
-- `v0.0.15`-`v0.0.17`: installed-agent detection and dashboard rules metrics
-  were corrected; missing agents are no longer shown on the main detected
-  grid.
-- `v0.0.18`: sync/share result moved to a modal and the Primary picker moved
-  from a native select to a styled popover.
-- `v0.0.19`: agent detail pages can view/edit/create native instruction files
-  through the safe file editor route.
-- `v0.0.20`: fixed the `sync-button.tsx` missing-module build error and added
-  local branded agent icons. Claude Code uses the Claude mark, Codex uses the
-  OpenAI mark, Cursor and Gemini use their Simple Icons marks, and unknown
-  agents fall back to initials.
-
-Verification for `v0.0.20`:
-
-- `npm run check`
-- `npm run test:core`
-- `npm run build --workspace=plexus-agent-config-core`
-- `npm run build --workspace=plexus-agent-config-web`
-- Playwright screenshot against `http://localhost:7777/`
 
 Known local-dev quirk: running `next dev` may rewrite
 `apps/web/next-env.d.ts` from `.next/types/routes.d.ts` to
@@ -1003,6 +974,5 @@ Recently important fixes that must not regress:
 
 ---
 
-*Last updated for v0.0.20 on 2026-04-30. If you change the sync contract,
-store layout, backup behavior, supported paths, CLI behavior, or UI routes,
-update this file in the same change.*
+*If you change the sync contract, store layout, backup behavior, supported
+paths, CLI behavior, or UI routes, update this file in the same change.*
