@@ -31,6 +31,7 @@ type SkillEntry = {
   path: string;
   isSymlink: boolean;
   linkTarget?: string;
+  managedByPlexus?: boolean;
   hasSkillMd: boolean;
 };
 
@@ -78,7 +79,7 @@ function isMarkdownPath(p: string): boolean {
 }
 
 export function AgentDetail({ data }: { data: AgentInspection }) {
-  const plexusOwnedSkills = data.skills.filter((s) => s.isSymlink).length;
+  const plexusOwnedSkills = data.skills.filter((s) => s.managedByPlexus).length;
   const localSkills = data.skills.length - plexusOwnedSkills;
 
   return (
@@ -198,6 +199,9 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
               >
                 <div>
                   <div className="font-mono text-[13px] text-plexus-text">{s.id}</div>
+                  <div className="mt-0.5 text-[10px] text-plexus-text-3">
+                    {truncMid(s.path, 80)}
+                  </div>
                   {s.isSymlink && s.linkTarget && (
                     <div className="mt-0.5 text-[10px] text-plexus-text-3">
                       → {truncMid(s.linkTarget, 80)}
@@ -205,8 +209,10 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
                   )}
                 </div>
                 <div className="text-right">
-                  {s.isSymlink ? (
+                  {s.managedByPlexus ? (
                     <Badge variant="synced">Plexus-owned</Badge>
+                  ) : s.isSymlink ? (
+                    <Badge variant="native">external symlink</Badge>
                   ) : (
                     <Badge variant="divergent">agent-local</Badge>
                   )}

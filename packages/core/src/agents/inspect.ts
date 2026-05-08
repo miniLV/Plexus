@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathExists } from "../store/fs-utils.js";
-import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS } from "../store/paths.js";
+import { AGENT_DISPLAY_NAMES, AGENT_PATHS, AGENT_ROOTS, PLEXUS_PATHS } from "../store/paths.js";
 import type { AgentId } from "../types.js";
 import { isAgentInstalled } from "./detect.js";
 
@@ -44,6 +44,8 @@ export interface SkillEntry {
   path: string;
   isSymlink: boolean;
   linkTarget?: string;
+  /** True only when the agent entry links back into Plexus's canonical store. */
+  managedByPlexus: boolean;
   /** Whether SKILL.md exists inside. */
   hasSkillMd: boolean;
 }
@@ -129,6 +131,7 @@ async function listSkills(skillsDir: string): Promise<SkillEntry[]> {
         path: full,
         isSymlink,
         linkTarget,
+        managedByPlexus: linkTarget ? isInside(linkTarget, PLEXUS_PATHS.root) : false,
         hasSkillMd,
       });
     }
@@ -136,6 +139,11 @@ async function listSkills(skillsDir: string): Promise<SkillEntry[]> {
   } catch {
     return [];
   }
+}
+
+function isInside(child: string, parent: string): boolean {
+  const relative = path.relative(path.resolve(parent), path.resolve(child));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
 export function instructionsForAgent(

@@ -12,7 +12,13 @@ import { useEffect, useState } from "react";
 
 interface SharePlan {
   targetAgents: string[];
-  sources: Array<{ agent: string; mcp: number; skills: number; rules: boolean; total: number }>;
+  sources: Array<{
+    agent: string;
+    mcp: number;
+    skills: number;
+    rules: boolean;
+    total: number;
+  }>;
   recommendedPrimaryAgent?: string;
   selectedPrimaryAgent?: string;
   conflictCount: number;

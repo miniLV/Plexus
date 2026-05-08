@@ -51,7 +51,7 @@ describe("buildImportPreview", () => {
     ]);
   });
 
-  it("counts Plexus-owned skill symlinks but ignores user-owned external symlinks", async () => {
+  it("counts real and symlinked native skill directories", async () => {
     const cursorSkillsDir = AGENT_PATHS.cursor.skillsDir;
     await fs.mkdir(cursorSkillsDir, { recursive: true });
 
@@ -79,7 +79,7 @@ describe("buildImportPreview", () => {
       ],
     });
 
-    expect(preview.perAgent.cursor.skills).toBe(2);
+    expect(preview.perAgent.cursor.skills).toBe(3);
     expect(preview.skills).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -91,13 +91,38 @@ describe("buildImportPreview", () => {
           kind: "new",
           item: expect.objectContaining({ id: "native-tool" }),
         }),
+        expect.objectContaining({
+          kind: "new",
+          item: expect.objectContaining({ id: "external-tool" }),
+        }),
+      ]),
+    );
+  });
+
+  it("reads Cursor Agent Skills from ~/.cursor/skills instead of commands", async () => {
+    await writeSkill(path.join(sandbox.home, ".cursor", "skills", "native-tool"), "Native Tool");
+    await writeSkill(
+      path.join(sandbox.home, ".cursor", "commands", "legacy-command"),
+      "Legacy Command",
+    );
+
+    const preview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
+
+    expect(AGENT_PATHS.cursor.skillsDir).toBe(path.join(sandbox.home, ".cursor", "skills"));
+    expect(preview.perAgent.cursor.skills).toBe(1);
+    expect(preview.skills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "new",
+          item: expect.objectContaining({ id: "native-tool" }),
+        }),
       ]),
     );
     expect(preview.skills).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           kind: "new",
-          item: expect.objectContaining({ id: "external-tool" }),
+          item: expect.objectContaining({ id: "legacy-command" }),
         }),
       ]),
     );

@@ -41,8 +41,7 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     skills: true,
     mcpFormat: "json",
     mcpPath: path.join(home, ".cursor", "mcp.json"),
-    // Cursor doesn't have a true "skill" concept yet; we publish to commands.
-    skillsDir: path.join(home, ".cursor", "commands"),
+    skillsDir: path.join(home, ".cursor", "skills"),
     // ~/.cursor/mcp.json is exclusively for MCP — safe to fully own via
     // a symlink to the Plexus canonical cache.
     mcpFileMode: "exclusive",

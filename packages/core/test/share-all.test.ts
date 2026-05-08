@@ -8,6 +8,7 @@ const sandbox = await setupSandbox("share-all");
 const { previewShareAll, runShareAll } = await import("../src/sync/index.js");
 const { readMCP, writeMCP } = await import("../src/store/mcp.js");
 const { readRules } = await import("../src/store/rules.js");
+const { readSkills } = await import("../src/store/skills.js");
 const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
@@ -98,6 +99,15 @@ async function writeQwenConfig(): Promise<void> {
   await fs.writeFile(path.join(sandbox.home, ".qwen", "QWEN.md"), "qwen rules\n", "utf8");
 }
 
+async function writeSkill(dir: string, name: string): Promise<void> {
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(
+    path.join(dir, "SKILL.md"),
+    `---\nname: ${name}\ndescription: ${name} description\n---\n${name} body\n`,
+    "utf8",
+  );
+}
+
 describe("runShareAll", () => {
   it("preserves unique native config and resolves same-id conflicts with the preferred agent", async () => {
     await writeClaudeConfig();
@@ -171,5 +181,25 @@ describe("runShareAll", () => {
     const rawGemini = JSON.parse(await fs.readFile(AGENT_PATHS["gemini-cli"].mcpPath, "utf8"));
     expect(rawGemini.ui.theme).toBe("Default");
     expect(rawGemini.mcpServers.remote.url).toBe("https://example.test/mcp");
+  });
+
+  it("ignores Cursor internal skills-cursor during share-all", async () => {
+    await writeSkill(path.join(AGENT_PATHS.cursor.skillsDir, "user-tool"), "user-tool");
+    await writeSkill(
+      path.join(sandbox.home, ".cursor", "skills-cursor", "create-skill"),
+      "create-skill",
+    );
+
+    const plan = await previewShareAll({ preferredAgent: "cursor" });
+    const cursorSource = plan.sources.find((source) => source.agent === "cursor");
+    expect(cursorSource).toMatchObject({
+      skills: 1,
+    });
+    expect(plan.skills.safe).toBe(1);
+
+    await runShareAll({ preferredAgent: "cursor" });
+
+    const skills = await readSkills("personal");
+    expect(skills.map((skill) => skill.id)).toEqual(["user-tool"]);
   });
 });
