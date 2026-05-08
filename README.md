@@ -19,6 +19,18 @@
 </p>
 
 <p align="center">
+  <code>npx -y plexus-agent-config@latest start</code>
+</p>
+
+<p align="center">
+  适合已经同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，并且已经开始被配置漂移折腾的人。
+</p>
+
+<p align="center">
+  local-first · 写回前自动 snapshot · 对共享原生配置使用 partial-write，而不是整文件覆盖
+</p>
+
+<p align="center">
   如果 Plexus 帮你少维护几份重复的 Agent 配置，欢迎点个 Star，让更多多 Agent 用户看到它。
 </p>
 

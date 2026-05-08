@@ -15,8 +15,19 @@
 </p>
 
 <p align="center">
-  If Plexus saves you from maintaining the same agent config in five places,
-  a GitHub star helps other multi-agent developers find it.
+  <code>npx -y plexus-agent-config@latest start</code>
+</p>
+
+<p align="center">
+  Best fit for developers already using Claude Code plus Cursor, Codex, Gemini CLI, or Qwen Code and feeling config drift.
+</p>
+
+<p align="center">
+  local-first · snapshots before native writes · partial-writes shared config files instead of replacing them
+</p>
+
+<p align="center">
+  If Plexus saves you from maintaining the same agent config in five places, a GitHub star helps other multi-agent developers find it.
 </p>
 
 <p align="center">
