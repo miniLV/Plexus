@@ -31,6 +31,7 @@ export default async function McpPage() {
     string,
     boolean
   >;
+  const visibleAgents = ALL_AGENTS.filter((agent) => installed[agent]);
 
   return (
     <div className="space-y-8">
@@ -40,7 +41,7 @@ export default async function McpPage() {
       </header>
       <McpEditor
         initial={rows}
-        agents={[...ALL_AGENTS]}
+        agents={visibleAgents}
         displayNames={AGENT_DISPLAY_NAMES}
         installed={installed}
       />
