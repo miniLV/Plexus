@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, X } from "lucide-react";
+import { Loader2, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 type Row = {
@@ -45,6 +45,7 @@ export function McpEditor({
 }) {
   const [rows, setRows] = useState<Row[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState({
     id: "",
@@ -129,10 +130,15 @@ export function McpEditor({
 
   async function removeRow(row: Row) {
     if (row.authority !== "personal") return;
-    if (!confirm(`Delete ${row.id} from Plexus and all agents?`)) return;
-    setBusy(row.id);
+    setDeleteTarget(row);
+  }
+
+  async function confirmRemoveRow() {
+    if (!deleteTarget || deleteTarget.authority !== "personal") return;
+    const id = deleteTarget.id;
+    setBusy(id);
     try {
-      const res = await fetch(`/api/mcp/${encodeURIComponent(row.id)}`, {
+      const res = await fetch(`/api/mcp/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       const data = await res.json().catch(() => ({}));
@@ -141,11 +147,17 @@ export function McpEditor({
         return;
       }
       setMsg(null);
+      setDeleteTarget(null);
       await reload();
     } finally {
       setBusy(null);
     }
   }
+
+  const deleteBusy = deleteTarget ? busy === deleteTarget.id : false;
+  const closeDeleteDialog = () => {
+    if (!deleteBusy) setDeleteTarget(null);
+  };
 
   return (
     <div className="space-y-5">
@@ -289,6 +301,80 @@ export function McpEditor({
           </tbody>
         </table>
       </Card>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Cancel MCP removal"
+            className="absolute inset-0 cursor-default bg-black/65"
+            onClick={closeDeleteDialog}
+            disabled={deleteBusy}
+          />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="mcp-remove-title"
+            aria-describedby="mcp-remove-description"
+            className="relative z-10 w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+          >
+            <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
+              <div className="mt-0.5 rounded-md bg-plexus-err/10 p-2 text-plexus-err">
+                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div id="mcp-remove-title" className="text-sm font-semibold text-plexus-text">
+                  Remove MCP server?
+                </div>
+                <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                  {deleteTarget.id}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Cancel"
+                onClick={closeDeleteDialog}
+                disabled={deleteBusy}
+                className="rounded-sm p-1 text-plexus-text-3 hover:bg-plexus-surface-2 hover:text-plexus-text disabled:pointer-events-none disabled:opacity-50"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="space-y-3 px-5 py-4 text-sm text-plexus-text-2">
+              <p id="mcp-remove-description">
+                This removes the server from Plexus and all managed agent configs.
+              </p>
+              <div className="rounded-md border border-plexus-border bg-plexus-surface-2/60 px-3 py-2">
+                <div className="plexus-eyebrow mb-1">command</div>
+                <code
+                  className="block truncate font-mono text-xs text-plexus-text-3"
+                  title={`${deleteTarget.command} ${(deleteTarget.args ?? []).join(" ")}`.trim()}
+                >
+                  {deleteTarget.command} {(deleteTarget.args ?? []).join(" ")}
+                </code>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border bg-plexus-surface-2/40 px-5 py-3">
+              <Button variant="ghost" size="sm" onClick={closeDeleteDialog} disabled={deleteBusy}>
+                Cancel
+              </Button>
+              <Button
+                variant="danger-solid"
+                size="sm"
+                onClick={confirmRemoveRow}
+                disabled={deleteBusy}
+              >
+                {deleteBusy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                )}
+                {deleteBusy ? "Removing" : "Remove MCP"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Card className="space-y-2 px-4 py-3 text-xs leading-relaxed text-plexus-text-3">
         <div>
