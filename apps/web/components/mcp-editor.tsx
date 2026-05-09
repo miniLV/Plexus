@@ -132,22 +132,15 @@ export function McpEditor({
     if (!confirm(`Delete ${row.id} from Plexus and all agents?`)) return;
     setBusy(row.id);
     try {
-      const next = rows
-        .filter((r) => r.authority === "personal" && r.id !== row.id)
-        .map((r) => ({
-          id: r.id,
-          command: r.command,
-          args: r.args,
-          env: r.env,
-          layer: "personal",
-          enabledAgents: r.enabledAgents ?? [],
-        }));
-      await fetch("/api/mcp", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ servers: next }),
+      const res = await fetch(`/api/mcp/${encodeURIComponent(row.id)}`, {
+        method: "DELETE",
       });
-      await fetch("/api/sync", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setMsg(`Error: ${data.message ?? "failed to remove MCP"}`);
+        return;
+      }
+      setMsg(null);
       await reload();
     } finally {
       setBusy(null);
@@ -219,7 +212,7 @@ export function McpEditor({
                   {displayNames[a] ?? AGENT_LABELS[a] ?? a}
                 </th>
               ))}
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3 text-right font-medium">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -276,15 +269,16 @@ export function McpEditor({
                 })}
                 <td className="px-4 py-3 text-right">
                   {r.authority === "personal" && (
-                    <button
-                      type="button"
+                    <Button
+                      variant="danger"
+                      size="sm"
                       onClick={() => removeRow(r)}
                       disabled={busy === r.id}
-                      className="text-plexus-text-3 hover:text-plexus-err disabled:opacity-50"
                       title="Delete from Plexus and all agents"
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    </button>
+                      Remove
+                    </Button>
                   )}
                 </td>
               </tr>

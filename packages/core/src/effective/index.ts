@@ -208,6 +208,52 @@ export async function toggleMcpAgent(opts: {
   return { ok: true, syncResult: results[0], message: backup?.dir };
 }
 
+export async function removeMcpEverywhere(
+  id: string,
+): Promise<{ ok: boolean; syncResults?: SyncResult[]; message?: string }> {
+  const personal = await readMCP("personal");
+  const team = await readMCP("team");
+  const personalRow = personal.find((m) => m.id === id);
+  const teamRow = team.find((m) => m.id === id);
+
+  if (!personalRow && teamRow) {
+    return { ok: false, message: "Team-layer MCPs are read-only here" };
+  }
+
+  let row = personalRow;
+  if (!row) {
+    const nativePreview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
+    const cand = nativePreview.mcp.find((c) => c.kind === "new" && c.item.id === id);
+    if (!cand || cand.kind !== "new") {
+      return { ok: false, message: `MCP ${id} not found` };
+    }
+    row = cand.item;
+  }
+
+  const without = personal.filter((m) => m.id !== id);
+  const tombstone: MCPServerDef = { ...row, layer: "personal", enabledAgents: [] };
+
+  await writeMCP("personal", [...without, tombstone]);
+
+  const backup = await snapshotAgentConfigs({
+    reason: `removeMcpEverywhere ${id}`,
+  }).catch(() => undefined);
+
+  const results: SyncResult[] = [];
+  for (const agent of ALL_AGENTS) {
+    const r = await syncSingleAgent(agent);
+    if (r) results.push(r);
+  }
+
+  const errors = results.flatMap((r) => r.errors.map((error) => `${r.agent}: ${error}`));
+  if (errors.length > 0) {
+    return { ok: false, syncResults: results, message: errors.join("; ") };
+  }
+
+  await writeMCP("personal", without);
+  return { ok: true, syncResults: results, message: backup?.dir };
+}
+
 /** Same idea for skills. Promote also re-syncs every native source. */
 export async function toggleSkillAgent(opts: {
   id: string;
