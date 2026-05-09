@@ -31,6 +31,8 @@ export default async function SkillsPage() {
     string,
     boolean
   >;
+  const visibleAgents = ALL_AGENTS.filter((agent) => installed[agent]);
+
   return (
     <div className="space-y-8">
       <header>
@@ -39,7 +41,7 @@ export default async function SkillsPage() {
       </header>
       <SkillsEditor
         initial={rows}
-        agents={[...ALL_AGENTS]}
+        agents={visibleAgents}
         displayNames={AGENT_DISPLAY_NAMES}
         installed={installed}
       />

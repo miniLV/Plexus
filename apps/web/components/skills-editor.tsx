@@ -151,7 +151,7 @@ export function SkillsEditor({
             />
             <input
               className="h-8 w-52 rounded border border-plexus-border bg-plexus-surface-2 pr-3 pl-8 text-xs placeholder:text-plexus-text-mute focus:border-plexus-accent focus:outline-none"
-              placeholder="Filter id or name…"
+              placeholder="Filter skill…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
@@ -208,26 +208,31 @@ export function SkillsEditor({
         </Card>
       )}
 
-      <Card className="overflow-hidden">
-        <table className="w-full border-collapse text-sm">
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[920px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-plexus-border text-left text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
-              <th className="px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Skill</th>
               <th className="px-4 py-3 font-medium">Layer</th>
               {agents.map((a) => (
-                <th key={a} className="px-2 py-3 text-center font-medium">
-                  {displayNames[a] ?? AGENT_LABELS[a] ?? a}
+                <th
+                  key={a}
+                  className="px-2 py-3 text-center font-medium"
+                  title={displayNames[a] ?? a}
+                >
+                  {AGENT_LABELS[a] ?? displayNames[a] ?? a}
                 </th>
               ))}
-              <th className="px-4 py-3" />
+              <th className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center font-medium shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)]">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 && (
               <tr>
                 <td
-                  colSpan={4 + agents.length}
+                  colSpan={3 + agents.length}
                   className="px-4 py-10 text-center text-sm text-plexus-text-3"
                 >
                   {rows.length === 0
@@ -236,48 +241,68 @@ export function SkillsEditor({
                 </td>
               </tr>
             )}
-            {visible.map((r) => (
-              <tr
-                key={r.id}
-                className="border-b border-plexus-border/60 last:border-0 hover:bg-plexus-surface-2/40"
-              >
-                <td className="px-4 py-3 font-mono text-[13px] text-plexus-text">{r.id}</td>
-                <td className="px-4 py-3 text-plexus-text-2">{r.name}</td>
-                <td className="px-4 py-3">
-                  <Badge variant={authorityVariant(r.authority)}>{r.authority}</Badge>
-                </td>
-                {agents.map((a) => {
-                  const has = r.effectiveAgents.includes(a);
-                  const isBusy = busy === `${r.id}:${a}`;
-                  const disabled = r.authority === "team" || !installed[a];
-                  return (
-                    <td key={a} className="px-2 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={has}
-                        disabled={disabled || isBusy}
-                        onChange={(e) => toggle(r, a, e.target.checked)}
-                        className="h-4 w-4 cursor-pointer accent-plexus-accent disabled:cursor-not-allowed disabled:opacity-40"
-                        title={!installed[a] ? `${displayNames[a]} not installed` : ""}
-                      />
-                    </td>
-                  );
-                })}
-                <td className="px-4 py-3 text-right">
-                  {r.authority === "personal" && (
-                    <button
-                      type="button"
-                      onClick={() => removeRow(r)}
-                      disabled={busy === r.id}
-                      className="text-plexus-text-3 hover:text-plexus-err disabled:opacity-50"
-                      title="Delete skill"
+            {visible.map((r) => {
+              const showFolderId = r.name !== r.id;
+              return (
+                <tr
+                  key={r.id}
+                  className="group border-b border-plexus-border/60 last:border-0 hover:bg-plexus-surface-2/40"
+                >
+                  <td className="min-w-[260px] px-4 py-3">
+                    <div
+                      className={
+                        showFolderId
+                          ? "truncate text-sm font-medium text-plexus-text"
+                          : "truncate font-mono text-[13px] text-plexus-text"
+                      }
+                      title={r.name}
                     >
-                      <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                      {r.name}
+                    </div>
+                    {showFolderId && (
+                      <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                        {r.id}
+                      </code>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant={authorityVariant(r.authority)}>{r.authority}</Badge>
+                  </td>
+                  {agents.map((a) => {
+                    const has = r.effectiveAgents.includes(a);
+                    const isBusy = busy === `${r.id}:${a}`;
+                    const disabled = r.authority === "team" || !installed[a];
+                    return (
+                      <td key={a} className="px-2 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={has}
+                          disabled={disabled || isBusy}
+                          onChange={(e) => toggle(r, a, e.target.checked)}
+                          className="h-4 w-4 cursor-pointer accent-plexus-accent disabled:cursor-not-allowed disabled:opacity-40"
+                          title={!installed[a] ? `${displayNames[a]} not installed` : ""}
+                        />
+                      </td>
+                    );
+                  })}
+                  <td className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)] group-hover:bg-plexus-surface-2">
+                    {r.authority === "personal" && (
+                      <Button
+                        variant="danger"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => removeRow(r)}
+                        disabled={busy === r.id}
+                        title="Delete skill"
+                        aria-label={`Delete skill ${r.id}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </Card>
