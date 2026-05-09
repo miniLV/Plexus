@@ -23,6 +23,13 @@
 </p>
 
 <p align="center">
+  场景指南：
+  <a href="https://minilv.github.io/Plexus/guides.html">Guides</a> ·
+  <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html">Claude Code / Codex Skills + MCP</a> ·
+  <a href="https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html">CLAUDE.md / AGENTS.md</a>
+</p>
+
+<p align="center">
   适合已经同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，并且已经开始被配置漂移折腾的人。
 </p>
 
