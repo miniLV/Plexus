@@ -200,8 +200,8 @@ export function McpEditor({
         </Card>
       )}
 
-      <Card className="overflow-hidden">
-        <table className="w-full border-collapse text-sm">
+      <Card className="overflow-x-auto">
+        <table className="w-full min-w-[960px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-plexus-border text-left text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
               <th className="px-4 py-3 font-medium">ID</th>
@@ -212,7 +212,9 @@ export function McpEditor({
                   {displayNames[a] ?? AGENT_LABELS[a] ?? a}
                 </th>
               ))}
-              <th className="px-4 py-3 text-right font-medium">Action</th>
+              <th className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center font-medium shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)]">
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -230,7 +232,7 @@ export function McpEditor({
             {rows.map((r) => (
               <tr
                 key={r.id}
-                className="border-b border-plexus-border/60 last:border-0 hover:bg-plexus-surface-2/40"
+                className="group border-b border-plexus-border/60 last:border-0 hover:bg-plexus-surface-2/40"
               >
                 <td className="px-4 py-3 font-mono text-[13px] text-plexus-text">{r.id}</td>
                 <td className="px-4 py-3">
@@ -267,17 +269,18 @@ export function McpEditor({
                     </td>
                   );
                 })}
-                <td className="px-4 py-3 text-right">
+                <td className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)] group-hover:bg-plexus-surface-2">
                   {r.authority === "personal" && (
                     <Button
                       variant="danger"
-                      size="sm"
+                      size="icon"
+                      className="h-7 w-7"
                       onClick={() => removeRow(r)}
                       disabled={busy === r.id}
                       title="Delete from Plexus and all agents"
+                      aria-label={`Delete ${r.id} from Plexus and all agents`}
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      Remove
                     </Button>
                   )}
                 </td>
