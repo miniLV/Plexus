@@ -427,7 +427,7 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
         </Card>
 
         <Card className="overflow-hidden">
-          <div className="grid grid-cols-[1fr_auto] border-b border-plexus-border px-4 py-3 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] border-b border-plexus-border px-4 py-3 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
             <div>{copy.agentTarget}</div>
             <div>{copy.status}</div>
           </div>
@@ -453,14 +453,17 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
                   key={agent.agentId}
                   className="border-b border-plexus-border/60 px-4 py-3 last:border-0 hover:bg-plexus-surface-2/40"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-plexus-text">{displayName}</div>
                       <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
                         {agent.targetPath}
                       </code>
                     </div>
-                    <Badge variant={statusVariant(agent.status)}>
+                    <Badge
+                      variant={statusVariant(agent.status)}
+                      className="h-6 shrink-0 whitespace-nowrap px-2.5"
+                    >
                       <StatusDot tone={statusTone(agent.status)} />
                       {statusLabel(agent.status, copy)}
                     </Badge>
@@ -471,52 +474,62 @@ export function RulesPanel({ initial }: { initial: RulesStatus }) {
                         ? copy.appliedAt(fmtUpdatedAt(agent.lastAppliedAt, copy, locale))
                         : copy.noApplyRecord}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1 rounded border border-plexus-border bg-plexus-surface-2/70 p-0.5">
                       {!isLinked ? (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => importFromAgent(agent.agentId)}
                           disabled={busy != null || disabled || agent.status === "missing"}
+                          title={copy.import}
+                          aria-label={copy.import}
                         >
                           {importBusy ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
                           ) : (
                             <ArrowDownToLine className="h-3.5 w-3.5" strokeWidth={1.5} />
                           )}
-                          {copy.import}
                         </Button>
                       ) : null}
                       {isLinked ? (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => detachAgent(agent.agentId, displayName)}
                           disabled={busy != null || disabled || dirty}
-                          title={dirty ? copy.detachDirtyTitle : undefined}
+                          title={dirty ? copy.detachDirtyTitle : copy.detach}
+                          aria-label={copy.detach}
                         >
                           {detachBusy ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
                           ) : (
                             <Link2Off className="h-3.5 w-3.5" strokeWidth={1.5} />
                           )}
-                          {copy.detach}
                         </Button>
                       ) : null}
                       {showRelink ? (
                         <Button
                           variant="secondary"
-                          size="sm"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => relinkAgent(agent.agentId, displayName, agent.status)}
                           disabled={!canLink}
-                          title={dirty ? copy.relinkDirtyTitle : undefined}
+                          title={
+                            dirty
+                              ? copy.relinkDirtyTitle
+                              : agent.status === "missing"
+                                ? copy.link
+                                : copy.relink
+                          }
+                          aria-label={agent.status === "missing" ? copy.link : copy.relink}
                         >
                           {relinkBusy ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
                           ) : (
                             <Link2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                           )}
-                          {agent.status === "missing" ? copy.link : copy.relink}
                         </Button>
                       ) : null}
                     </div>
