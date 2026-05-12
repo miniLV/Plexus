@@ -3,14 +3,24 @@ import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { instructionsForAgent } from "../agents/inspect.js";
 import { cleanupLegacyResidue, snapshotAgentConfigs } from "../backup/index.js";
-import { readNativeMcpFromAgent, readNativeSkillsFromAgent } from "../import/from-agents.js";
+import {
+  firstNativeSkillSourceDir,
+  readNativeMcpFromAgent,
+  readNativeSkillsFromAgent,
+} from "../import/from-agents.js";
 import { applyRulesToAgents } from "../rules/index.js";
 import { readConfig } from "../store/config.js";
 import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
 import { readEffectiveRules, readRules, writePersonalRules } from "../store/rules.js";
-import { readAllSkills, readSkills, resolveSkillSourceDir, writeSkill } from "../store/skills.js";
+import {
+  readAllSkills,
+  readSkills,
+  resolveSkillSourceDir,
+  writeSkill,
+  writeSkillBundle,
+} from "../store/skills.js";
 import type { AgentId, MCPServerDef, RulesApplyResult, SkillDef, SyncReport } from "../types.js";
 
 /**
@@ -517,6 +527,7 @@ async function applySmartMergeToStore(
   }
 
   const nextSkillsById = new Map<string, SkillDef>();
+  const nativeSkillSources = new Map<string, AgentId[]>();
   for (const item of storeSkills) {
     nextSkillsById.set(item.id, withTargets({ ...item, layer: "personal" }, targets));
   }
@@ -524,13 +535,19 @@ async function applySmartMergeToStore(
     if (nextSkillsById.has(group.id)) continue;
     const selected = chooseVariant(group.variants, preferredAgent);
     nextSkillsById.set(group.id, withTargets({ ...selected.item, layer: "personal" }, targets));
+    nativeSkillSources.set(group.id, sortedAgents(selected.sources));
   }
 
   const nextMcp = [...nextMcpById.values()].sort((a, b) => a.id.localeCompare(b.id));
   const nextSkills = [...nextSkillsById.values()].sort((a, b) => a.id.localeCompare(b.id));
   await writeMCP("personal", nextMcp);
   for (const item of nextSkills) {
-    await writeSkill(item);
+    const sourceAgents = nativeSkillSources.get(item.id);
+    if (sourceAgents) {
+      await writeSkillBundle(item, await firstNativeSkillSourceDir(item.id, sourceAgents));
+    } else {
+      await writeSkill(item);
+    }
   }
 
   return { imported, mcpShared: nextMcp.length, skillsShared: nextSkills.length };

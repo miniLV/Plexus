@@ -6,6 +6,7 @@ import type { SyncResult } from "../../types.js";
 import {
   type AgentAdapter,
   type ApplyContext,
+  cleanupManagedSkillLinks,
   emptyResult,
   ensureDir,
   placeLinkOrCopy,
@@ -67,23 +68,7 @@ export const codexAdapter: AgentAdapter = {
     try {
       await ensureDir(caps.skillsDir);
       const filtered = ctx.skills.filter((s) => s.enabledAgents.includes("codex"));
-      const disabledManagedSkillIds = new Set(
-        ctx.skills.filter((s) => !s.enabledAgents.includes("codex")).map((s) => s.id),
-      );
-      for (const id of disabledManagedSkillIds) {
-        const dir = path.join(caps.skillsDir, id);
-        try {
-          // Symlink-safe removal: lstat first, unlink for symlinks, rm for real dirs.
-          const lst = await fs.lstat(dir);
-          if (lst.isSymbolicLink()) {
-            await fs.unlink(dir);
-          } else {
-            await fs.rm(dir, { recursive: true, force: true });
-          }
-        } catch {
-          // best effort cleanup
-        }
-      }
+      await cleanupManagedSkillLinks(ctx);
 
       for (const skill of filtered) {
         const sourcePath = ctx.skillSourcePaths.get(skill.id);

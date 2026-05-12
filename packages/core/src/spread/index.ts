@@ -1,12 +1,18 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { snapshotAgentConfigs } from "../backup/index.js";
-import { buildImportPreview } from "../import/from-agents.js";
+import { buildImportPreview, firstNativeSkillSourceDir } from "../import/from-agents.js";
 import { readConfig } from "../store/config.js";
 import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
-import { readAllSkills, readSkills, resolveSkillSourceDir, writeSkill } from "../store/skills.js";
+import {
+  readAllSkills,
+  readSkills,
+  resolveSkillSourceDir,
+  writeSkill,
+  writeSkillBundle,
+} from "../store/skills.js";
 import type { AgentId, MCPServerDef, SkillDef, SyncResult } from "../types.js";
 
 /**
@@ -192,11 +198,12 @@ export async function applySpread(opts: {
           enabledAgents: Array.from(new Set([...existingTeam.enabledAgents, to])),
         });
       } else {
-        await writeSkill({
+        const item = {
           ...cand.item,
-          layer: "personal",
+          layer: "personal" as const,
           enabledAgents: Array.from(new Set([...cand.item.enabledAgents, to])),
-        });
+        };
+        await writeSkillBundle(item, await firstNativeSkillSourceDir(item.id, [from]));
       }
       skillsAdded += 1;
     }

@@ -1,6 +1,6 @@
 import { readAllMCP, readMCP, writeMCP } from "../store/mcp.js";
-import { readAllSkills, readSkills, writeSkill } from "../store/skills.js";
-import { buildImportPreview } from "./from-agents.js";
+import { readAllSkills, readSkills, writeSkill, writeSkillBundle } from "../store/skills.js";
+import { buildImportPreview, firstNativeSkillSourceDir } from "./from-agents.js";
 import type { ImportPreview, MCPCandidate, SkillCandidate } from "./from-agents.js";
 
 export type {
@@ -94,7 +94,10 @@ export async function applyImport(preview?: ImportPreview): Promise<{
 
     for (const cand of p.skills) {
       if (cand.kind === "new") {
-        await writeSkill(cand.item);
+        await writeSkillBundle(
+          cand.item,
+          await firstNativeSkillSourceDir(cand.item.id, cand.sourceAgents),
+        );
         skillsWritten += 1;
       } else {
         const existingPersonal = personalById.get(cand.id);

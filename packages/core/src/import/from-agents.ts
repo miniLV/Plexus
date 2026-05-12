@@ -163,6 +163,30 @@ export async function readNativeSkillsFromAgent(agentId: AgentId): Promise<Skill
   }
 }
 
+export async function resolveNativeSkillSourceDir(
+  agentId: AgentId,
+  skillId: string,
+): Promise<string | undefined> {
+  const dir = path.join(AGENT_PATHS[agentId].skillsDir, skillId);
+  try {
+    const st = await fs.stat(dir);
+    return st.isDirectory() ? dir : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function firstNativeSkillSourceDir(
+  skillId: string,
+  sourceAgents: AgentId[],
+): Promise<string | undefined> {
+  for (const agent of sourceAgents) {
+    const dir = await resolveNativeSkillSourceDir(agent, skillId);
+    if (dir) return dir;
+  }
+  return undefined;
+}
+
 export interface BuildImportPreviewArgs {
   storeMcp: MCPServerDef[];
   storeSkills: SkillDef[];

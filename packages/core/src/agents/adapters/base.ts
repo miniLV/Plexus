@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { AGENT_PATHS, PLEXUS_PATHS } from "../../store/paths.js";
 import type { AgentId, MCPServerDef, SkillDef, SyncResult } from "../../types.js";
 
 export interface ApplyContext {
@@ -85,6 +86,72 @@ export async function placeLinkOrCopy(
     await fs.copyFile(target, linkPath);
   }
   return { via: "copy", backedUp };
+}
+
+export async function cleanupManagedSkillLinks(ctx: ApplyContext): Promise<void> {
+  const caps = AGENT_PATHS[ctx.agentId];
+  const enabledIds = new Set(
+    ctx.skills
+      .filter((skill) => skill.enabledAgents.includes(ctx.agentId))
+      .map((skill) => skill.id),
+  );
+  const disabledIds = ctx.skills
+    .filter((skill) => !skill.enabledAgents.includes(ctx.agentId))
+    .map((skill) => skill.id);
+
+  for (const id of disabledIds) {
+    await safeRemoveDir(path.join(caps.skillsDir, id));
+  }
+
+  let entries: string[];
+  try {
+    entries = await fs.readdir(caps.skillsDir);
+  } catch {
+    return;
+  }
+
+  for (const name of entries) {
+    if (name.startsWith(".")) continue;
+    const dir = path.join(caps.skillsDir, name);
+    let target: string;
+    try {
+      const lst = await fs.lstat(dir);
+      if (!lst.isSymbolicLink()) continue;
+      const rawTarget = await fs.readlink(dir);
+      target = path.isAbsolute(rawTarget) ? rawTarget : path.resolve(path.dirname(dir), rawTarget);
+    } catch {
+      continue;
+    }
+    if (!enabledIds.has(name) && isPlexusStoreSkillPath(target)) {
+      await safeRemoveDir(dir);
+    }
+  }
+}
+
+async function safeRemoveDir(p: string): Promise<void> {
+  try {
+    const lst = await fs.lstat(p);
+    if (lst.isSymbolicLink()) {
+      await fs.unlink(p);
+    } else {
+      await fs.rm(p, { recursive: true, force: true });
+    }
+  } catch {
+    // best-effort
+  }
+}
+
+function isPlexusStoreSkillPath(target: string): boolean {
+  const roots = [
+    path.join(PLEXUS_PATHS.personal, PLEXUS_PATHS.skillsDirRel),
+    path.join(PLEXUS_PATHS.team, PLEXUS_PATHS.skillsDirRel),
+  ];
+  return roots.some((root) => isInside(target, root));
+}
+
+function isInside(child: string, parent: string): boolean {
+  const relative = path.relative(path.resolve(parent), path.resolve(child));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
 export function emptyResult(agentId: AgentId): SyncResult {

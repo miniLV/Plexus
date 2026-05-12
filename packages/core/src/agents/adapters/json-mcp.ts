@@ -5,6 +5,7 @@ import type { AgentId, MCPServerDef, SyncResult } from "../../types.js";
 import {
   type AgentAdapter,
   type ApplyContext,
+  cleanupManagedSkillLinks,
   emptyResult,
   ensureDir,
   placeFileSymlink,
@@ -67,15 +68,7 @@ export function makeJsonMcpAdapter(agentId: AgentId): AgentAdapter {
         try {
           await ensureDir(caps.skillsDir);
           const filtered = ctx.skills.filter((s) => s.enabledAgents.includes(agentId));
-          const disabledManagedSkillIds = new Set(
-            ctx.skills.filter((s) => !s.enabledAgents.includes(agentId)).map((s) => s.id),
-          );
-
-          // Remove Plexus-managed skill dirs that are now disabled for this agent.
-          for (const id of disabledManagedSkillIds) {
-            const dir = path.join(caps.skillsDir, id);
-            await safeRemoveDir(dir);
-          }
+          await cleanupManagedSkillLinks(ctx);
 
           for (const skill of filtered) {
             const sourcePath = ctx.skillSourcePaths.get(skill.id);
@@ -99,24 +92,6 @@ export function makeJsonMcpAdapter(agentId: AgentId): AgentAdapter {
       return result;
     },
   };
-}
-
-/**
- * Symlink-safe directory removal. fs.rm(recursive) on a symlink behaves
- * inconsistently across OS versions — explicitly handle the symlink case
- * by unlinking the link itself, never the target.
- */
-async function safeRemoveDir(p: string): Promise<void> {
-  try {
-    const lst = await fs.lstat(p);
-    if (lst.isSymbolicLink()) {
-      await fs.unlink(p);
-    } else {
-      await fs.rm(p, { recursive: true, force: true });
-    }
-  } catch {
-    // best-effort
-  }
 }
 
 /** Partial-write: rewrite mcpServers section only, preserve everything else. */

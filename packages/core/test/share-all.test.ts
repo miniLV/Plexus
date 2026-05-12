@@ -202,4 +202,20 @@ describe("runShareAll", () => {
     const skills = await readSkills("personal");
     expect(skills.map((skill) => skill.id)).toEqual(["user-tool"]);
   });
+
+  it("copies native skill resources into the Plexus store during share-all", async () => {
+    const nativeSkillDir = path.join(AGENT_PATHS["claude-code"].skillsDir, "diagram-tool");
+    await writeSkill(nativeSkillDir, "diagram-tool");
+    await fs.mkdir(path.join(nativeSkillDir, "scripts"), { recursive: true });
+    await fs.writeFile(path.join(nativeSkillDir, "scripts", "validate.py"), "print('ok')\n");
+
+    await runShareAll({ preferredAgent: "claude-code" });
+
+    await expect(
+      fs.readFile(
+        path.join(PLEXUS_PATHS.personal, "skills", "diagram-tool", "scripts", "validate.py"),
+        "utf8",
+      ),
+    ).resolves.toBe("print('ok')\n");
+  });
 });

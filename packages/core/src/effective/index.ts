@@ -1,12 +1,17 @@
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { snapshotAgentConfigs } from "../backup/index.js";
-import { buildImportPreview } from "../import/from-agents.js";
+import { buildImportPreview, firstNativeSkillSourceDir } from "../import/from-agents.js";
 import { readConfig } from "../store/config.js";
 import { readMCP, writeMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
 import { ALL_AGENTS } from "../store/paths.js";
-import { readSkills, resolveSkillSourceDir, writeSkill } from "../store/skills.js";
+import {
+  readSkills,
+  resolveSkillSourceDir,
+  writeSkill,
+  writeSkillBundle,
+} from "../store/skills.js";
 import type { AgentId, ConfigLayer, MCPServerDef, SkillDef, SyncResult } from "../types.js";
 
 /**
@@ -286,7 +291,8 @@ export async function toggleSkillAgent(opts: {
     const enabledAgents = opts.enabled
       ? Array.from(new Set([...cand.sourceAgents, opts.agent]))
       : cand.sourceAgents.filter((a) => a !== opts.agent);
-    await writeSkill({ ...cand.item, layer: "personal", enabledAgents });
+    const item = { ...cand.item, layer: "personal" as const, enabledAgents };
+    await writeSkillBundle(item, await firstNativeSkillSourceDir(item.id, cand.sourceAgents));
     agentsToSync = Array.from(new Set([...cand.sourceAgents, opts.agent]));
   }
 

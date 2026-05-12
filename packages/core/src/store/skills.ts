@@ -126,6 +126,35 @@ export async function writeSkill(skill: SkillDef): Promise<void> {
   await fs.writeFile(path.join(dir, "SKILL.md"), serializeSkillMarkdown(skill), "utf8");
 }
 
+export async function writeSkillBundle(skill: SkillDef, sourceDir?: string): Promise<void> {
+  await writeSkill(skill);
+  if (!sourceDir) return;
+
+  const destDir = path.join(skillsRoot(skill.layer), skill.id);
+  await copySkillResources(sourceDir, destDir);
+}
+
+async function copySkillResources(sourceDir: string, destDir: string): Promise<void> {
+  try {
+    const [sourceReal, destReal] = await Promise.all([
+      fs.realpath(sourceDir).catch(() => path.resolve(sourceDir)),
+      fs.realpath(destDir).catch(() => path.resolve(destDir)),
+    ]);
+    if (sourceReal === destReal) return;
+
+    const entries = await fs.readdir(sourceDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === "SKILL.md" || entry.name === ".DS_Store") continue;
+      await fs.cp(path.join(sourceDir, entry.name), path.join(destDir, entry.name), {
+        recursive: true,
+        force: true,
+      });
+    }
+  } catch {
+    // A missing or unreadable native bundle should not block importing SKILL.md.
+  }
+}
+
 export async function deleteSkill(layer: ConfigLayer, skillId: string): Promise<void> {
   const dir = path.join(skillsRoot(layer), skillId);
   if (await pathExists(dir)) {

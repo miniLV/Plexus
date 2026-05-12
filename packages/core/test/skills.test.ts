@@ -6,12 +6,15 @@ import { setupSandbox } from "./_setup.js";
 
 const sandbox = await setupSandbox("skills");
 const { readSkills, writeSkill } = await import("../src/store/skills.js");
-const { PLEXUS_PATHS } = await import("../src/store/paths.js");
+const { runSync } = await import("../src/sync/index.js");
+const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
 
 beforeEach(async () => {
   await fs.rm(PLEXUS_PATHS.root, { recursive: true, force: true });
+  await fs.rm(path.join(sandbox.home, ".claude"), { recursive: true, force: true });
+  await fs.rm(path.join(sandbox.home, "external-skills"), { recursive: true, force: true });
 });
 
 function frontmatter(raw: string): Record<string, unknown> {
@@ -82,5 +85,37 @@ describe("Skill store markdown normalization", () => {
     expect(fm.description).toBe(
       "Use when enforcing Atlassian MCP access. Use when validating Jira or Confluence tools.",
     );
+  });
+
+  it("removes stale Plexus-managed skill symlinks during sync", async () => {
+    const skillsDir = AGENT_PATHS["claude-code"].skillsDir;
+    await fs.mkdir(skillsDir, { recursive: true });
+
+    await writeSkill({
+      id: "plantuml",
+      name: "plantuml",
+      description: "PlantUML diagrams",
+      body: "# PlantUML\n",
+      layer: "personal",
+      enabledAgents: ["claude-code"],
+    });
+
+    const staleLink = path.join(skillsDir, "confluence-arch-design-wiki");
+    const staleTarget = path.join(PLEXUS_PATHS.personal, "skills", "confluence-arch-design-wiki");
+    await fs.symlink(staleTarget, staleLink, "dir");
+
+    const externalTarget = path.join(sandbox.home, "external-skills", "external-tool");
+    await fs.mkdir(externalTarget, { recursive: true });
+    await fs.writeFile(path.join(externalTarget, "SKILL.md"), "# external\n", "utf8");
+    const externalLink = path.join(skillsDir, "external-tool");
+    await fs.symlink(externalTarget, externalLink, "dir");
+
+    await runSync(["claude-code"]);
+
+    await expect(fs.lstat(staleLink)).rejects.toThrow();
+    await expect(fs.lstat(externalLink)).resolves.toBeTruthy();
+    await expect(
+      fs.readFile(path.join(skillsDir, "plantuml", "SKILL.md"), "utf8"),
+    ).resolves.toContain("PlantUML diagrams");
   });
 });

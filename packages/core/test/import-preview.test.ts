@@ -5,6 +5,7 @@ import { setupSandbox } from "./_setup.js";
 
 const sandbox = await setupSandbox("import-preview");
 const { buildImportPreview } = await import("../src/import/from-agents.js");
+const { applyImport } = await import("../src/import/index.js");
 const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
@@ -125,6 +126,32 @@ describe("buildImportPreview", () => {
           item: expect.objectContaining({ id: "legacy-command" }),
         }),
       ]),
+    );
+  });
+
+  it("copies bundled native skill resources into the Plexus personal store", async () => {
+    const nativeSkillDir = path.join(AGENT_PATHS["claude-code"].skillsDir, "diagram-tool");
+    await writeSkill(nativeSkillDir, "Diagram Tool");
+    await fs.mkdir(path.join(nativeSkillDir, "scripts"), { recursive: true });
+    await fs.writeFile(
+      path.join(nativeSkillDir, "scripts", "validate.py"),
+      "print('ok')\n",
+      "utf8",
+    );
+    await fs.mkdir(path.join(nativeSkillDir, "references"), { recursive: true });
+    await fs.writeFile(path.join(nativeSkillDir, "references", "syntax.md"), "# Syntax\n", "utf8");
+
+    await applyImport();
+
+    const storeDir = path.join(PLEXUS_PATHS.personal, "skills", "diagram-tool");
+    await expect(fs.readFile(path.join(storeDir, "SKILL.md"), "utf8")).resolves.toContain(
+      "Diagram Tool",
+    );
+    await expect(fs.readFile(path.join(storeDir, "scripts", "validate.py"), "utf8")).resolves.toBe(
+      "print('ok')\n",
+    );
+    await expect(fs.readFile(path.join(storeDir, "references", "syntax.md"), "utf8")).resolves.toBe(
+      "# Syntax\n",
     );
   });
 });
