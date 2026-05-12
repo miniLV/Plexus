@@ -30,7 +30,7 @@ ${kleur.bold("Usage:")}
   plexus detect       list detected AI agents on this machine
   plexus join <git-url>   subscribe to a team config repo
   plexus pull         refresh the team layer from upstream
-  plexus sync [--prefer <agent>]  import, share, and apply config to all enabled agents
+  plexus sync [--prefer <agent>]  union Plexus + native config and apply to enabled agents
   plexus status       show subscription / sync status
   plexus help         show this help
 `);

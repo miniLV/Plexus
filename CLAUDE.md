@@ -257,6 +257,20 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - Qwen Code target: `~/.qwen/skills/<id>`
 - Factory Droid target: `~/.factory/skills/<id>`
 
+The Plexus store is part of the skill union, not just a sync output. A skill
+created directly under `~/.config/plexus/personal/skills/<id>` is already a
+canonical source item. `runShareAll()` unions:
+
+```text
+Plexus personal/team store + native agent skills = canonical Plexus union
+```
+
+Native-only skills are imported into the personal layer, including bundled
+resources such as `scripts/`, `references/`, `assets/`, and `agents/`.
+If the same skill ID exists in Plexus and a native agent with different bundle
+content, Plexus wins by default and the preview should surface a conflict
+instead of silently treating an agent as the source of truth.
+
 `placeLinkOrCopy()` is the shared helper. If a real file or directory already
 exists at the target, it is quarantined under
 `~/.config/plexus/backups/_collisions/` before the link/copy is placed.
@@ -323,11 +337,11 @@ Entry points:
 Core functions in `packages/core/src/sync/index.ts`:
 
 - `runSync()` applies the current Plexus store to selected targets.
-- `previewShareAll()` inspects native MCPs, skills, and rules, then chooses a
-  recommended primary source.
-- `runShareAll()` imports native config into the personal store, resolves
-  conflicts by preferred source, enables imported config for every target, then
-  applies MCP/skills/rules.
+- `previewShareAll()` inspects the Plexus store plus native MCPs, skills, and
+  rules, builds a union preview, and reports same-ID conflicts.
+- `runShareAll()` imports native-only config into the personal store, keeps
+  Plexus-store entries authoritative for existing IDs, enables the union for
+  every target, then applies MCP/skills/rules.
 
 `runSync()` flow:
 
@@ -339,13 +353,19 @@ Core functions in `packages/core/src/sync/index.ts`:
 6. Merge team + personal.
 7. Apply adapters for enabled, installed targets.
 
-`runShareAll()` is the user-facing foolproof mode. When more than one source
-has native config, the UI lets the user pick the primary source. If the user
-does not pick one, the priority order is:
+`runShareAll()` is the user-facing foolproof mode. Normal sync does not ask the
+user to choose a source: Plexus personal/team store and native agent config are
+merged as a union. Source selection is only a conflict-resolution affordance
+for same-ID native-native conflicts. If the user does not pick one, the native
+priority order is:
 
 ```text
 codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid
 ```
+
+If Plexus already has an item with the same ID, the Plexus version is the
+default winner. The preview should expose that as `preferredSource: "plexus"`;
+an agent preference must not overwrite an existing Plexus store item.
 
 ### 4.2 Import
 

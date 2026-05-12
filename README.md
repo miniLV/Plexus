@@ -81,7 +81,7 @@ Plexus 的目标很简单：给这些工具一个本地的 single source of trut
 
 如果你同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，并且已经厌倦了在五六个地方手动维护同一份配置，Plexus 就是为这个场景做的。
 
-它会先扫描你本机已有的配置，遇到多个来源时让你选择一个 Primary Agent，随后把 Rules、MCP Servers 和 Skills 写入 `~/.config/plexus/` 作为本地基线，再投射回每个 Agent 的原生位置。每次写入原生文件前都会创建 snapshot，后悔了可以从 Backups 页面恢复。
+它会把 `~/.config/plexus/` 作为本机 canonical store，同时扫描各个 agent 的原生配置，把 Plexus store 和 native-only 配置取并集合并。同 ID 内容不同才需要你选择保留哪个版本；普通同步不需要选择 source。每次写入原生文件前都会创建 snapshot，后悔了可以从 Backups 页面恢复。
 
 ## Plexus 能做什么？
 
@@ -146,8 +146,8 @@ npm run dev
 
 第一次使用时，只需要点 Dashboard 右上角的 **Share config everywhere**：
 
-1. Plexus 会检测已安装的 Agent，并导入它们已有的 Rules、MCP Servers 和 Skills。
-2. 页面会展示 smart-merge preview；同 ID 冲突才使用你选择的 Primary Agent。
+1. Plexus 会检测已安装的 Agent，并把 Plexus store、native Rules、MCP Servers 和 Skills 合并成并集。
+2. 页面会展示 smart-merge preview；只有同 ID 不同内容时才进入冲突处理。
 3. Plexus 会把配置应用到 enabled agents，并在写入原生文件前创建 snapshot。
 
 如果想用本地 CLI：
@@ -241,8 +241,8 @@ plexus start -p 7777
 plexus detect       list detected agents
 plexus join <url>   clone a team config repo into ~/.config/plexus/team
 plexus pull         pull the configured team repo
-plexus sync         import, share, and apply config to all enabled agents
-plexus sync --prefer codex
+plexus sync         union Plexus + native config and apply to enabled agents
+plexus sync --prefer codex   use Codex only to resolve native-native conflicts
 plexus status       show team subscription and sync status
 plexus help
 ```

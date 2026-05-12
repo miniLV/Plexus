@@ -8,7 +8,7 @@ const sandbox = await setupSandbox("share-all");
 const { previewShareAll, runShareAll } = await import("../src/sync/index.js");
 const { readMCP, writeMCP } = await import("../src/store/mcp.js");
 const { readRules } = await import("../src/store/rules.js");
-const { readSkills } = await import("../src/store/skills.js");
+const { readSkills, writeSkill: writeStoreSkill } = await import("../src/store/skills.js");
 const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
@@ -119,7 +119,12 @@ describe("runShareAll", () => {
     expect(plan.selectedPrimaryAgent).toBe("codex");
     expect(plan.mcp.safe).toBe(2);
     expect(plan.mcp.conflicts).toEqual([
-      { id: "shared", sources: ["codex", "claude-code"], preferredAgent: "codex" },
+      {
+        id: "shared",
+        sources: ["codex", "claude-code"],
+        preferredSource: "codex",
+        preferredAgent: "codex",
+      },
     ]);
     expect(plan.rules.conflict).toBe(true);
 
@@ -162,6 +167,60 @@ describe("runShareAll", () => {
     const shared = servers.find((server) => server.id === "shared");
     expect(shared?.args).toEqual(["store"]);
     expect(shared?.enabledAgents).toEqual(["claude-code", "codex"]);
+  });
+
+  it("treats Plexus skills as part of the share-all union", async () => {
+    await fs.mkdir(AGENT_PATHS["claude-code"].skillsDir, { recursive: true });
+    await writeStoreSkill({
+      id: "store-tool",
+      name: "store-tool",
+      description: "Store tool",
+      body: "# Store Tool\n",
+      layer: "personal",
+      enabledAgents: ["claude-code"],
+    });
+    await writeSkill(path.join(AGENT_PATHS.codex.skillsDir, "native-tool"), "native-tool");
+
+    const report = await runShareAll({ preferredAgent: "codex" });
+
+    expect(report.plan.sources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ source: "plexus", skills: 1 }),
+        expect.objectContaining({ source: "codex", agent: "codex", skills: 1 }),
+      ]),
+    );
+    const skills = await readSkills("personal");
+    expect(skills.map((skill) => skill.id).sort()).toEqual(["native-tool", "store-tool"]);
+    expect(skills.every((skill) => skill.enabledAgents.includes("claude-code"))).toBe(true);
+    expect(skills.every((skill) => skill.enabledAgents.includes("codex"))).toBe(true);
+  });
+
+  it("reports Plexus-native skill conflicts while keeping the Plexus version", async () => {
+    await writeStoreSkill({
+      id: "shared-tool",
+      name: "shared-tool",
+      description: "Store version",
+      body: "# Store Version\n",
+      layer: "personal",
+      enabledAgents: ["claude-code"],
+    });
+    await writeSkill(path.join(AGENT_PATHS["claude-code"].skillsDir, "shared-tool"), "Native");
+
+    const plan = await previewShareAll({ preferredAgent: "claude-code" });
+
+    expect(plan.skills.conflicts).toEqual([
+      {
+        id: "shared-tool",
+        sources: ["plexus", "claude-code"],
+        preferredSource: "plexus",
+      },
+    ]);
+
+    await runShareAll({ preferredAgent: "claude-code" });
+
+    const [skill] = await readSkills("personal");
+    expect(skill.body).toBe("# Store Version\n");
+    expect(skill.enabledAgents).toEqual(["claude-code"]);
   });
 
   it("imports Gemini CLI and Qwen Code without dropping remote MCP fields", async () => {

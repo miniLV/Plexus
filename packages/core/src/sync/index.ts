@@ -1,4 +1,6 @@
+import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
+import path from "node:path";
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
 import { instructionsForAgent } from "../agents/inspect.js";
@@ -7,6 +9,7 @@ import {
   firstNativeSkillSourceDir,
   readNativeMcpFromAgent,
   readNativeSkillsFromAgent,
+  resolveNativeSkillSourceDir,
 } from "../import/from-agents.js";
 import { applyRulesToAgents } from "../rules/index.js";
 import { readConfig } from "../store/config.js";
@@ -105,8 +108,11 @@ export interface ShareImportStats {
   skillsExtended: number;
 }
 
+export type ShareSourceId = AgentId | "plexus";
+
 export interface ShareSourceSummary {
-  agent: AgentId;
+  source: ShareSourceId;
+  agent?: AgentId;
   mcp: number;
   skills: number;
   rules: boolean;
@@ -115,14 +121,17 @@ export interface ShareSourceSummary {
 
 export interface ShareConflictSummary {
   id: string;
-  sources: AgentId[];
+  sources: ShareSourceId[];
+  preferredSource?: ShareSourceId;
   preferredAgent?: AgentId;
 }
 
 export interface SharePlan {
   targetAgents: AgentId[];
   sources: ShareSourceSummary[];
+  recommendedPrimarySource?: ShareSourceId;
   recommendedPrimaryAgent?: AgentId;
+  selectedPrimarySource?: ShareSourceId;
   selectedPrimaryAgent?: AgentId;
   conflictCount: number;
   mcp: {
@@ -134,8 +143,9 @@ export interface SharePlan {
     conflicts: ShareConflictSummary[];
   };
   rules: {
-    sources: AgentId[];
+    sources: ShareSourceId[];
     conflict: boolean;
+    preferredSource?: ShareSourceId;
     preferredAgent?: AgentId;
   };
 }
@@ -197,6 +207,16 @@ interface NativeShareState {
   rulesSources: RulesSource[];
 }
 
+interface StoreShareState {
+  sourceSummary: ShareSourceSummary;
+  mcpFingerprints: Map<string, string>;
+  skillFingerprints: Map<string, string>;
+  rulesSource?: {
+    content: string;
+    fingerprint: string;
+  };
+}
+
 function normalizeShareOptions(input?: AgentId[] | ShareAllOptions): ShareAllOptions {
   return Array.isArray(input) ? { only: input } : (input ?? {});
 }
@@ -218,6 +238,14 @@ function sortedAgents(agents: AgentId[]): AgentId[] {
   return [...new Set(agents)].sort(
     (a, b) => AGENT_PRIORITY.indexOf(a) - AGENT_PRIORITY.indexOf(b) || a.localeCompare(b),
   );
+}
+
+function sortedSources(sources: ShareSourceId[]): ShareSourceId[] {
+  return [...new Set(sources)].sort((a, b) => sourcePriority(a) - sourcePriority(b));
+}
+
+function sourcePriority(source: ShareSourceId): number {
+  return source === "plexus" ? -1 : AGENT_PRIORITY.indexOf(source);
 }
 
 function sortJson(value: unknown): unknown {
@@ -265,6 +293,46 @@ function skillFingerprint(item: SkillDef): string {
   });
 }
 
+async function skillBundleFingerprint(item: SkillDef, sourceDir?: string): Promise<string> {
+  const resources = sourceDir ? await readSkillResourceFingerprints(sourceDir) : [];
+  return fingerprint({
+    skill: JSON.parse(skillFingerprint(item)) as unknown,
+    resources,
+  });
+}
+
+async function readSkillResourceFingerprints(sourceDir: string): Promise<
+  Array<{
+    path: string;
+    content: string;
+  }>
+> {
+  const files: Array<{ path: string; content: string }> = [];
+
+  async function walk(dir: string, relPrefix = ""): Promise<void> {
+    let entries: Dirent[];
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.name === "SKILL.md" || entry.name === ".DS_Store") continue;
+      const rel = relPrefix ? `${relPrefix}/${entry.name}` : entry.name;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full, rel);
+      } else if (entry.isFile()) {
+        const content = await fs.readFile(full);
+        files.push({ path: rel, content: content.toString("base64") });
+      }
+    }
+  }
+
+  await walk(sourceDir);
+  return files.sort((a, b) => a.path.localeCompare(b.path));
+}
+
 function addVariant<T extends { id: string }>(
   groups: Map<string, NativeGroup<T>>,
   item: T,
@@ -282,14 +350,16 @@ function addVariant<T extends { id: string }>(
 }
 
 function bestAgentFromSources(sources: ShareSourceSummary[]): AgentId | undefined {
-  return [...sources]
-    .filter((source) => source.total > 0)
-    .sort(
-      (a, b) =>
-        b.total - a.total ||
-        AGENT_PRIORITY.indexOf(a.agent) - AGENT_PRIORITY.indexOf(b.agent) ||
-        a.agent.localeCompare(b.agent),
-    )[0]?.agent;
+  const nativeSources = sources.filter(
+    (source): source is ShareSourceSummary & { agent: AgentId } =>
+      Boolean(source.agent) && source.total > 0,
+  );
+  return [...nativeSources].sort(
+    (a, b) =>
+      b.total - a.total ||
+      AGENT_PRIORITY.indexOf(a.agent) - AGENT_PRIORITY.indexOf(b.agent) ||
+      a.agent.localeCompare(b.agent),
+  )[0]?.agent;
 }
 
 function variantPriority(variant: Variant<unknown>): number {
@@ -316,6 +386,16 @@ function preferredAgentForVariant<T>(variant: Variant<T>, preferredAgent?: Agent
   const [agent] = sortedAgents(variant.sources);
   if (!agent) throw new Error("Cannot summarize a native config variant with no sources");
   return agent;
+}
+
+function preferredSourceForConflict<T>(
+  variants: Variant<T>[] | undefined,
+  hasStoreVariant: boolean,
+  preferredAgent?: AgentId,
+): ShareSourceId {
+  if (hasStoreVariant) return "plexus";
+  if (!variants || variants.length === 0) return "plexus";
+  return preferredAgentForVariant(chooseVariant(variants, preferredAgent), preferredAgent);
 }
 
 async function readRulesSources(targets: AgentId[]): Promise<RulesSource[]> {
@@ -378,11 +458,17 @@ async function collectNativeShareState(targets: AgentId[]): Promise<NativeShareS
 
     for (const skill of nativeSkills) {
       const item: SkillDef = { ...skill, layer: "personal", enabledAgents: [agent] };
-      addVariant(skillGroups, item, agent, skillFingerprint(item));
+      addVariant(
+        skillGroups,
+        item,
+        agent,
+        await skillBundleFingerprint(item, await resolveNativeSkillSourceDir(agent, item.id)),
+      );
     }
 
     const hasRules = rulesSources.some((source) => source.agent === agent);
     sourceSummaries.push({
+      source: agent,
       agent,
       mcp: nativeMcp.length,
       skills: nativeSkills.length,
@@ -394,57 +480,136 @@ async function collectNativeShareState(targets: AgentId[]): Promise<NativeShareS
   return { sourceSummaries, mcpGroups, skillGroups, rulesSources };
 }
 
-function summarizeConflicts<T extends { id: string }>(
+async function collectStoreShareState(): Promise<StoreShareState> {
+  const [teamMcp, personalMcp, teamSkills, personalSkills, rules] = await Promise.all([
+    readMCP("team"),
+    readMCP("personal"),
+    readSkills("team"),
+    readSkills("personal"),
+    readEffectiveRules(),
+  ]);
+  const mcp = mergeMCP(teamMcp, personalMcp);
+  const skills = mergeSkills(teamSkills, personalSkills);
+  const mcpFingerprints = new Map(mcp.map((item) => [item.id, mcpFingerprint(item)]));
+  const skillFingerprints = new Map<string, string>();
+  for (const item of skills) {
+    skillFingerprints.set(
+      item.id,
+      await skillBundleFingerprint(item, resolveSkillSourceDir(item.layer, item.id)),
+    );
+  }
+
+  return {
+    sourceSummary: {
+      source: "plexus",
+      mcp: mcp.length,
+      skills: skills.length,
+      rules: Boolean(rules),
+      total: mcp.length + skills.length + (rules ? 1 : 0),
+    },
+    mcpFingerprints,
+    skillFingerprints,
+    rulesSource: rules
+      ? { content: rules.content, fingerprint: fingerprint(rules.content) }
+      : undefined,
+  };
+}
+
+function summarizeUnionConflicts<T extends { id: string }>(
   groups: Map<string, NativeGroup<T>>,
+  storeFingerprints: Map<string, string>,
   preferredAgent?: AgentId,
 ): ShareConflictSummary[] {
   const conflicts: ShareConflictSummary[] = [];
-  for (const group of groups.values()) {
-    if (group.variants.length <= 1) continue;
-    const selected = chooseVariant(group.variants, preferredAgent);
+  const ids = new Set([...storeFingerprints.keys(), ...groups.keys()]);
+  for (const id of ids) {
+    const group = groups.get(id);
+    const fingerprints = new Set(group?.variants.map((variant) => variant.fingerprint) ?? []);
+    const storeFingerprint = storeFingerprints.get(id);
+    if (storeFingerprint) fingerprints.add(storeFingerprint);
+    if (fingerprints.size <= 1) continue;
+    const preferredSource = preferredSourceForConflict(
+      group?.variants,
+      Boolean(storeFingerprint),
+      preferredAgent,
+    );
     conflicts.push({
-      id: group.id,
-      sources: sortedAgents(group.variants.flatMap((variant) => variant.sources)),
-      preferredAgent: preferredAgentForVariant(selected, preferredAgent),
+      id,
+      sources: sortedSources([
+        ...(storeFingerprint ? (["plexus"] as const) : []),
+        ...(group?.variants.flatMap((variant) => variant.sources) ?? []),
+      ]),
+      preferredSource,
+      preferredAgent: preferredSource === "plexus" ? undefined : preferredSource,
     });
   }
   return conflicts.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function countSafeGroups<T extends { id: string }>(groups: Map<string, NativeGroup<T>>): number {
-  return [...groups.values()].filter((group) => group.variants.length === 1).length;
+function countSafeUnionGroups<T extends { id: string }>(
+  groups: Map<string, NativeGroup<T>>,
+  storeFingerprints: Map<string, string>,
+): number {
+  const ids = new Set([...storeFingerprints.keys(), ...groups.keys()]);
+  return [...ids].filter((id) => {
+    const fingerprints = new Set(groups.get(id)?.variants.map((variant) => variant.fingerprint));
+    const storeFingerprint = storeFingerprints.get(id);
+    if (storeFingerprint) fingerprints.add(storeFingerprint);
+    return fingerprints.size <= 1;
+  }).length;
 }
 
 function buildSharePlan(
   targetAgents: AgentId[],
   state: NativeShareState,
+  store: StoreShareState,
   selectedPrimaryAgent?: AgentId,
 ): SharePlan {
   const recommendedPrimaryAgent = bestAgentFromSources(state.sourceSummaries);
-  const ruleFingerprints = new Set(state.rulesSources.map((source) => source.fingerprint));
+  const ruleFingerprints = new Set([
+    ...state.rulesSources.map((source) => source.fingerprint),
+    ...(store.rulesSource ? [store.rulesSource.fingerprint] : []),
+  ]);
   const rulesSource = chooseRulesSource(state.rulesSources, selectedPrimaryAgent);
-  const mcpConflicts = summarizeConflicts(state.mcpGroups, selectedPrimaryAgent);
-  const skillConflicts = summarizeConflicts(state.skillGroups, selectedPrimaryAgent);
+  const mcpConflicts = summarizeUnionConflicts(
+    state.mcpGroups,
+    store.mcpFingerprints,
+    selectedPrimaryAgent,
+  );
+  const skillConflicts = summarizeUnionConflicts(
+    state.skillGroups,
+    store.skillFingerprints,
+    selectedPrimaryAgent,
+  );
   const rulesConflict = ruleFingerprints.size > 1;
+  const recommendedPrimarySource =
+    store.sourceSummary.total > 0 ? "plexus" : recommendedPrimaryAgent;
+  const selectedPrimarySource = store.sourceSummary.total > 0 ? "plexus" : selectedPrimaryAgent;
 
   return {
     targetAgents,
-    sources: state.sourceSummaries,
+    sources: [store.sourceSummary, ...state.sourceSummaries],
+    recommendedPrimarySource,
     recommendedPrimaryAgent,
+    selectedPrimarySource,
     selectedPrimaryAgent,
     conflictCount: mcpConflicts.length + skillConflicts.length + (rulesConflict ? 1 : 0),
     mcp: {
-      safe: countSafeGroups(state.mcpGroups),
+      safe: countSafeUnionGroups(state.mcpGroups, store.mcpFingerprints),
       conflicts: mcpConflicts,
     },
     skills: {
-      safe: countSafeGroups(state.skillGroups),
+      safe: countSafeUnionGroups(state.skillGroups, store.skillFingerprints),
       conflicts: skillConflicts,
     },
     rules: {
-      sources: sortedAgents(state.rulesSources.map((source) => source.agent)),
+      sources: sortedSources([
+        ...(store.rulesSource ? (["plexus"] as const) : []),
+        ...state.rulesSources.map((source) => source.agent),
+      ]),
       conflict: rulesConflict,
-      preferredAgent: rulesSource?.agent,
+      preferredSource: store.rulesSource ? "plexus" : rulesSource?.agent,
+      preferredAgent: store.rulesSource ? undefined : rulesSource?.agent,
     },
   };
 }
@@ -452,15 +617,19 @@ function buildSharePlan(
 async function planShareAll(options?: ShareAllOptions): Promise<{
   targetAgents: AgentId[];
   state: NativeShareState;
+  store: StoreShareState;
   plan: SharePlan;
   primaryAgent?: AgentId;
 }> {
   const targetAgents = await getSyncTargets(options?.only);
-  const state = await collectNativeShareState(targetAgents);
-  const initial = buildSharePlan(targetAgents, state, options?.preferredAgent);
+  const [state, store] = await Promise.all([
+    collectNativeShareState(targetAgents),
+    collectStoreShareState(),
+  ]);
+  const initial = buildSharePlan(targetAgents, state, store, options?.preferredAgent);
   const primaryAgent = options?.preferredAgent ?? initial.recommendedPrimaryAgent;
-  const plan = buildSharePlan(targetAgents, state, primaryAgent);
-  return { targetAgents, state, plan, primaryAgent };
+  const plan = buildSharePlan(targetAgents, state, store, primaryAgent);
+  return { targetAgents, state, store, plan, primaryAgent };
 }
 
 export async function previewShareAll(options?: ShareAllOptions): Promise<SharePlan> {

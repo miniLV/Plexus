@@ -13,24 +13,42 @@ import { useEffect, useState } from "react";
 interface SharePlan {
   targetAgents: string[];
   sources: Array<{
-    agent: string;
+    source?: string;
+    agent?: string;
     mcp: number;
     skills: number;
     rules: boolean;
     total: number;
   }>;
+  recommendedPrimarySource?: string;
   recommendedPrimaryAgent?: string;
+  selectedPrimarySource?: string;
   selectedPrimaryAgent?: string;
   conflictCount: number;
   mcp: {
     safe: number;
-    conflicts: Array<{ id: string; sources: string[]; preferredAgent?: string }>;
+    conflicts: Array<{
+      id: string;
+      sources: string[];
+      preferredSource?: string;
+      preferredAgent?: string;
+    }>;
   };
   skills: {
     safe: number;
-    conflicts: Array<{ id: string; sources: string[]; preferredAgent?: string }>;
+    conflicts: Array<{
+      id: string;
+      sources: string[];
+      preferredSource?: string;
+      preferredAgent?: string;
+    }>;
   };
-  rules: { sources: string[]; conflict: boolean; preferredAgent?: string };
+  rules: {
+    sources: string[];
+    conflict: boolean;
+    preferredSource?: string;
+    preferredAgent?: string;
+  };
   error?: string;
 }
 
@@ -66,8 +84,8 @@ const COPY = {
     analyzing: "Analyzing local agents...",
     smartMerge: (safe: number, conflicts: number) =>
       `Smart merge: ${safe} safe · ${conflicts} conflicts`,
-    primary: "Primary",
-    source: "Source:",
+    primary: "Conflict preference",
+    source: "Union:",
     noSource: "No local source config yet",
     sharing: "Sharing...",
     share: "Share config everywhere",
@@ -78,18 +96,18 @@ const COPY = {
     imported: "Imported",
     enabled: "Enabled",
     skills: "skills",
-    resolved: (count: number, agent: string) => `Resolved ${count} conflicts with ${agent}.`,
+    resolved: (_count: number, agent: string) => `Used ${agent} for native conflicts.`,
     rulesApplied: (count: number) => `Rules applied to ${count} targets.`,
     error: "error",
     done: "Done",
   },
   zh: {
-    chooseSource: "选择来源",
+    chooseSource: "选择冲突版本",
     analyzing: "正在分析本地 Agent...",
     smartMerge: (safe: number, conflicts: number) =>
       `智能合并：${safe} 个安全 · ${conflicts} 个冲突`,
-    primary: "主来源",
-    source: "来源：",
+    primary: "冲突优先版本",
+    source: "并集：",
     noSource: "还没有本地来源配置",
     sharing: "正在同步...",
     share: "同步到所有配置",
@@ -100,12 +118,27 @@ const COPY = {
     imported: "已导入",
     enabled: "已启用",
     skills: "技能",
-    resolved: (count: number, agent: string) => `已使用 ${agent} 解决 ${count} 个冲突。`,
+    resolved: (_count: number, agent: string) => `已使用 ${agent} 处理 native 冲突。`,
     rulesApplied: (count: number) => `规则已应用到 ${count} 个目标。`,
     error: "错误",
     done: "完成",
   },
 };
+
+function sourceId(source: { source?: string; agent?: string }): string {
+  return source.source ?? source.agent ?? "";
+}
+
+function sourceLabel(id: string): string {
+  return id === "plexus" ? "Plexus" : agentDisplayName(id);
+}
+
+function SourceName({ id }: { id: string }) {
+  if (id === "plexus") {
+    return <span className="font-medium text-plexus-text">Plexus</span>;
+  }
+  return <AgentName agentId={id} iconSize="xs" labelClassName="font-medium text-plexus-text" />;
+}
 
 export function SyncButton() {
   const { locale } = useLanguage();
@@ -129,7 +162,7 @@ export function SyncButton() {
       const selected =
         data.selectedPrimaryAgent ??
         data.recommendedPrimaryAgent ??
-        data.sources?.find((source) => source.total > 0)?.agent ??
+        data.sources?.find((source) => sourceId(source) !== "plexus" && source.total > 0)?.agent ??
         "";
       setPreferredAgent(selected);
     } catch {
@@ -169,9 +202,13 @@ export function SyncButton() {
   }
 
   const activeSources = plan?.sources.filter((source) => source.total > 0) ?? [];
-  const showPrimaryPicker = activeSources.length > 1 || (plan?.conflictCount ?? 0) > 0;
+  const nativeSources = activeSources.filter((source) => sourceId(source) !== "plexus");
+  const showPrimaryPicker = nativeSources.length > 1 && (plan?.conflictCount ?? 0) > 0;
   const safeCount = (plan?.mcp.safe ?? 0) + (plan?.skills.safe ?? 0);
-  const preferredLabel = preferredAgent ? agentDisplayName(preferredAgent) : copy.chooseSource;
+  const preferredLabel = preferredAgent ? sourceLabel(preferredAgent) : copy.chooseSource;
+  const activeSourceLabel = activeSources
+    .map((source) => sourceLabel(sourceId(source)))
+    .join(" + ");
 
   return (
     <div className="flex flex-col items-end gap-2">
@@ -195,12 +232,7 @@ export function SyncButton() {
                   >
                     <span className="text-plexus-text-3">{copy.primary}</span>
                     {preferredAgent ? (
-                      <AgentName
-                        agentId={preferredAgent}
-                        label={preferredLabel}
-                        iconSize="xs"
-                        labelClassName="font-medium text-plexus-text"
-                      />
+                      <SourceName id={preferredAgent} />
                     ) : (
                       <span className="font-medium text-plexus-text">{preferredLabel}</span>
                     )}
@@ -213,25 +245,22 @@ export function SyncButton() {
                     sideOffset={6}
                     className="z-50 w-64 overflow-hidden rounded-md border border-plexus-border bg-plexus-surface p-1 shadow-lg outline-none animate-in fade-in-0 zoom-in-95"
                   >
-                    {activeSources.map((source) => {
-                      const selected = source.agent === preferredAgent;
+                    {nativeSources.map((source) => {
+                      const id = sourceId(source);
+                      const selected = id === preferredAgent;
                       return (
                         <button
                           type="button"
-                          key={source.agent}
+                          key={id}
                           className="flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 text-left text-sm text-plexus-text transition-colors hover:bg-plexus-surface-2 focus:bg-plexus-surface-2 focus:outline-none"
                           onClick={() => {
-                            setPreferredAgent(source.agent);
+                            setPreferredAgent(id);
                             setPickerOpen(false);
-                            void refreshPlan(source.agent);
+                            void refreshPlan(id);
                           }}
                         >
                           <span>
-                            <AgentName
-                              agentId={source.agent}
-                              iconSize="xs"
-                              labelClassName="font-medium"
-                            />
+                            <SourceName id={id} />
                             <span className="mt-0.5 block font-mono text-[11px] text-plexus-text-3">
                               {source.mcp} MCP · {source.skills} skills
                               {source.rules ? " · rules" : ""}
@@ -250,7 +279,7 @@ export function SyncButton() {
           ) : plan && activeSources[0] ? (
             <span className="inline-flex h-8 items-center gap-2 rounded border border-plexus-border bg-plexus-surface px-2.5">
               <span>{copy.source}</span>
-              <AgentName agentId={activeSources[0].agent} iconSize="xs" />
+              <span className="font-medium text-plexus-text">{activeSourceLabel}</span>
             </span>
           ) : (
             <span className="inline-flex h-8 items-center rounded border border-plexus-border bg-plexus-surface px-2.5">
