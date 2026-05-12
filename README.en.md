@@ -80,7 +80,7 @@ Plexus gives those tools one local source of truth.
 
 Use Plexus if you run Claude Code plus Cursor, Codex, Gemini CLI, or Qwen Code and are tired of hand-editing the same config in five places.
 
-Plexus imports what you already have, lets you choose a Primary Agent when configs conflict, stores a local baseline under `~/.config/plexus/`, then projects Rules, MCP servers, and Skills back into each agent's native location. Native files are snapshotted before writes, so you can undo from the Backups page.
+Plexus treats `~/.config/plexus/` as the local canonical store, scans each agent's native config, and merges the Plexus store plus native-only entries as a union. You only choose a version when the same ID has different content; normal sync no longer asks you to choose a source. Native files are snapshotted before writes, so you can undo from the Backups page.
 
 ## What It Does
 
@@ -153,8 +153,8 @@ Open [http://localhost:7777](http://localhost:7777).
 
 On first run, click **Share config everywhere** in the dashboard:
 
-1. Plexus detects installed agents and imports existing Rules, MCP servers, and Skills.
-2. It shows a smart-merge preview; same-ID conflicts use the selected Primary Agent.
+1. Plexus detects installed agents and merges the Plexus store, native Rules, MCP servers, and Skills as a union.
+2. It shows a smart-merge preview; only same-ID content conflicts need a version choice.
 3. It applies config to enabled agents and snapshots native files before writing.
 
 For a linked local CLI:
@@ -267,8 +267,8 @@ plexus start -p 7777
 plexus detect       list detected agents
 plexus join <url>   clone a team config repo into ~/.config/plexus/team
 plexus pull         pull the configured team repo
-plexus sync         import, share, and apply config to all enabled agents
-plexus sync --prefer codex
+plexus sync         union Plexus + native config and apply to enabled agents
+plexus sync --prefer codex   use Codex only to resolve native-native conflicts
 plexus status       show team subscription and sync status
 plexus help
 ```
