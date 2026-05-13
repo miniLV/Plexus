@@ -26,9 +26,13 @@ export type ItemAuthority = "personal" | "team" | "native";
 
 export interface EffectiveMcpRow {
   id: string;
+  type?: string;
   command: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
   /** Where the canonical record lives. */
   authority: ItemAuthority;
   /** Agents that currently have this item (native or via store). */
@@ -84,9 +88,13 @@ export async function getEffectiveMcp(): Promise<EffectiveMcpRow[]> {
     const base = storeRow ?? native!.first;
     rows.push({
       id,
+      type: base.type,
       command: base.command,
       args: base.args,
       env: base.env,
+      url: base.url,
+      httpUrl: base.httpUrl,
+      headers: base.headers,
       authority,
       effectiveAgents,
       nativeAgents,

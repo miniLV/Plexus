@@ -8,9 +8,13 @@ import { useState } from "react";
 
 type Row = {
   id: string;
+  type?: string;
   command: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
   authority: "personal" | "team" | "native";
   effectiveAgents: string[];
   nativeAgents: string[];
@@ -30,6 +34,11 @@ function authorityVariant(a: Row["authority"]): "personal" | "team" | "native" {
   if (a === "team") return "team";
   if (a === "personal") return "personal";
   return "native";
+}
+
+function mcpCommand(row: Row): string {
+  const command = `${row.command} ${(row.args ?? []).join(" ")}`.trim();
+  return command || row.url || row.httpUrl || "remote URL server";
 }
 
 export function McpEditor({
@@ -98,9 +107,13 @@ export function McpEditor({
               .filter((r) => r.authority === "personal")
               .map((r) => ({
                 id: r.id,
+                type: r.type,
                 command: r.command,
                 args: r.args,
                 env: r.env,
+                url: r.url,
+                httpUrl: r.httpUrl,
+                headers: r.headers,
                 layer: "personal",
                 enabledAgents: r.enabledAgents ?? [],
               })),
@@ -261,9 +274,7 @@ export function McpEditor({
                     {r.authority}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-plexus-text-3">
-                  {r.command} {(r.args ?? []).join(" ")}
-                </td>
+                <td className="px-4 py-3 font-mono text-xs text-plexus-text-3">{mcpCommand(r)}</td>
                 {agents.map((a) => {
                   const has = r.effectiveAgents.includes(a);
                   const isBusy = busy === `${r.id}:${a}`;
@@ -350,7 +361,7 @@ export function McpEditor({
                   className="block truncate font-mono text-xs text-plexus-text-3"
                   title={`${deleteTarget.command} ${(deleteTarget.args ?? []).join(" ")}`.trim()}
                 >
-                  {deleteTarget.command} {(deleteTarget.args ?? []).join(" ")}
+                  {mcpCommand(deleteTarget)}
                 </code>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowRight,
   ChevronRight,
+  Eye,
   FileText,
   Loader2,
   Pencil,
@@ -39,8 +40,13 @@ type SkillEntry = {
 
 type McpRow = {
   id: string;
+  type?: string;
   command: string;
   args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
   authority: "personal" | "team" | "native";
   effectiveAgents: string[];
   nativeAgents: string[];
@@ -92,7 +98,141 @@ function isMarkdownPath(p: string): boolean {
 
 function mcpCommand(row: McpRow): string {
   const value = `${row.command} ${(row.args ?? []).join(" ")}`.trim();
-  return value || "remote URL server";
+  return value || row.url || row.httpUrl || "remote URL server";
+}
+
+function compactRecord(
+  value: Record<string, string> | undefined,
+): Record<string, string> | undefined {
+  if (!value || Object.keys(value).length === 0) return undefined;
+  return value;
+}
+
+function mcpConfigForDisplay(row: McpRow): Record<string, unknown> {
+  return {
+    id: row.id,
+    ...(row.type ? { type: row.type } : {}),
+    ...(row.command.trim() ? { command: row.command } : {}),
+    ...(row.args && row.args.length > 0 ? { args: row.args } : {}),
+    ...(compactRecord(row.env) ? { env: row.env } : {}),
+    ...(row.url ? { url: row.url } : {}),
+    ...(row.httpUrl ? { httpUrl: row.httpUrl } : {}),
+    ...(compactRecord(row.headers) ? { headers: row.headers } : {}),
+    enabledAgents: row.enabledAgents ?? row.effectiveAgents,
+  };
+}
+
+function stringifyMcp(row: McpRow): string {
+  return JSON.stringify(mcpConfigForDisplay(row), null, 2);
+}
+
+type ParsedMcpConfig =
+  | {
+      ok: true;
+      server: {
+        id: string;
+        type?: string;
+        command: string;
+        args?: string[];
+        env?: Record<string, string>;
+        url?: string;
+        httpUrl?: string;
+        headers?: Record<string, string>;
+        enabledAgents: string[];
+      };
+    }
+  | { ok: false; message: string };
+
+function optionalJsonString(value: unknown, label: string): string | undefined | Error {
+  if (value == null || value === "") return undefined;
+  if (typeof value !== "string") return new Error(`${label} must be a string`);
+  return value.trim() ? value : undefined;
+}
+
+function jsonStringRecord(
+  value: unknown,
+  label: string,
+): Record<string, string> | undefined | Error {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return new Error(`${label} must be an object with string values`);
+  }
+  const entries = Object.entries(value);
+  const invalid = entries.find(([, child]) => typeof child !== "string");
+  if (invalid) return new Error(`${label}.${invalid[0]} must be a string`);
+  return entries.length > 0 ? (Object.fromEntries(entries) as Record<string, string>) : undefined;
+}
+
+function jsonStringArray(value: unknown, label: string): string[] | undefined | Error {
+  if (value == null) return undefined;
+  if (!Array.isArray(value)) return new Error(`${label} must be an array`);
+  const invalid = value.find((child) => typeof child !== "string");
+  if (invalid != null) return new Error(`${label} must contain only strings`);
+  const next = value.map(String).filter(Boolean);
+  return next.length > 0 ? next : undefined;
+}
+
+function parseMcpConfigText(row: McpRow, text: string): ParsedMcpConfig {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err) {
+    return { ok: false, message: `Invalid JSON: ${(err as Error).message}` };
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, message: "MCP config must be a JSON object." };
+  }
+  const record = parsed as Record<string, unknown>;
+  if (record.id != null && record.id !== row.id) {
+    return { ok: false, message: "MCP id cannot be changed here." };
+  }
+
+  const type = optionalJsonString(record.type, "type");
+  const args = jsonStringArray(record.args, "args");
+  const env = jsonStringRecord(record.env, "env");
+  const url = optionalJsonString(record.url, "url");
+  const httpUrl = optionalJsonString(record.httpUrl, "httpUrl");
+  const headers = jsonStringRecord(record.headers, "headers");
+  if (type instanceof Error) return { ok: false, message: type.message };
+  if (args instanceof Error) return { ok: false, message: args.message };
+  if (env instanceof Error) return { ok: false, message: env.message };
+  if (url instanceof Error) return { ok: false, message: url.message };
+  if (httpUrl instanceof Error) return { ok: false, message: httpUrl.message };
+  if (headers instanceof Error) return { ok: false, message: headers.message };
+  if (record.command != null && typeof record.command !== "string") {
+    return { ok: false, message: "command must be a string" };
+  }
+  if (record.enabledAgents != null && !Array.isArray(record.enabledAgents)) {
+    return { ok: false, message: "enabledAgents must be an array" };
+  }
+  if (
+    Array.isArray(record.enabledAgents) &&
+    record.enabledAgents.some((agent) => typeof agent !== "string")
+  ) {
+    return { ok: false, message: "enabledAgents must contain only strings" };
+  }
+
+  const command = typeof record.command === "string" ? record.command : "";
+  if (!command.trim() && !url?.trim() && !httpUrl?.trim()) {
+    return { ok: false, message: "MCP needs either command, url, or httpUrl." };
+  }
+
+  return {
+    ok: true,
+    server: {
+      id: row.id,
+      type,
+      command,
+      args,
+      env,
+      url,
+      httpUrl,
+      headers,
+      enabledAgents: Array.isArray(record.enabledAgents)
+        ? record.enabledAgents
+        : (row.enabledAgents ?? row.effectiveAgents),
+    },
+  };
 }
 
 export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows: McpRow[] }) {
@@ -100,6 +240,12 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
   const localSkills = data.skills.length - plexusOwnedSkills;
   const [mcpItems, setMcpItems] = useState(mcpRows);
   const [deleteTarget, setDeleteTarget] = useState<McpRow | null>(null);
+  const [configTarget, setConfigTarget] = useState<{
+    row: McpRow;
+    mode: "view" | "edit";
+  } | null>(null);
+  const [configText, setConfigText] = useState("");
+  const [configMsg, setConfigMsg] = useState<string | null>(null);
   const [busyMcp, setBusyMcp] = useState<string | null>(null);
   const [mcpMsg, setMcpMsg] = useState<string | null>(null);
   const personalMcp = mcpItems.filter((row) => row.authority === "personal").length;
@@ -126,6 +272,40 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
         return;
       }
       setDeleteTarget(null);
+      await reloadMcp();
+    } finally {
+      setBusyMcp(null);
+    }
+  }
+
+  function openMcpConfig(row: McpRow, mode: "view" | "edit") {
+    setConfigTarget({ row, mode });
+    setConfigText(stringifyMcp(row));
+    setConfigMsg(null);
+  }
+
+  async function saveMcpConfig() {
+    if (!configTarget || configTarget.mode !== "edit") return;
+    const parsed = parseMcpConfigText(configTarget.row, configText);
+    if (!parsed.ok) {
+      setConfigMsg(parsed.message);
+      return;
+    }
+
+    setBusyMcp(configTarget.row.id);
+    setConfigMsg(null);
+    try {
+      const res = await fetch(`/api/mcp/${encodeURIComponent(configTarget.row.id)}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ server: parsed.server }),
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.ok) {
+        setConfigMsg(`Error: ${result.message ?? "failed to save MCP"}`);
+        return;
+      }
+      setConfigTarget(null);
       await reloadMcp();
     } finally {
       setBusyMcp(null);
@@ -275,9 +455,32 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
                     {row.authority}
                   </Badge>
                 </div>
-                <div className="text-right">
+                <div className="flex justify-end gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => openMcpConfig(row, "view")}
+                    title="View MCP config"
+                    aria-label={`View MCP ${row.id}`}
+                  >
+                    <Eye className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </Button>
+                  {row.authority !== "team" && (
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => openMcpConfig(row, "edit")}
+                      disabled={busyMcp === row.id}
+                      title="Edit MCP config"
+                      aria-label={`Edit MCP ${row.id}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    </Button>
+                  )}
                   {row.authority === "team" ? (
-                    <span className="text-xs text-plexus-text-3">read-only</span>
+                    <span className="self-center text-xs text-plexus-text-3">read-only</span>
                   ) : (
                     <Button
                       variant="danger"
@@ -391,6 +594,93 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
           </Card>
         </details>
       </section>
+
+      {configTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Close MCP config"
+            className="absolute inset-0 cursor-default bg-black/65"
+            onClick={() => {
+              if (!busyMcp) setConfigTarget(null);
+            }}
+            disabled={Boolean(busyMcp)}
+          />
+          <dialog
+            open
+            aria-labelledby="agent-mcp-config-title"
+            className="relative z-10 flex max-h-[82vh] w-full max-w-2xl cursor-default flex-col overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+          >
+            <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
+              <div className="mt-0.5 rounded-md bg-plexus-accent-faint p-2 text-plexus-accent">
+                {configTarget.mode === "edit" ? (
+                  <Pencil className="h-4 w-4" strokeWidth={1.5} />
+                ) : (
+                  <Eye className="h-4 w-4" strokeWidth={1.5} />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div id="agent-mcp-config-title" className="text-sm font-semibold text-plexus-text">
+                  {configTarget.mode === "edit" ? "Edit MCP config" : "View MCP config"}
+                </div>
+                <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                  {configTarget.row.id}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setConfigTarget(null)}
+                disabled={Boolean(busyMcp)}
+                className="rounded-sm p-1 text-plexus-text-3 hover:bg-plexus-surface-2 hover:text-plexus-text disabled:pointer-events-none disabled:opacity-50"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-3 overflow-auto px-5 py-4">
+              <textarea
+                className="min-h-[320px] w-full resize-y rounded border border-plexus-border bg-plexus-bg px-3 py-2 font-mono text-xs leading-relaxed text-plexus-text outline-none placeholder:text-plexus-text-mute focus:border-plexus-accent disabled:opacity-85"
+                value={configText}
+                onChange={(event) => setConfigText(event.target.value)}
+                readOnly={configTarget.mode === "view"}
+                spellCheck={false}
+              />
+              {configTarget.mode === "edit" && (
+                <div className="rounded-md border border-plexus-border bg-plexus-surface-2/60 px-3 py-2 text-xs leading-relaxed text-plexus-text-3">
+                  Edit the JSON directly. Save requires valid JSON and one MCP transport field:
+                  command, url, or httpUrl. Unknown fields are ignored by this editor.
+                </div>
+              )}
+              {configMsg && <div className="text-xs text-plexus-err">{configMsg}</div>}
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border bg-plexus-surface-2/40 px-5 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfigTarget(null)}
+                disabled={Boolean(busyMcp)}
+              >
+                {configTarget.mode === "edit" ? "Cancel" : "Close"}
+              </Button>
+              {configTarget.mode === "edit" && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={saveMcpConfig}
+                  disabled={Boolean(busyMcp)}
+                >
+                  {busyMcp ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                  ) : (
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  )}
+                  {busyMcp ? "Saving" : "Save and sync"}
+                </Button>
+              )}
+            </div>
+          </dialog>
+        </div>
+      )}
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
