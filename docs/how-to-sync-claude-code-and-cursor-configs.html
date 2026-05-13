@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to sync Claude Code and Cursor config without overwriting native files</title>
+    <meta
+      name="description"
+      content="A practical guide to keeping Claude Code and Cursor rules, MCP servers, and skills aligned without replacing native files that the tools manage themselves."
+    />
+    <link
+      rel="canonical"
+      href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-cursor-configs.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:title"
+      content="How to sync Claude Code and Cursor config without overwriting native files"
+    />
+    <meta
+      property="og:description"
+      content="Keep Claude Code and Cursor rules, MCP servers, and skills aligned while preserving auth, history, and other native state."
+    />
+    <meta
+      property="og:url"
+      content="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-cursor-configs.html"
+    />
+    <meta
+      property="og:image"
+      content="https://minilv.github.io/Plexus/assets/readme/dashboard-en.png"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f1115;
+        --surface: #171a21;
+        --surface-2: #20252e;
+        --text: #f3f1eb;
+        --muted: #b9b6ad;
+        --line: #333946;
+        --green: #76b782;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      a {
+        color: #c8facc;
+      }
+
+      .wrap {
+        width: min(100vw - 40px, 860px);
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 72px 0 40px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 17, 21, 0.98), rgba(15, 17, 21, 0.92));
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--green);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(36px, 6vw, 54px);
+      }
+
+      h2 {
+        margin: 40px 0 14px;
+        font-size: 28px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      main {
+        padding: 40px 0 72px;
+      }
+
+      .lede {
+        font-size: 20px;
+      }
+
+      .panel {
+        margin: 28px 0;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .panel strong {
+        color: var(--text);
+      }
+
+      code,
+      pre {
+        font-family:
+          ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+      }
+
+      pre {
+        overflow-x: auto;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: #dce8de;
+      }
+
+      img {
+        width: 100%;
+        height: auto;
+        margin: 20px 0 10px;
+        border: 1px solid #d4cec1;
+        border-radius: 8px;
+        background: #111318;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .button.primary {
+        background: var(--green);
+        border-color: var(--green);
+        color: #101310;
+      }
+
+      footer {
+        padding: 28px 0 48px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      @media (max-width: 640px) {
+        p,
+        li {
+          font-size: 17px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        .button {
+          width: 100%;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "How to sync Claude Code and Cursor config without overwriting native files",
+        "description": "A practical guide to keeping Claude Code and Cursor rules, MCP servers, and skills aligned without replacing native files that the tools manage themselves.",
+        "author": {
+          "@type": "Person",
+          "name": "miniLV"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Plexus Agent Config"
+        },
+        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-sync-claude-code-and-cursor-configs.html"
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <p class="eyebrow">Plexus Guide</p>
+        <h1>How to sync Claude Code and Cursor config without overwriting native files</h1>
+        <p class="lede">
+          Claude Code and Cursor are a common pairing, but they expect different files, different
+          MCP layouts, and different instruction paths. The sync problem shows up right after the
+          first useful setup.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <p>
+          Claude Code reads <code>CLAUDE.md</code> and <code>~/.claude.json</code>. Cursor uses
+          <code>AGENTS.md</code>, <code>~/.cursor/mcp.json</code>, and its own commands or skills
+          directory. Once both tools have real config, drift starts fast: rules diverge, MCP lists
+          split apart, and the safest-looking shortcut is often the one most likely to overwrite
+          native state.
+        </p>
+
+        <h2>Why this pairing drifts so easily</h2>
+        <ul>
+          <li>Claude Code and Cursor do not store instructions in the same file name.</li>
+          <li>Their MCP files are shaped differently and are not equally safe to replace.</li>
+          <li>Useful commands and skills live in separate directories.</li>
+          <li>
+            Claude Code's native config can include state you do not want to clobber just to sync
+            one MCP server.
+          </li>
+        </ul>
+
+        <div class="panel">
+          <strong>The hard part is not exporting config once.</strong>
+          <p>
+            The hard part is keeping Claude Code and Cursor aligned after day two, when both tools
+            already have native state that should survive the sync.
+          </p>
+        </div>
+
+        <h2>A safer model for Claude Code and Cursor</h2>
+        <p>
+          In practice, the safer model is one local source of truth plus per-tool writes that
+          respect each tool's native format:
+        </p>
+        <ul>
+          <li>one baseline for shared rules</li>
+          <li>one canonical MCP server list</li>
+          <li>one shared store for reusable skills or commands</li>
+          <li>backups before every native write</li>
+          <li>partial writes where the native file also holds tool-owned state</li>
+        </ul>
+
+        <p>
+          That is the model Plexus uses. It imports the config already on your machine, stores the
+          canonical copy under <code>~/.config/plexus/</code>, then projects rules, MCP servers,
+          and skills back into Claude Code and Cursor in their own expected shapes.
+        </p>
+
+        <img
+          src="assets/readme/dashboard-en.png"
+          alt="Plexus dashboard showing multiple detected AI coding agents"
+        />
+
+        <h2>What Plexus preserves</h2>
+        <ul>
+          <li>It does not run MCP servers.</li>
+          <li>It snapshots native files before writes.</li>
+          <li>It partial-writes shared files instead of replacing them wholesale.</li>
+          <li>It keeps the canonical store local and telemetry-free.</li>
+        </ul>
+
+        <h2>Why this matters specifically for Cursor</h2>
+        <p>
+          Cursor is often the editor you touch most frequently, so small config mismatches become
+          visible quickly. A good sync model needs to keep Cursor convenient without turning Claude
+          Code into a second copy you have to remember to patch later.
+        </p>
+
+        <h2>Quick start</h2>
+        <pre><code>npx -y plexus-agent-config@latest start</code></pre>
+        <p>
+          Open the local dashboard, import the agents already on your machine, preview the merge,
+          and sync the resulting rules, MCP servers, and skills back into Claude Code and Cursor.
+        </p>
+
+        <h2>When this is a better fit than dotfiles</h2>
+        <p>
+          Dotfiles work well when every target file is fully yours. Plexus is aimed at the more
+          awkward case: different tools, different native formats, and at least one shared file
+          that should not be replaced just to keep configs aligned.
+        </p>
+
+        <h2>Related guides</h2>
+        <ul>
+          <li>
+            <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-cursor-codex-configs.html"
+              >How to sync Claude Code, Cursor, and Codex config without drift</a
+            >
+          </li>
+          <li>
+            <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html"
+              >How to sync Claude Code and Codex skills and MCP without replacing native files</a
+            >
+          </li>
+          <li>
+            <a href="https://minilv.github.io/Plexus/how-to-share-mcp-servers-across-claude-code-cursor-codex.html"
+              >How to share MCP servers across Claude Code, Cursor, and Codex safely</a
+            >
+          </li>
+          <li>
+            <a href="https://minilv.github.io/Plexus/guides.html">Browse the full Plexus guide collection</a>
+          </li>
+        </ul>
+
+        <div class="actions">
+          <a class="button primary" href="https://github.com/miniLV/Plexus">View Plexus on GitHub</a>
+          <a class="button" href="https://minilv.github.io/Plexus/guides.html">Browse all guides</a>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Plexus Agent Config: local config sync for Claude Code, Cursor, Codex, Gemini CLI, and
+        other AI coding tools.
+      </div>
+    </footer>
+  </body>
+</html>

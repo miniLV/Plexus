@@ -25,6 +25,7 @@
 <p align="center">
   场景指南：
   <a href="https://minilv.github.io/Plexus/guides.html">Guides</a> ·
+  <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-cursor-configs.html">Claude Code / Cursor Config</a> ·
   <a href="https://minilv.github.io/Plexus/how-to-sync-claude-code-and-codex-skills-mcp.html">Claude Code / Codex Skills + MCP</a> ·
   <a href="https://minilv.github.io/Plexus/how-to-keep-claude-md-and-agents-md-in-sync.html">CLAUDE.md / AGENTS.md</a>
 </p>
