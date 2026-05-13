@@ -129,12 +129,12 @@ export function McpEditor({
   }
 
   async function removeRow(row: Row) {
-    if (row.authority !== "personal") return;
+    if (row.authority === "team") return;
     setDeleteTarget(row);
   }
 
   async function confirmRemoveRow() {
-    if (!deleteTarget || deleteTarget.authority !== "personal") return;
+    if (!deleteTarget || deleteTarget.authority === "team") return;
     const id = deleteTarget.id;
     setBusy(id);
     try {
@@ -282,7 +282,7 @@ export function McpEditor({
                   );
                 })}
                 <td className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)] group-hover:bg-plexus-surface-2">
-                  {r.authority === "personal" && (
+                  {r.authority !== "team" && (
                     <Button
                       variant="danger"
                       size="icon"
@@ -379,8 +379,9 @@ export function McpEditor({
       <Card className="space-y-2 px-4 py-3 text-xs leading-relaxed text-plexus-text-3">
         <div>
           <Badge variant="native">native</Badge> items are still only in the agent's own config.
-          Toggling promotes them into your personal Plexus store. <Badge variant="team">team</Badge>{" "}
-          items live in the team repo and are read-only here.
+          Toggling promotes them into your personal Plexus store; deleting removes them from the
+          native agent configs too. <Badge variant="team">team</Badge> items live in the team repo
+          and are read-only here.
         </div>
         <details>
           <summary className="cursor-pointer text-plexus-text-2 hover:text-plexus-text">

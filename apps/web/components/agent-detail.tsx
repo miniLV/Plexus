@@ -10,8 +10,10 @@ import {
   FileText,
   Loader2,
   Pencil,
+  Plug,
   ShieldAlert,
   Sparkles,
+  Trash2,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +35,16 @@ type SkillEntry = {
   linkTarget?: string;
   managedByPlexus?: boolean;
   hasSkillMd: boolean;
+};
+
+type McpRow = {
+  id: string;
+  command: string;
+  args?: string[];
+  authority: "personal" | "team" | "native";
+  effectiveAgents: string[];
+  nativeAgents: string[];
+  enabledAgents?: string[];
 };
 
 type InstructionFile = {
@@ -78,9 +90,47 @@ function isMarkdownPath(p: string): boolean {
   return /\.(md|markdown)$/i.test(p);
 }
 
-export function AgentDetail({ data }: { data: AgentInspection }) {
+function mcpCommand(row: McpRow): string {
+  const value = `${row.command} ${(row.args ?? []).join(" ")}`.trim();
+  return value || "remote URL server";
+}
+
+export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows: McpRow[] }) {
   const plexusOwnedSkills = data.skills.filter((s) => s.managedByPlexus).length;
   const localSkills = data.skills.length - plexusOwnedSkills;
+  const [mcpItems, setMcpItems] = useState(mcpRows);
+  const [deleteTarget, setDeleteTarget] = useState<McpRow | null>(null);
+  const [busyMcp, setBusyMcp] = useState<string | null>(null);
+  const [mcpMsg, setMcpMsg] = useState<string | null>(null);
+  const personalMcp = mcpItems.filter((row) => row.authority === "personal").length;
+  const nativeMcp = mcpItems.filter((row) => row.authority === "native").length;
+
+  async function reloadMcp() {
+    const res = await fetch("/api/mcp/effective");
+    const dataJson = await res.json();
+    const rows = (dataJson.rows ?? []) as McpRow[];
+    setMcpItems(rows.filter((row) => row.effectiveAgents.includes(data.id)));
+  }
+
+  async function confirmRemoveMcp() {
+    if (!deleteTarget || deleteTarget.authority === "team") return;
+    setBusyMcp(deleteTarget.id);
+    setMcpMsg(null);
+    try {
+      const res = await fetch(`/api/mcp/${encodeURIComponent(deleteTarget.id)}`, {
+        method: "DELETE",
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.ok) {
+        setMcpMsg(`Error: ${result.message ?? "failed to remove MCP"}`);
+        return;
+      }
+      setDeleteTarget(null);
+      await reloadMcp();
+    } finally {
+      setBusyMcp(null);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -155,6 +205,110 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
             </div>
           </Card>
         )}
+      </section>
+
+      {/* MCP servers ──────────────────── */}
+      <section className="space-y-3">
+        <details className="group" open>
+          <summary className="flex cursor-pointer list-none items-center justify-between rounded-md border border-plexus-border bg-plexus-surface px-4 py-3 transition-colors hover:bg-plexus-surface-2/60">
+            <div className="flex items-center gap-3">
+              <ChevronRight
+                className="h-4 w-4 text-plexus-text-3 transition-transform group-open:rotate-90"
+                strokeWidth={1.5}
+              />
+              <span className="plexus-eyebrow">MCP Servers</span>
+              <span className="text-sm text-plexus-text-2">{mcpItems.length}</span>
+              {personalMcp > 0 && <Badge variant="synced">{personalMcp} personal</Badge>}
+              {nativeMcp > 0 && <Badge variant="divergent">{nativeMcp} native-only</Badge>}
+            </div>
+            <Link
+              href="/mcp"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 text-xs text-plexus-accent hover:underline"
+            >
+              Manage in MCP page <ArrowRight className="h-3 w-3" strokeWidth={1.5} />
+            </Link>
+          </summary>
+          <Card className="mt-2 overflow-hidden">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border px-4 py-3 text-[11px] uppercase tracking-[0.10em] text-plexus-text-3">
+              <div>Server</div>
+              <div className="text-right">Layer</div>
+              <div className="text-right">Action</div>
+            </div>
+            {mcpItems.length === 0 && (
+              <div className="px-4 py-8 text-center text-sm text-plexus-text-3">
+                No MCP servers enabled for this agent.
+              </div>
+            )}
+            {mcpItems.map((row) => (
+              <div
+                key={row.id}
+                className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 border-b border-plexus-border/60 px-4 py-2.5 text-sm last:border-0 hover:bg-plexus-surface-2/40"
+              >
+                <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Plug
+                      className="h-3.5 w-3.5 flex-shrink-0 text-plexus-text-3"
+                      strokeWidth={1.5}
+                    />
+                    <code className="truncate font-mono text-[13px] text-plexus-text">
+                      {row.id}
+                    </code>
+                  </div>
+                  <code
+                    className="mt-0.5 block truncate font-mono text-[10px] text-plexus-text-3"
+                    title={mcpCommand(row)}
+                  >
+                    {mcpCommand(row)}
+                  </code>
+                </div>
+                <div className="text-right">
+                  <Badge
+                    variant={
+                      row.authority === "team"
+                        ? "team"
+                        : row.authority === "personal"
+                          ? "personal"
+                          : "native"
+                    }
+                  >
+                    {row.authority}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  {row.authority === "team" ? (
+                    <span className="text-xs text-plexus-text-3">read-only</span>
+                  ) : (
+                    <Button
+                      variant="danger"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setDeleteTarget(row)}
+                      disabled={busyMcp === row.id}
+                      title="Delete from Plexus and managed agent configs"
+                      aria-label={`Delete MCP ${row.id}`}
+                    >
+                      {busyMcp === row.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {(mcpMsg || mcpItems.some((row) => row.authority === "team")) && (
+              <div className="border-t border-plexus-border/60 bg-plexus-surface-2/40 px-4 py-3 text-xs text-plexus-text-3">
+                {mcpMsg ? (
+                  <span className="text-plexus-err">{mcpMsg}</span>
+                ) : (
+                  "Team-layer MCP servers are managed from the team config and cannot be deleted here."
+                )}
+              </div>
+            )}
+          </Card>
+        </details>
       </section>
 
       {/* Skills ────────────────────────── */}
@@ -237,6 +391,85 @@ export function AgentDetail({ data }: { data: AgentInspection }) {
           </Card>
         </details>
       </section>
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Cancel MCP removal"
+            className="absolute inset-0 cursor-default bg-black/65"
+            onClick={() => {
+              if (!busyMcp) setDeleteTarget(null);
+            }}
+            disabled={Boolean(busyMcp)}
+          />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="agent-mcp-remove-title"
+            aria-describedby="agent-mcp-remove-description"
+            className="relative z-10 w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+          >
+            <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
+              <div className="mt-0.5 rounded-md bg-plexus-err/10 p-2 text-plexus-err">
+                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div id="agent-mcp-remove-title" className="text-sm font-semibold text-plexus-text">
+                  Remove MCP server?
+                </div>
+                <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                  {deleteTarget.id}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Cancel"
+                onClick={() => setDeleteTarget(null)}
+                disabled={Boolean(busyMcp)}
+                className="rounded-sm p-1 text-plexus-text-3 hover:bg-plexus-surface-2 hover:text-plexus-text disabled:pointer-events-none disabled:opacity-50"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="space-y-3 px-5 py-4 text-sm text-plexus-text-2">
+              <p id="agent-mcp-remove-description">
+                This removes the server from Plexus and all managed agent configs after taking a
+                backup snapshot.
+              </p>
+              <div className="rounded-md border border-plexus-border bg-plexus-surface-2/60 px-3 py-2">
+                <div className="plexus-eyebrow mb-1">command</div>
+                <code className="block truncate font-mono text-xs text-plexus-text-3">
+                  {mcpCommand(deleteTarget)}
+                </code>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border bg-plexus-surface-2/40 px-5 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeleteTarget(null)}
+                disabled={Boolean(busyMcp)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger-solid"
+                size="sm"
+                onClick={confirmRemoveMcp}
+                disabled={Boolean(busyMcp)}
+              >
+                {busyMcp ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                )}
+                {busyMcp ? "Removing" : "Remove MCP"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MCP file (collapsed by default) ─ */}
       <section className="space-y-3">
