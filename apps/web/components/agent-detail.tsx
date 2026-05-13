@@ -53,6 +53,16 @@ type McpRow = {
   enabledAgents?: string[];
 };
 
+type SkillRow = {
+  id: string;
+  name: string;
+  description?: string;
+  authority: "personal" | "team" | "native";
+  effectiveAgents: string[];
+  nativeAgents: string[];
+  enabledAgents?: string[];
+};
+
 type InstructionFile = {
   label: string;
   filename: string;
@@ -235,11 +245,19 @@ function parseMcpConfigText(row: McpRow, text: string): ParsedMcpConfig {
   };
 }
 
-export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows: McpRow[] }) {
-  const plexusOwnedSkills = data.skills.filter((s) => s.managedByPlexus).length;
-  const localSkills = data.skills.length - plexusOwnedSkills;
+export function AgentDetail({
+  data,
+  mcpRows,
+  skillRows,
+}: {
+  data: AgentInspection;
+  mcpRows: McpRow[];
+  skillRows: SkillRow[];
+}) {
   const [mcpItems, setMcpItems] = useState(mcpRows);
+  const [skillItems, setSkillItems] = useState(data.skills);
   const [deleteTarget, setDeleteTarget] = useState<McpRow | null>(null);
+  const [skillDeleteTarget, setSkillDeleteTarget] = useState<SkillEntry | null>(null);
   const [configTarget, setConfigTarget] = useState<{
     row: McpRow;
     mode: "view" | "edit";
@@ -247,7 +265,12 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
   const [configText, setConfigText] = useState("");
   const [configMsg, setConfigMsg] = useState<string | null>(null);
   const [busyMcp, setBusyMcp] = useState<string | null>(null);
+  const [busySkill, setBusySkill] = useState<string | null>(null);
   const [mcpMsg, setMcpMsg] = useState<string | null>(null);
+  const [skillMsg, setSkillMsg] = useState<string | null>(null);
+  const skillRowsById = new Map(skillRows.map((row) => [row.id, row]));
+  const plexusOwnedSkills = skillItems.filter((s) => s.managedByPlexus).length;
+  const localSkills = skillItems.length - plexusOwnedSkills;
   const personalMcp = mcpItems.filter((row) => row.authority === "personal").length;
   const nativeMcp = mcpItems.filter((row) => row.authority === "native").length;
 
@@ -275,6 +298,29 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
       await reloadMcp();
     } finally {
       setBusyMcp(null);
+    }
+  }
+
+  async function confirmRemoveSkill() {
+    if (!skillDeleteTarget) return;
+    const row = skillRowsById.get(skillDeleteTarget.id);
+    if (row?.authority === "team") return;
+
+    setBusySkill(skillDeleteTarget.id);
+    setSkillMsg(null);
+    try {
+      const res = await fetch(`/api/skills/${encodeURIComponent(skillDeleteTarget.id)}`, {
+        method: "DELETE",
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok || !result.ok) {
+        setSkillMsg(`Error: ${result.message ?? result.error ?? "failed to remove skill"}`);
+        return;
+      }
+      setSkillDeleteTarget(null);
+      setSkillItems((items) => items.filter((s) => s.id !== skillDeleteTarget.id));
+    } finally {
+      setBusySkill(null);
     }
   }
 
@@ -524,7 +570,7 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
                 strokeWidth={1.5}
               />
               <span className="plexus-eyebrow">Skills</span>
-              <span className="text-sm text-plexus-text-2">{data.skills.length}</span>
+              <span className="text-sm text-plexus-text-2">{skillItems.length}</span>
               {plexusOwnedSkills > 0 && (
                 <Badge variant="synced">{plexusOwnedSkills} Plexus-owned</Badge>
               )}
@@ -544,51 +590,87 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
               <div className="text-right">Owner</div>
               <div className="text-right">Action</div>
             </div>
-            {data.skills.length === 0 && (
+            {skillItems.length === 0 && (
               <div className="px-4 py-8 text-center text-sm text-plexus-text-3">
                 No skills installed for this agent.
               </div>
             )}
-            {data.skills.slice(0, 50).map((s) => (
-              <div
-                key={s.path}
-                className="grid grid-cols-[1fr_auto_auto] gap-x-4 border-b border-plexus-border/60 px-4 py-2.5 text-sm last:border-0 hover:bg-plexus-surface-2/40"
-              >
-                <div>
-                  <div className="font-mono text-[13px] text-plexus-text">{s.id}</div>
-                  <div className="mt-0.5 text-[10px] text-plexus-text-3">
-                    {truncMid(s.path, 80)}
-                  </div>
-                  {s.isSymlink && s.linkTarget && (
+            {skillItems.slice(0, 50).map((s) => {
+              const skillRow = skillRowsById.get(s.id);
+              const isTeamSkill = skillRow?.authority === "team";
+              const canDeleteSkill = s.hasSkillMd && !isTeamSkill;
+              return (
+                <div
+                  key={s.path}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 border-b border-plexus-border/60 px-4 py-2.5 text-sm last:border-0 hover:bg-plexus-surface-2/40"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate font-mono text-[13px] text-plexus-text">{s.id}</div>
                     <div className="mt-0.5 text-[10px] text-plexus-text-3">
-                      → {truncMid(s.linkTarget, 80)}
+                      {truncMid(s.path, 80)}
                     </div>
-                  )}
+                    {s.isSymlink && s.linkTarget && (
+                      <div className="mt-0.5 text-[10px] text-plexus-text-3">
+                        → {truncMid(s.linkTarget, 80)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    {s.managedByPlexus ? (
+                      <Badge variant="synced">Plexus-owned</Badge>
+                    ) : s.isSymlink ? (
+                      <Badge variant="native">external symlink</Badge>
+                    ) : (
+                      <Badge variant="divergent">agent-local</Badge>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-1.5">
+                    {s.hasSkillMd && (
+                      <FileViewerButton
+                        agentId={data.id}
+                        filePath={`${s.path}/SKILL.md`}
+                        mode="view"
+                        label="View"
+                      />
+                    )}
+                    {isTeamSkill ? (
+                      <span className="self-center text-xs text-plexus-text-3">read-only</span>
+                    ) : (
+                      canDeleteSkill && (
+                        <Button
+                          variant="danger"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => setSkillDeleteTarget(s)}
+                          disabled={busySkill === s.id}
+                          title="Delete skill from Plexus and synced agent folders"
+                          aria-label={`Delete skill ${s.id}`}
+                        >
+                          {busySkill === s.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          )}
+                        </Button>
+                      )
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  {s.managedByPlexus ? (
-                    <Badge variant="synced">Plexus-owned</Badge>
-                  ) : s.isSymlink ? (
-                    <Badge variant="native">external symlink</Badge>
-                  ) : (
-                    <Badge variant="divergent">agent-local</Badge>
-                  )}
-                </div>
-                <div className="text-right">
-                  {s.hasSkillMd && (
-                    <FileViewerButton
-                      agentId={data.id}
-                      filePath={`${s.path}/SKILL.md`}
-                      mode="view"
-                      label="View"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-            {data.skills.length > 50 && (
+              );
+            })}
+            {skillItems.length > 50 && (
               <div className="border-t border-plexus-border/60 px-4 py-2 text-center text-xs text-plexus-text-3">
-                … and {data.skills.length - 50} more (manage on the Skills page)
+                … and {skillItems.length - 50} more (manage on the Skills page)
+              </div>
+            )}
+            {(skillMsg ||
+              skillItems.some((s) => skillRowsById.get(s.id)?.authority === "team")) && (
+              <div className="border-t border-plexus-border/60 bg-plexus-surface-2/40 px-4 py-3 text-xs text-plexus-text-3">
+                {skillMsg ? (
+                  <span className="text-plexus-err">{skillMsg}</span>
+                ) : (
+                  "Team-layer skills are managed from the team config and cannot be deleted here."
+                )}
               </div>
             )}
           </Card>
@@ -755,6 +837,89 @@ export function AgentDetail({ data, mcpRows }: { data: AgentInspection; mcpRows:
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                 )}
                 {busyMcp ? "Removing" : "Remove MCP"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {skillDeleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+          <button
+            type="button"
+            aria-label="Cancel skill removal"
+            className="absolute inset-0 cursor-default bg-black/65"
+            onClick={() => {
+              if (!busySkill) setSkillDeleteTarget(null);
+            }}
+            disabled={Boolean(busySkill)}
+          />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="agent-skill-remove-title"
+            aria-describedby="agent-skill-remove-description"
+            className="relative z-10 w-full max-w-md cursor-default overflow-hidden rounded-md border border-plexus-border bg-plexus-surface text-left shadow-lg"
+          >
+            <div className="flex items-start gap-3 border-b border-plexus-border px-5 py-4">
+              <div className="mt-0.5 rounded-md bg-plexus-err/10 p-2 text-plexus-err">
+                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div
+                  id="agent-skill-remove-title"
+                  className="text-sm font-semibold text-plexus-text"
+                >
+                  Remove skill?
+                </div>
+                <code className="mt-1 block truncate font-mono text-xs text-plexus-text-3">
+                  {skillDeleteTarget.id}
+                </code>
+              </div>
+              <button
+                type="button"
+                aria-label="Cancel"
+                onClick={() => setSkillDeleteTarget(null)}
+                disabled={Boolean(busySkill)}
+                className="rounded-sm p-1 text-plexus-text-3 hover:bg-plexus-surface-2 hover:text-plexus-text disabled:pointer-events-none disabled:opacity-50"
+              >
+                <X className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="space-y-3 px-5 py-4 text-sm text-plexus-text-2">
+              <p id="agent-skill-remove-description">
+                This removes the skill from Plexus and clears same-id skill folders from synced
+                agents. Local folders are quarantined before removal; team-layer skills cannot be
+                removed here.
+              </p>
+              <div className="rounded-md border border-plexus-border bg-plexus-surface-2/60 px-3 py-2">
+                <div className="plexus-eyebrow mb-1">path</div>
+                <code className="block truncate font-mono text-xs text-plexus-text-3">
+                  {skillDeleteTarget.path}
+                </code>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-plexus-border bg-plexus-surface-2/40 px-5 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSkillDeleteTarget(null)}
+                disabled={Boolean(busySkill)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger-solid"
+                size="sm"
+                onClick={confirmRemoveSkill}
+                disabled={Boolean(busySkill)}
+              >
+                {busySkill ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={1.5} />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                )}
+                {busySkill ? "Removing" : "Remove Skill"}
               </Button>
             </div>
           </div>

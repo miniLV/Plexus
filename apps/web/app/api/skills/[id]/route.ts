@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { ALL_AGENTS, deleteSkill, readSkills, writeSkill } from "plexus-agent-config-core";
+import {
+  ALL_AGENTS,
+  readSkills,
+  removeSkillEverywhere,
+  writeSkill,
+} from "plexus-agent-config-core";
 import type { AgentId, ConfigLayer } from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
@@ -58,8 +63,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         { status: 403 },
       );
     }
-    await deleteSkill("personal", id);
-    return NextResponse.json({ ok: true });
+    const result = await removeSkillEverywhere(id);
+    return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

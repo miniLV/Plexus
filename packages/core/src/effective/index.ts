@@ -1,18 +1,21 @@
+import fs from "node:fs/promises";
+import path from "node:path";
 import { adapters } from "../agents/adapters/index.js";
 import { detectAgents } from "../agents/detect.js";
-import { snapshotAgentConfigs } from "../backup/index.js";
+import { quarantineCollision, snapshotAgentConfigs } from "../backup/index.js";
 import { buildImportPreview, firstNativeSkillSourceDir } from "../import/from-agents.js";
 import { readConfig } from "../store/config.js";
 import { readMCP, writeMCP } from "../store/mcp.js";
 import { mergeMCP, mergeSkills } from "../store/merge.js";
-import { ALL_AGENTS } from "../store/paths.js";
+import { AGENT_PATHS, ALL_AGENTS } from "../store/paths.js";
 import {
+  deleteSkill,
   readSkills,
   resolveSkillSourceDir,
   writeSkill,
   writeSkillBundle,
 } from "../store/skills.js";
-import type { AgentId, ConfigLayer, MCPServerDef, SkillDef, SyncResult } from "../types.js";
+import type { AgentId, MCPServerDef, SkillDef, SyncResult } from "../types.js";
 
 /**
  * "Effective view" = the union of items present in any agent's native
@@ -265,6 +268,64 @@ export async function removeMcpEverywhere(
 
   await writeMCP("personal", without);
   return { ok: true, syncResults: results, message: backup?.dir };
+}
+
+export async function removeSkillEverywhere(
+  id: string,
+): Promise<{ ok: boolean; syncResults?: SyncResult[]; message?: string }> {
+  const personal = await readSkills("personal");
+  const team = await readSkills("team");
+  const personalRow = personal.find((s) => s.id === id);
+  const teamRow = team.find((s) => s.id === id);
+
+  if (!personalRow && teamRow) {
+    return { ok: false, message: "Team-layer skills are read-only here" };
+  }
+
+  let row = personalRow;
+  if (!row) {
+    const nativePreview = await buildImportPreview({ storeMcp: [], storeSkills: [] });
+    const cand = nativePreview.skills.find((c) => c.kind === "new" && c.item.id === id);
+    if (!cand || cand.kind !== "new") {
+      return { ok: false, message: `Skill ${id} not found` };
+    }
+    row = cand.item;
+  }
+
+  const tombstone: SkillDef = { ...row, layer: "personal", enabledAgents: [] };
+  await writeSkill(tombstone);
+
+  const backup = await snapshotAgentConfigs({
+    reason: `removeSkillEverywhere ${id}`,
+  }).catch(() => undefined);
+  await quarantineNativeSkillDirs(id);
+
+  const results: SyncResult[] = [];
+  for (const agent of ALL_AGENTS) {
+    const r = await syncSingleAgent(agent);
+    if (r) results.push(r);
+  }
+
+  const errors = results.flatMap((r) => r.errors.map((error) => `${r.agent}: ${error}`));
+  if (errors.length > 0) {
+    return { ok: false, syncResults: results, message: errors.join("; ") };
+  }
+
+  await deleteSkill("personal", id);
+  return { ok: true, syncResults: results, message: backup?.dir };
+}
+
+async function quarantineNativeSkillDirs(id: string): Promise<void> {
+  for (const agent of ALL_AGENTS) {
+    const dir = path.join(AGENT_PATHS[agent].skillsDir, id);
+    try {
+      const lst = await fs.lstat(dir);
+      if (lst.isSymbolicLink()) continue;
+    } catch {
+      continue;
+    }
+    await quarantineCollision({ agent, sourcePath: dir }).catch(() => null);
+  }
 }
 
 /** Same idea for skills. Promote also re-syncs every native source. */

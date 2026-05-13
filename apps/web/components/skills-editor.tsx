@@ -80,14 +80,19 @@ export function SkillsEditor({
   }
 
   async function removeRow(row: Row) {
-    if (row.authority !== "personal") return;
+    if (row.authority === "team") return;
     if (!confirm(`Delete skill "${row.id}"?`)) return;
     setBusy(row.id);
+    setMsg(null);
     try {
-      await fetch(`/api/skills/${encodeURIComponent(row.id)}?layer=personal`, {
+      const res = await fetch(`/api/skills/${encodeURIComponent(row.id)}`, {
         method: "DELETE",
       });
-      await fetch("/api/sync", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setMsg(`Error: ${data.message ?? data.error ?? "failed to delete skill"}`);
+        return;
+      }
       await reload();
     } finally {
       setBusy(null);
@@ -286,7 +291,7 @@ export function SkillsEditor({
                     );
                   })}
                   <td className="sticky right-0 z-10 bg-plexus-surface px-3 py-3 text-center shadow-[-10px_0_14px_-14px_rgb(0_0_0/0.45)] group-hover:bg-plexus-surface-2">
-                    {r.authority === "personal" && (
+                    {r.authority !== "team" && (
                       <Button
                         variant="danger"
                         size="icon"

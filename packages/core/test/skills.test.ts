@@ -6,6 +6,7 @@ import { setupSandbox } from "./_setup.js";
 
 const sandbox = await setupSandbox("skills");
 const { readSkills, writeSkill } = await import("../src/store/skills.js");
+const { removeSkillEverywhere } = await import("../src/effective/index.js");
 const { runSync } = await import("../src/sync/index.js");
 const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
@@ -117,5 +118,45 @@ describe("Skill store markdown normalization", () => {
     await expect(
       fs.readFile(path.join(skillsDir, "plantuml", "SKILL.md"), "utf8"),
     ).resolves.toContain("PlantUML diagrams");
+  });
+
+  it("removes a personal skill from the store and synced agent folders", async () => {
+    const skillsDir = AGENT_PATHS["claude-code"].skillsDir;
+    await fs.mkdir(skillsDir, { recursive: true });
+
+    await writeSkill({
+      id: "remove-me",
+      name: "remove-me",
+      description: "Temporary skill",
+      body: "# Remove Me\n",
+      layer: "personal",
+      enabledAgents: ["claude-code"],
+    });
+
+    await runSync(["claude-code"]);
+    await expect(fs.lstat(path.join(skillsDir, "remove-me"))).resolves.toBeTruthy();
+
+    const result = await removeSkillEverywhere("remove-me");
+
+    expect(result.ok).toBe(true);
+    expect((await readSkills("personal")).map((skill) => skill.id)).not.toContain("remove-me");
+    await expect(fs.lstat(path.join(skillsDir, "remove-me"))).rejects.toThrow();
+  });
+
+  it("removes a native-only skill without leaving a personal store entry", async () => {
+    const skillsDir = AGENT_PATHS["claude-code"].skillsDir;
+    const nativeDir = path.join(skillsDir, "native-only");
+    await fs.mkdir(nativeDir, { recursive: true });
+    await fs.writeFile(
+      path.join(nativeDir, "SKILL.md"),
+      ["---", "name: native-only", "description: Local skill", "---", "# Native Only"].join("\n"),
+      "utf8",
+    );
+
+    const result = await removeSkillEverywhere("native-only");
+
+    expect(result.ok).toBe(true);
+    expect((await readSkills("personal")).map((skill) => skill.id)).not.toContain("native-only");
+    await expect(fs.lstat(nativeDir)).rejects.toThrow();
   });
 });

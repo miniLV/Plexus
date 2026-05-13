@@ -3,7 +3,13 @@ import { getServerLocale } from "@/lib/i18n-server";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ALL_AGENTS, type AgentId, getEffectiveMcp, inspectAgent } from "plexus-agent-config-core";
+import {
+  ALL_AGENTS,
+  type AgentId,
+  getEffectiveMcp,
+  getEffectiveSkills,
+  inspectAgent,
+} from "plexus-agent-config-core";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +33,13 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   if (!VALID.has(id)) notFound();
   const agentId = id as AgentId;
-  const [data, allMcp] = await Promise.all([inspectAgent(agentId), getEffectiveMcp()]);
+  const [data, allMcp, allSkills] = await Promise.all([
+    inspectAgent(agentId),
+    getEffectiveMcp(),
+    getEffectiveSkills(),
+  ]);
   const mcpRows = allMcp.filter((row) => row.effectiveAgents.includes(agentId));
+  const skillRows = allSkills.filter((row) => row.effectiveAgents.includes(agentId));
 
   return (
     <div className="space-y-8">
@@ -42,7 +53,7 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
         <h1 className="plexus-display mt-3 mb-2">{data.displayName}</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">{copy.description}</p>
       </header>
-      <AgentDetail data={data} mcpRows={mcpRows} />
+      <AgentDetail data={data} mcpRows={mcpRows} skillRows={skillRows} />
     </div>
   );
 }
