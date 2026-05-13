@@ -86,6 +86,7 @@ command = ""
       mcp: [
         {
           id: "remote-figma",
+          type: "http",
           command: "",
           url: "https://mcp.figma.com/mcp",
           headers: { Authorization: "Bearer token" },
@@ -114,6 +115,7 @@ command = ""
     const servers = after.mcp_servers ?? {};
 
     expect(Object.keys(servers)).toEqual(["remote-figma"]);
+    expect(servers["remote-figma"]?.type).toBe("http");
     expect(servers["remote-figma"]?.url).toBe("https://mcp.figma.com/mcp");
     expect(servers["remote-figma"]?.command).toBeUndefined();
     expect(servers["remote-figma"]?.http_headers).toEqual({ Authorization: "Bearer token" });

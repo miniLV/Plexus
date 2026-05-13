@@ -98,6 +98,7 @@ function hasEntries(value: Record<string, string> | undefined): value is Record<
 }
 
 function serializeCodexMcp(s: {
+  type?: string;
   command: string;
   args?: string[];
   env?: Record<string, string>;
@@ -106,6 +107,7 @@ function serializeCodexMcp(s: {
   headers?: Record<string, string>;
 }): Record<string, unknown> {
   return {
+    ...(s.type ? { type: s.type } : {}),
     ...(s.command.trim() ? { command: s.command } : {}),
     ...(s.args ? { args: s.args } : {}),
     ...(hasEntries(s.env) ? { env: s.env } : {}),

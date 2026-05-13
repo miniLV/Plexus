@@ -30,6 +30,7 @@ describe("buildImportPreview", () => {
   it("preserves Codex URL MCP servers when importing native config", async () => {
     const codexConfig = [
       "[mcp_servers.remote-figma]",
+      'type = "http"',
       'url = "https://mcp.figma.com/mcp"',
       'http_headers = { Authorization = "Bearer token" }',
       "",
@@ -44,6 +45,7 @@ describe("buildImportPreview", () => {
         kind: "new",
         item: expect.objectContaining({
           id: "remote-figma",
+          type: "http",
           command: "",
           url: "https://mcp.figma.com/mcp",
           headers: { Authorization: "Bearer token" },

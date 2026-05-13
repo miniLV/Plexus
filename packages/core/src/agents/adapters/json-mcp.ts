@@ -182,6 +182,7 @@ async function writeExclusive(
 
 function serializeMcp(s: MCPServerDef): Record<string, unknown> {
   return {
+    ...(s.type ? { type: s.type } : {}),
     ...(s.command ? { command: s.command } : {}),
     ...(s.args ? { args: s.args } : {}),
     ...(s.env ? { env: s.env } : {}),

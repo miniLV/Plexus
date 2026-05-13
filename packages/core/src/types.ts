@@ -57,6 +57,8 @@ export interface AgentCapabilities {
 export interface MCPServerDef {
   /** Stable id, used as the key in mcpServers map. */
   id: string;
+  /** MCP transport type for JSON-based agents, e.g. "http", "sse", or "stdio". */
+  type?: string;
   command: string;
   args?: string[];
   env?: Record<string, string>;

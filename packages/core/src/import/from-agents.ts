@@ -53,6 +53,7 @@ export interface ImportPreview {
 export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
   Array<{
     id: string;
+    type?: string;
     command: string;
     args?: string[];
     env?: Record<string, string>;
@@ -75,6 +76,7 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
     const m = data.mcp_servers ?? {};
     return Object.entries(m).map(([id, cfg]) => ({
       id,
+      type: typeof cfg?.type === "string" ? cfg.type : undefined,
       command: String(cfg?.command ?? ""),
       args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
       env:
@@ -98,6 +100,7 @@ function readJsonMcpEntry(
   cfg: any,
 ): {
   id: string;
+  type?: string;
   command: string;
   args?: string[];
   env?: Record<string, string>;
@@ -107,6 +110,7 @@ function readJsonMcpEntry(
 } {
   return {
     id,
+    type: typeof cfg?.type === "string" ? cfg.type : undefined,
     command: String(cfg?.command ?? ""),
     args: Array.isArray(cfg?.args) ? cfg.args.map(String) : undefined,
     env: readJsonRecord(cfg?.env),
@@ -202,6 +206,7 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
     string,
     {
       first: {
+        type?: string;
         command: string;
         args?: string[];
         env?: Record<string, string>;
@@ -224,6 +229,7 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
       } else {
         nativeMcp.set(m.id, {
           first: {
+            type: m.type,
             command: m.command,
             args: m.args,
             env: m.env,
@@ -269,6 +275,7 @@ export async function buildImportPreview(args: BuildImportPreviewArgs): Promise<
         kind: "new",
         item: {
           id,
+          type: native.first.type,
           command: native.first.command,
           args: native.first.args,
           env: native.first.env,

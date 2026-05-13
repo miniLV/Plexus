@@ -267,9 +267,10 @@ function fingerprint(value: unknown): string {
 }
 
 function mcpFingerprint(
-  item: Pick<MCPServerDef, "command" | "args" | "env" | "url" | "httpUrl" | "headers">,
+  item: Pick<MCPServerDef, "type" | "command" | "args" | "env" | "url" | "httpUrl" | "headers">,
 ): string {
   return fingerprint({
+    type: item.type ?? "",
     command: item.command,
     args: item.args ?? [],
     env: item.env ?? {},
@@ -444,6 +445,7 @@ async function collectNativeShareState(targets: AgentId[]): Promise<NativeShareS
     for (const server of nativeMcp) {
       const item: MCPServerDef = {
         id: server.id,
+        type: server.type,
         command: server.command,
         args: server.args,
         env: server.env,
