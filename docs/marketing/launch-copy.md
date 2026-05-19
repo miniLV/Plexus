@@ -231,6 +231,52 @@ It is early, open source, and built for people who use multiple AI coding tools 
 Repo: https://github.com/miniLV/Plexus
 ```
 
+## Threads
+
+Use Threads when the hook is frustration with multi-tool config drift, not a
+full product launch. Keep the post short and let the first reply carry the
+safety model.
+
+Link target guidance:
+
+- use the GitHub repo when the audience already knows Claude Code / Cursor / Codex
+- use the Cursor guide when the audience is mostly editor-heavy
+- use the guide hub when the audience is broader and still problem-aware
+
+Short post:
+
+```text
+I got tired of copying the same MCP servers, rules, and skills between Claude Code and Cursor.
+
+So I built Plexus: a local dashboard that imports existing config, previews conflicts, and syncs back into each tool's native files with backups.
+
+https://github.com/miniLV/Plexus
+```
+
+Cursor-focused post:
+
+```text
+If you use Claude Code + Cursor together, config drift gets old fast.
+
+Plexus keeps rules, MCP servers, and skills aligned without replacing the native files those tools manage themselves.
+
+Guide:
+https://minilv.github.io/Plexus/how-to-sync-claude-code-and-cursor-configs.html
+```
+
+Reply under the post:
+
+```text
+The thing I cared about most was trust:
+
+- local-first
+- snapshots before native writes
+- partial-writes shared config files instead of replacing them wholesale
+- does not execute MCP servers
+
+Still early, but already useful if you run more than one AI coding tool on the same machine.
+```
+
 ## Product Hunt Draft
 
 Use only after the install path and demo video are ready.
