@@ -7,6 +7,7 @@ import { useState } from "react";
 
 type BackupEntry = {
   agent: string | null;
+  kind?: "file" | "directory";
   backupPath: string;
   originalPath: string;
   wasSymlink: boolean;
@@ -40,6 +41,10 @@ function fmtSnapshotTime(d: Date): string {
   });
 }
 
+function entryCountLabel(count: number): string {
+  return `${count} item${count === 1 ? "" : "s"}`;
+}
+
 export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
   const [snapshots, setSnapshots] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
@@ -69,7 +74,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
       const data = await res.json();
       if (data.ok) {
         setMsg(
-          `Restored ${data.restored} file(s) from ${id}.${
+          `Restored ${data.restored} item(s) from ${id}.${
             data.errors?.length ? ` Errors: ${data.errors.join("; ")}` : ""
           }`,
         );
@@ -113,7 +118,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
             No snapshots yet — they'll appear here after your first sync or edit.
           </div>
           <div className="mt-1 text-xs text-plexus-text-3">
-            Plexus auto-snapshots every agent's MCP file before any write.
+            Plexus auto-snapshots agent MCP files and native skill bundles before writes.
           </div>
         </Card>
       ) : (
@@ -129,7 +134,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                       {Number.isNaN(date.getTime()) ? snap.id : fmtSnapshotTime(date)}
                     </div>
                     <div className="mt-0.5 truncate text-xs text-plexus-text-3">
-                      {snap.entries.length} file{snap.entries.length === 1 ? "" : "s"} ·{" "}
+                      {entryCountLabel(snap.entries.length)} ·{" "}
                       <code className="font-mono">{shortenPath(snap.dir, 70)}</code>
                     </div>
                   </div>
@@ -161,7 +166,7 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                 {isOpen && (
                   <div className="mt-3 space-y-1 border-t border-plexus-border pt-3 text-xs">
                     {snap.entries.length === 0 && (
-                      <div className="text-plexus-text-3">No file entries.</div>
+                      <div className="text-plexus-text-3">No entries.</div>
                     )}
                     {snap.entries.map((e) => (
                       <div
@@ -171,7 +176,9 @@ export function BackupsPanel({ initial }: { initial: Snapshot[] }) {
                         <code className="font-mono text-plexus-text">
                           {shortenPath(e.originalPath, 80)}
                         </code>
-                        <span className="text-plexus-text-3">{e.agent ?? "single-file"}</span>
+                        <span className="text-plexus-text-3">
+                          {e.agent ?? "single-file"} · {e.kind ?? "file"}
+                        </span>
                       </div>
                     ))}
                   </div>

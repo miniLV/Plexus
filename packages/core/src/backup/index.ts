@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ensureDir, pathExists } from "../store/fs-utils.js";
@@ -11,20 +12,18 @@ export const COLLISION_BACKUP_ROOT = path.join(PLEXUS_PATHS.backups, "_collision
 export const LEGACY_RESIDUE_ROOT = path.join(PLEXUS_PATHS.backups, "_legacy-residue");
 
 /**
- * Plexus snapshots every agent's native MCP config file before any sync write.
- *
- * Snapshots live under `~/.config/plexus/backups/<ISO-timestamp>/` so a user
- * can always restore the previous state with `cp` if Plexus made a wrong
- * decision. We deliberately do NOT back up skill directories: skills are
- * already symlinks to the Plexus store, and doubling the disk usage on every
- * toggle would be expensive and rarely useful.
+ * Plexus snapshots every agent's native MCP config file and native skill
+ * bundles before sync writes. Snapshots live under
+ * `~/.config/plexus/backups/<ISO-timestamp>/` so a user can recover if Plexus
+ * makes a wrong decision.
  */
 
 export interface BackupEntry {
-  agent: AgentId;
-  /** Path of the snapshotted file inside the backup directory. */
+  agent: AgentId | null;
+  kind?: "file" | "directory";
+  /** Path of the snapshotted file or directory inside the backup directory. */
   backupPath: string;
-  /** Original path of the file we copied. */
+  /** Original path of the file or directory we copied. */
   originalPath: string;
   /** Was the original a symlink? Lets restore reproduce the link. */
   wasSymlink: boolean;
@@ -65,6 +64,16 @@ function backupFileName(filePath: string): string {
   return `${parsed.name}.${hash}${parsed.ext || ".bak"}`;
 }
 
+function skillBackupName(agentId: AgentId, skillPath: string): string {
+  const parsed = path.parse(skillPath);
+  const hash = crypto
+    .createHash("sha256")
+    .update(path.resolve(skillPath))
+    .digest("hex")
+    .slice(0, 8);
+  return `${agentId}-skill-${parsed.name}.${hash}`;
+}
+
 export async function snapshotAgentConfigs(opts?: {
   reason?: string;
 }): Promise<BackupSnapshot> {
@@ -77,35 +86,53 @@ export async function snapshotAgentConfigs(opts?: {
   const entries: BackupEntry[] = [];
   for (const agentId of ALL_AGENTS) {
     const caps = AGENT_PATHS[agentId];
-    if (!caps.mcp) continue;
-    if (!(await pathExists(caps.mcpPath))) continue;
+    if (caps.mcp && (await pathExists(caps.mcpPath))) {
+      try {
+        let wasSymlink = false;
+        let linkTarget: string | undefined;
+        const lst = await fs.lstat(caps.mcpPath);
+        wasSymlink = lst.isSymbolicLink();
+        if (wasSymlink) linkTarget = await fs.readlink(caps.mcpPath);
 
-    let wasSymlink = false;
-    let linkTarget: string | undefined;
-    try {
-      const lst = await fs.lstat(caps.mcpPath);
-      wasSymlink = lst.isSymbolicLink();
-      if (wasSymlink) linkTarget = await fs.readlink(caps.mcpPath);
-    } catch {
-      continue;
+        const ext = path.extname(caps.mcpPath) || ".bak";
+        const fname = `${agentId}-mcp${ext}`;
+        const backupPath = path.join(dir, fname);
+        // Always copy the resolved file content (so the backup is self-contained).
+        const content = await fs.readFile(caps.mcpPath);
+        await fs.writeFile(backupPath, content);
+        entries.push({
+          agent: agentId,
+          kind: "file",
+          backupPath,
+          originalPath: caps.mcpPath,
+          wasSymlink,
+          linkTarget,
+        });
+      } catch {
+        // best-effort; skip agents we can't read
+      }
     }
 
-    const ext = path.extname(caps.mcpPath) || ".bak";
-    const fname = `${agentId}-mcp${ext}`;
-    const backupPath = path.join(dir, fname);
-    try {
-      // Always copy the resolved file content (so the backup is self-contained).
-      const content = await fs.readFile(caps.mcpPath);
-      await fs.writeFile(backupPath, content);
-      entries.push({
-        agent: agentId,
-        backupPath,
-        originalPath: caps.mcpPath,
-        wasSymlink,
-        linkTarget,
-      });
-    } catch {
-      // best-effort; skip agents we can't read
+    if (!caps.skills || !(await pathExists(caps.skillsDir))) continue;
+    const skillDirs = await listNativeSkillDirs(caps.skillsDir);
+    for (const skillDir of skillDirs) {
+      const backupPath = path.join(dir, skillBackupName(agentId, skillDir));
+      try {
+        const lst = await fs.lstat(skillDir);
+        const wasSymlink = lst.isSymbolicLink();
+        const linkTarget = wasSymlink ? await fs.readlink(skillDir) : undefined;
+        await fs.cp(skillDir, backupPath, { recursive: true, dereference: true });
+        entries.push({
+          agent: agentId,
+          kind: "directory",
+          backupPath,
+          originalPath: skillDir,
+          wasSymlink,
+          linkTarget,
+        });
+      } catch {
+        // best-effort; skip skills we can't read
+      }
     }
   }
 
@@ -118,6 +145,34 @@ export async function snapshotAgentConfigs(opts?: {
 
   await pruneOldBackups(KEEP);
   return { dir, id, entries };
+}
+
+async function listNativeSkillDirs(skillsDir: string): Promise<string[]> {
+  let entries: Dirent[];
+  try {
+    entries = await fs.readdir(skillsDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const skillDirs: string[] = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith(".") || entry.name.includes(".plexus-backup-")) continue;
+    const fullPath = path.join(skillsDir, entry.name);
+    if (entry.isSymbolicLink()) {
+      try {
+        const st = await fs.stat(fullPath);
+        if (!st.isDirectory()) continue;
+      } catch {
+        continue;
+      }
+    } else if (!entry.isDirectory()) {
+      continue;
+    }
+    if (!(await pathExists(path.join(fullPath, "SKILL.md")))) continue;
+    skillDirs.push(fullPath);
+  }
+  return skillDirs;
 }
 
 async function pruneOldBackups(keep: number): Promise<void> {
@@ -276,7 +331,7 @@ export async function cleanupLegacyResidue(): Promise<{
   return { moved };
 }
 
-/** Restore one snapshot by copying every backed-up file back over the original. */
+/** Restore one snapshot by copying every backed-up file/directory over the original. */
 export async function restoreSnapshot(id: string): Promise<{
   restored: number;
   errors: string[];
@@ -289,19 +344,40 @@ export async function restoreSnapshot(id: string): Promise<{
   let restored = 0;
   for (const entry of snap.entries) {
     try {
-      // Remove existing file/symlink first to avoid writing through links.
-      try {
-        await fs.unlink(entry.originalPath);
-      } catch {
-        // ignore
-      }
-      const content = await fs.readFile(entry.backupPath);
       await ensureDir(path.dirname(entry.originalPath));
-      await fs.writeFile(entry.originalPath, content);
+      await removeExistingPath(entry.originalPath);
+
+      if (entry.kind === "directory") {
+        if (entry.wasSymlink && entry.linkTarget) {
+          try {
+            await fs.symlink(entry.linkTarget, entry.originalPath, "dir");
+          } catch {
+            await fs.cp(entry.backupPath, entry.originalPath, { recursive: true });
+          }
+        } else {
+          await fs.cp(entry.backupPath, entry.originalPath, { recursive: true });
+        }
+      } else {
+        const content = await fs.readFile(entry.backupPath);
+        await fs.writeFile(entry.originalPath, content);
+      }
       restored += 1;
     } catch (err) {
       errors.push(`${entry.agent}: ${(err as Error).message}`);
     }
   }
   return { restored, errors };
+}
+
+async function removeExistingPath(targetPath: string): Promise<void> {
+  try {
+    const lst = await fs.lstat(targetPath);
+    if (lst.isDirectory() && !lst.isSymbolicLink()) {
+      await fs.rm(targetPath, { recursive: true, force: true });
+    } else {
+      await fs.unlink(targetPath);
+    }
+  } catch {
+    // Missing paths are fine during restore.
+  }
 }

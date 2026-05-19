@@ -52,6 +52,32 @@ describe("snapshot/restore round-trip", () => {
     }
   });
 
+  it("restores native skill bundle directories", async () => {
+    const skillDir = path.join(AGENT_PATHS["claude-code"].skillsDir, "bundle-tool");
+    await fs.mkdir(path.join(skillDir, "scripts"), { recursive: true });
+    await fs.writeFile(path.join(skillDir, "SKILL.md"), "# Bundle Tool\n", "utf8");
+    await fs.writeFile(path.join(skillDir, "scripts", "run.sh"), "#!/bin/bash\necho ok\n", "utf8");
+
+    const snap = await snapshotAgentConfigs({ reason: "skill bundle restore test" });
+    const skillEntry = snap.entries.find((entry) => entry.originalPath === skillDir);
+    expect(skillEntry?.kind).toBe("directory");
+
+    await fs.rm(skillDir, { recursive: true, force: true });
+    await fs.mkdir(skillDir, { recursive: true });
+    await fs.writeFile(path.join(skillDir, "SKILL.md"), "# Mutated\n", "utf8");
+
+    const out = await restoreSnapshot(snap.id);
+
+    expect(out.errors).toEqual([]);
+    expect(out.restored).toBe(snap.entries.length);
+    await expect(fs.readFile(path.join(skillDir, "SKILL.md"), "utf8")).resolves.toBe(
+      "# Bundle Tool\n",
+    );
+    await expect(fs.readFile(path.join(skillDir, "scripts", "run.sh"), "utf8")).resolves.toBe(
+      "#!/bin/bash\necho ok\n",
+    );
+  });
+
   it("listBackups returns the snapshot we just took", async () => {
     const list = await listBackups();
     expect(list.length).toBeGreaterThanOrEqual(1);

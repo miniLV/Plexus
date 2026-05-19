@@ -347,7 +347,8 @@ Core functions in `packages/core/src/sync/index.ts`:
 
 1. Read `~/.config/plexus/config.yaml`.
 2. Detect installed agents.
-3. Snapshot native MCP files with `snapshotAgentConfigs()`.
+3. Snapshot native MCP files and existing native skill bundles with
+   `snapshotAgentConfigs()`.
 4. Run `cleanupLegacyResidue()`.
 5. Read team + personal MCPs and skills.
 6. Merge team + personal.
@@ -405,7 +406,8 @@ Behavior:
 - Promote syncs every native source agent plus the target agent, so those
   agents start reading the canonical Plexus copy.
 - Non-promote toggles sync the affected agent.
-- Each toggle snapshots native MCP files before adapter writes.
+- Each toggle snapshots native MCP files and existing native skill bundles before
+  adapter writes.
 
 ### 4.4 Mirror
 
@@ -550,7 +552,7 @@ cleanupLegacyResidue();
 │   ├── claude-code-mcp.json
 │   ├── cursor-mcp.json
 │   ├── codex-mcp.toml
-│   └── factory-droid-mcp.json
+│   └── claude-code-skill-example.<hash>/
 ├── _collisions/
 └── _legacy-residue/
 ```
@@ -565,9 +567,9 @@ cleanupLegacyResidue();
 3. **No inline `.plexus-backup-*` residue.** Real collisions belong under
    `backups/_collisions/`, not next to agent files.
 4. **Restore is destructive by design.** `restoreSnapshot()` removes the
-   current file/symlink and writes the backed-up bytes back to the original
-   path. It does not currently recreate the original symlink, even though the
-   manifest records symlink metadata.
+   current file/symlink/directory and writes the backed-up file bytes or copied
+   directory back to the original path. Directory symlinks are recreated when
+   possible, falling back to the copied directory snapshot.
 5. **Ring buffer keeps 20 snapshot directories.** `_collisions` and
    `_legacy-residue` live under the same backup root; be careful changing
    pruning behavior.
