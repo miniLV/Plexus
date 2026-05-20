@@ -31,7 +31,7 @@
     "plexus": "dist/bin.js"
   },
   "main": "dist/bin.js",
-  "files": ["dist/**/*", "package.json"],
+  "files": ["dist/**/*", "package.json", "README.md"],
   "publishConfig": {
     "access": "public"
   },
