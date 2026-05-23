@@ -277,6 +277,89 @@ The thing I cared about most was trust:
 Still early, but already useful if you run more than one AI coding tool on the same machine.
 ```
 
+## Juejin Follow-up
+
+Use this after the first launch post if the comments show curiosity about trust,
+partial-write semantics, or why Plexus exists beyond dotfiles.
+
+Title options:
+
+```text
+我做了个本地工具，专门解决 Claude Code / Cursor / Codex 配置漂移
+```
+
+```text
+为什么我没继续用 dotfiles 同步 Claude Code、Cursor、Codex 配置
+```
+
+```text
+Claude Code、Cursor、Codex 一起用时，MCP / Skills / AGENTS.md 怎么不再手动维护
+```
+
+Opening paragraph:
+
+```text
+如果你同时在用 Claude Code、Cursor、Codex，配置漂移几乎一定会发生：同一个 MCP Server 要填好几遍，CLAUDE.md / AGENTS.md 会慢慢分叉，skills 目录也各长各的。
+
+我做 Plexus 不是为了发明一种新配置格式，而是为了让这些工具继续读各自原生文件的前提下，给它们一个本地 single source of truth。
+```
+
+Suggested outline:
+
+```text
+1. 先讲真实问题：为什么多 AI coding tools 会产生 config drift
+2. 讲清楚为什么不是简单 cp / dotfiles 就够了
+3. 解释 Plexus 的安全模型：local-first、snapshot、partial-write
+4. 用一张 dashboard 图或 config-sharing-map 图说明同步方式
+5. 最后给出 npx 体验入口和 GitHub 链接
+```
+
+Closing CTA:
+
+```text
+如果你也在同时维护 Claude Code、Cursor、Codex 或 Gemini CLI 的配置，欢迎直接告诉我你最怕哪种同步误伤。我会优先按真实工作流补。
+
+GitHub: https://github.com/miniLV/Plexus
+体验：npx -y plexus-agent-config@latest start
+```
+
+## V2EX
+
+Title:
+
+```text
+[开源] Plexus：把 Claude Code、Cursor、Codex 的 Rules / MCP / Skills 放回一处管理
+```
+
+Post:
+
+```text
+最近同时用 Claude Code、Cursor、Codex 写东西的人应该越来越多了，但这几个工具的配置文件、MCP 格式、skills 目录都不一样。
+
+结果就是一个好用的 MCP Server、一个顺手的 skill、或者一份 agent 规则，经常要复制到好几个地方。时间久了之后，不知道哪一份才是最新的，也不敢随便覆盖原生文件。
+
+我做了一个本地工具叫 Plexus，目标很简单：
+
+- 把 Rules、MCP Servers、Skills 收到 ~/.config/plexus/
+- 导入机器上已有的 Claude Code / Cursor / Codex / Gemini CLI / Qwen Code 配置
+- 再按各工具自己的原生格式同步回去
+
+比较在意的点是安全模型：
+
+- local-first
+- 写回前自动 snapshot
+- 对 ~/.claude.json、~/.codex/config.toml 这类共享文件只 partial-write MCP section
+- 不执行 MCP Server
+
+项目地址：
+https://github.com/miniLV/Plexus
+
+直接试：
+npx -y plexus-agent-config@latest start
+
+如果你也在多工具混用，挺想听听你最不希望这种工具碰坏什么配置。
+```
+
 ## Product Hunt Draft
 
 Use only after the install path and demo video are ready.
