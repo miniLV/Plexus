@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claude Code、Cursor、Codex 配置漂移怎么收口：Plexus 中文说明</title>
+    <meta
+      name="description"
+      content="一篇中文说明，讲清楚 Claude Code、Cursor、Codex 的 Rules、MCP Servers 和 Skills 为什么会配置漂移，以及 Plexus 如何在不覆盖原生文件的前提下做本地同步。"
+    />
+    <link
+      rel="canonical"
+      href="https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:title"
+      content="Claude Code、Cursor、Codex 配置漂移怎么收口：Plexus 中文说明"
+    />
+    <meta
+      property="og:description"
+      content="为什么多 AI coding tools 会配置漂移，为什么不是 cp / dotfiles 就够了，以及 Plexus 怎么安全地把本地配置收成一处。"
+    />
+    <meta
+      property="og:url"
+      content="https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html"
+    />
+    <meta
+      property="og:image"
+      content="https://minilv.github.io/Plexus/assets/readme/dashboard.png"
+    />
+    <meta property="og:site_name" content="Plexus Agent Config" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Claude Code、Cursor、Codex 配置漂移怎么收口：Plexus 中文说明"
+    />
+    <meta
+      name="twitter:description"
+      content="一篇中文说明，讲清楚多 AI coding tools 的配置漂移，以及 Plexus 如何本地、安全地同步 Rules、MCP Servers 和 Skills。"
+    />
+    <meta
+      name="twitter:image"
+      content="https://minilv.github.io/Plexus/assets/readme/dashboard.png"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f1115;
+        --surface: #171a21;
+        --surface-2: #20252e;
+        --text: #f3f1eb;
+        --muted: #b9b6ad;
+        --line: #333946;
+        --green: #76b782;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      a {
+        color: #c8facc;
+      }
+
+      .wrap {
+        width: min(100vw - 40px, 860px);
+        margin: 0 auto;
+      }
+
+      header {
+        padding: 72px 0 40px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(15, 17, 21, 0.98), rgba(15, 17, 21, 0.92));
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--green);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.15;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(36px, 6vw, 54px);
+      }
+
+      h2 {
+        margin: 40px 0 14px;
+        font-size: 28px;
+      }
+
+      p,
+      li {
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      main {
+        padding: 40px 0 72px;
+      }
+
+      .lede {
+        font-size: 20px;
+      }
+
+      .panel {
+        margin: 28px 0;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .panel strong {
+        color: var(--text);
+      }
+
+      code,
+      pre {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+      }
+
+      pre {
+        overflow-x: auto;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        color: #dce8de;
+      }
+
+      img {
+        width: 100%;
+        height: auto;
+        margin: 20px 0 10px;
+        border: 1px solid #d4cec1;
+        border-radius: 8px;
+        background: #111318;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .button.primary {
+        background: var(--green);
+        border-color: var(--green);
+        color: #101310;
+      }
+
+      footer {
+        padding: 28px 0 48px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      @media (max-width: 640px) {
+        p,
+        li {
+          font-size: 17px;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        .button {
+          width: 100%;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "Claude Code、Cursor、Codex 配置漂移怎么收口：Plexus 中文说明",
+        "description": "一篇中文说明，讲清楚 Claude Code、Cursor、Codex 的 Rules、MCP Servers 和 Skills 为什么会配置漂移，以及 Plexus 如何在不覆盖原生文件的前提下做本地同步。",
+        "author": {
+          "@type": "Person",
+          "name": "miniLV"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Plexus Agent Config"
+        },
+        "mainEntityOfPage": "https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html"
+      }
+    </script>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <p class="eyebrow">Plexus 中文说明</p>
+        <h1>Claude Code、Cursor、Codex 配置漂移怎么收口</h1>
+        <p class="lede">
+          真正麻烦的通常不是第一次配置，而是当同一份 Rules、MCP Servers 和 Skills
+          开始出现在多个 AI coding tools 里之后，哪一份才算最新，以及你敢不敢同步回去。
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <p>
+          如果你同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，很快就会碰到同一个问题：
+          一个好用的 MCP Server、一份顺手的 <code>CLAUDE.md</code> 规则、或者一个团队 skill，
+          会慢慢分散到不同工具的原生文件里。你知道它们应该一致，但又不敢粗暴覆盖。
+        </p>
+
+        <h2>为什么配置漂移会越来越烦</h2>
+        <ul>
+          <li>你在 Claude Code 里改了一条规则，Cursor 和 Codex 还停在旧版本。</li>
+          <li>你刚在 Cursor 里补了一个 MCP Server，另一个工具里又忘了加。</li>
+          <li>每个工具的 skill / commands 目录不同，复制过去也不总是放心。</li>
+          <li>有些原生文件里还混着 auth、history、profile，这让“整文件覆盖”变得很冒险。</li>
+        </ul>
+
+        <h2>为什么不是 cp / dotfiles 就够了</h2>
+        <p>
+          如果每个目标文件都完全归你自己管，dotfiles 当然很好。但 AI coding tools
+          的现实更复杂：有的文件是专门给 MCP 用的，有的文件里还混着工具自己维护的状态。这个时候，单纯复制文件的风险会明显变高。
+        </p>
+
+        <div class="panel">
+          <strong>Plexus 不是在发明一种新格式。</strong>
+          <p>
+            它做的事情更朴素：把本机的 canonical store 放在 <code>~/.config/plexus/</code>，
+            再按不同工具的原生约束，把配置安全地投射回去。
+          </p>
+        </div>
+
+        <h2>Plexus 怎么处理这个问题</h2>
+        <ul>
+          <li>Rules 和 Skills 优先用 symlink / copy 维持一份清晰的本地基线。</li>
+          <li>对 Cursor、Factory Droid 这类专用 MCP 文件，优先走 cache symlink / copy。</li>
+          <li>
+            对 <code>~/.claude.json</code>、<code>~/.codex/config.toml</code> 这类共享原生文件，只 partial-write
+            Plexus 管理的 MCP section。
+          </li>
+          <li>每次写回原生文件前自动 snapshot，真出问题还能从 Backups 页面恢复。</li>
+        </ul>
+
+        <img src="assets/readme/dashboard.png" alt="Plexus 中文 dashboard 截图" />
+
+        <h2>什么场景下最适合先试 Plexus</h2>
+        <ul>
+          <li>你已经同时用两个以上 AI coding tools，而且手动同步过不止一次。</li>
+          <li>你最怕的是覆盖掉 auth、history、profile 这种工具自己维护的内容。</li>
+          <li>你希望团队 rules / skills / MCP baseline 能分层管理，而不是到处复制。</li>
+        </ul>
+
+        <h2>最快体验方式</h2>
+        <pre><code>npx -y plexus-agent-config@latest start</code></pre>
+
+        <div class="actions">
+          <a class="button primary" href="https://github.com/miniLV/Plexus">打开 GitHub 仓库</a>
+          <a class="button" href="https://minilv.github.io/Plexus/">打开项目首页</a>
+          <a class="button" href="https://minilv.github.io/Plexus/guides.html">查看英文 Guides</a>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        Plexus 是一个 local-first 的配置控制台，不执行 MCP Server，本地保存 canonical store，
+        写回前自动 snapshot，并尽量保留各个工具自己的原生文件契约。
+      </div>
+    </footer>
+  </body>
+</html>
