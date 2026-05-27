@@ -282,6 +282,14 @@ Still early, but already useful if you run more than one AI coding tool on the s
 Use this after the first launch post if the comments show curiosity about trust,
 partial-write semantics, or why Plexus exists beyond dotfiles.
 
+Link target guidance:
+
+- use the Chinese drift guide when the audience is still deciding whether the
+  problem is real enough to care about:
+  `https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html`
+- use the GitHub repo only when commenters are already asking for source,
+  install steps, or implementation details
+
 Title options:
 
 ```text
@@ -319,6 +327,7 @@ Closing CTA:
 ```text
 如果你也在同时维护 Claude Code、Cursor、Codex 或 Gemini CLI 的配置，欢迎直接告诉我你最怕哪种同步误伤。我会优先按真实工作流补。
 
+中文说明: https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html
 GitHub: https://github.com/miniLV/Plexus
 体验：npx -y plexus-agent-config@latest start
 ```
@@ -353,6 +362,9 @@ Post:
 
 项目地址：
 https://github.com/miniLV/Plexus
+
+中文说明：
+https://minilv.github.io/Plexus/how-to-sync-ai-agent-configs-without-drift-zh.html
 
 直接试：
 npx -y plexus-agent-config@latest start
