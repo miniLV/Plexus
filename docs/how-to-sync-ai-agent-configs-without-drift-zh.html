@@ -287,6 +287,34 @@
           <li>你希望团队 rules / skills / MCP baseline 能分层管理，而不是到处复制。</li>
         </ul>
 
+        <h2>几个最常见的问题</h2>
+
+        <div class="panel">
+          <strong>为什么不是 cp / dotfiles 就够了？</strong>
+          <p>
+            如果所有目标文件都完全归你自己维护，dotfiles 当然很好。但 Claude Code、
+            Codex 这类工具的共享原生文件里，往往还混着 auth、history、profile 或其他工具状态。Plexus
+            的价值不在“再造一种配置格式”，而在于尽量保留这些原生契约，只改它真正管理的那一小部分。
+          </p>
+        </div>
+
+        <div class="panel">
+          <strong>会不会把我的登录态、历史记录或者工具自己的内容覆盖掉？</strong>
+          <p>
+            Plexus 的目标恰恰是避免这种风险。对共享原生文件，它只 partial-write 自己管理的 MCP
+            section；对专用 MCP 文件、Rules、Skills，则优先走 symlink / copy 这类更容易回退的方式。
+            每次写回前也会先做 snapshot。
+          </p>
+        </div>
+
+        <div class="panel">
+          <strong>Plexus 会帮我执行 MCP Server 或托管配置吗？</strong>
+          <p>
+            不会。Plexus 是 local-first 的配置控制台，不执行 MCP Server，也不是 secrets manager。
+            它做的是导入、整理、预览和安全写回，让不同工具继续读取自己的原生文件。
+          </p>
+        </div>
+
         <h2>最快体验方式</h2>
         <pre><code>npx -y plexus-agent-config@latest start</code></pre>
 
