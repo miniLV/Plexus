@@ -64,8 +64,11 @@ jobs:
         env:
           TARGET_VERSION: ${{ env.VERSION }}
 
+      - name: Regenerate lockfile
+        run: npm install --package-lock-only
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Publish to npm
         run: npm run release:npm
