@@ -88,6 +88,7 @@ Plexus/
 │       │   ├── rules/page.tsx
 │       │   ├── mcp/page.tsx
 │       │   ├── skills/page.tsx
+│       │   ├── market/page.tsx     # skills marketplace (GitHub-star ranked)
 │       │   ├── mirror/page.tsx
 │       │   ├── spread/page.tsx    # redirects to /mirror
 │       │   ├── agents/[id]/page.tsx
@@ -96,6 +97,8 @@ Plexus/
 │       │   ├── team/page.tsx
 │       │   ├── settings/page.tsx
 │       │   └── api/               # thin route handlers around plexus-agent-config-core
+│       │       ├── market/route.ts
+│       │       ├── market/install/route.ts
 │       │       └── rules/route.ts
 │       ├── components/
 │       │   ├── agent-icon.tsx     # local brand icons + AgentName helper
@@ -112,7 +115,6 @@ Plexus/
 │       │   ├── settings-panel.tsx
 │       │   ├── skills-editor.tsx
 │       │   ├── skills-market.tsx
-│       │   ├── skills-view.tsx
 │       │   ├── sync-button.tsx
 │       │   ├── team-panel.tsx
 │       │   └── ui/
@@ -627,6 +629,7 @@ Workspace:
   Rules
   MCP Servers
   Skills
+  Market
   Mirror
 
 Configuration:
@@ -700,9 +703,7 @@ Current behavior:
 
 ### Skills `/skills`
 
-Component: `apps/web/components/skills-view.tsx` (tabs), backed by
-`apps/web/components/skills-editor.tsx` (Installed) and
-`apps/web/components/skills-market.tsx` (Market).
+Component: `apps/web/components/skills-editor.tsx`.
 
 Current behavior mirrors MCP:
 
@@ -712,11 +713,18 @@ Current behavior mirrors MCP:
 - team rows are read-only in the UI
 - created skills generate `SKILL.md` frontmatter automatically
 
-The **Market** tab (see `packages/core/src/market/`) browses community skill
-repos ranked by GitHub star count (`GET /api/market`) and installs one repo as
-one skill into the personal store (`POST /api/market/install`, then a normal
-sync). Install prefers a root `SKILL.md` or the only `SKILL.md` in the tree,
-and rejects multi-skill collections with a clear message.
+### Market `/market`
+
+Component: `apps/web/components/skills-market.tsx`.
+
+Browses community skill repos ranked by GitHub star count (`GET /api/market`)
+and installs one repo as one skill into the personal store
+(`POST /api/market/install`, then a normal sync). Backed by
+`packages/core/src/market/` — it queries several agent-skill GitHub topics in
+parallel, dedupes, and sorts the union by stars (GitHub's `OR` operator cannot
+combine `topic:` qualifiers). Install prefers a root `SKILL.md` or the only
+`SKILL.md` in the tree, and rejects multi-skill collections with a clear
+message.
 
 ### Mirror `/mirror`
 
@@ -1018,6 +1026,7 @@ Recently important fixes that must not regress:
 | CLI | `packages/cli/src/bin.ts` |
 | Sidebar nav and version badge | `apps/web/components/app-sidebar.tsx` |
 | Dashboard | `apps/web/app/page.tsx` |
+| Skills market UI | `apps/web/components/skills-market.tsx` |
 | Sync/share CTA | `apps/web/components/sync-button.tsx` |
 | Agent brand icons | `apps/web/components/agent-icon.tsx` |
 | Agent display labels | `apps/web/lib/agent-metadata.ts` |

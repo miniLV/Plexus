@@ -14,6 +14,7 @@ import {
   ScrollText,
   Settings,
   Sparkles,
+  Star,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -42,6 +43,7 @@ const COPY = {
     rules: "Rules",
     mcp: "MCP Servers",
     skills: "Skills",
+    market: "Market",
     mirror: "Mirror",
     backups: "Backups",
     debug: "Debug",
@@ -59,6 +61,7 @@ const COPY = {
     rules: "规则",
     mcp: "MCP 服务",
     skills: "技能",
+    market: "市场",
     mirror: "镜像同步",
     backups: "备份",
     debug: "调试",
@@ -79,6 +82,7 @@ function nav(copy: Copy): NavGroup[] {
         { href: "/rules", label: copy.rules, icon: ScrollText },
         { href: "/mcp", label: copy.mcp, icon: Plug },
         { href: "/skills", label: copy.skills, icon: Sparkles },
+        { href: "/market", label: copy.market, icon: Star },
         { href: "/mirror", label: copy.mirror, icon: Repeat },
       ],
     },

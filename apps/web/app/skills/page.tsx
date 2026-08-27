@@ -1,4 +1,4 @@
-import { SkillsView } from "@/components/skills-view";
+import { SkillsEditor } from "@/components/skills-editor";
 import { getServerLocale } from "@/lib/i18n-server";
 import {
   AGENT_DISPLAY_NAMES,
@@ -13,12 +13,12 @@ const COPY = {
   en: {
     title: "Skills",
     description:
-      "Every unique skill across your installed agents and the Plexus store, plus a market of community skills ranked by GitHub stars. Toggle a checkbox to add or remove a skill from an agent — Plexus snapshots and symlinks for you.",
+      "Every unique skill across your installed agents and the Plexus store. Toggle a checkbox to add or remove a skill from an agent — Plexus snapshots and symlinks for you. Discover new skills in the Market.",
   },
   zh: {
     title: "技能",
     description:
-      "这里汇总已安装 Agent 和 Plexus store 里的所有 Skill，还有一个按 GitHub 星标排行的社区技能市场。勾选即可把 Skill 加到 Agent 或从 Agent 移除；Plexus 会负责快照和软链接。",
+      "这里汇总已安装 Agent 和 Plexus store 里的所有 Skill。勾选即可把 Skill 加到 Agent 或从 Agent 移除；Plexus 会负责快照和软链接。想发现新技能可以到「市场」逛逛。",
   },
 };
 
@@ -39,7 +39,7 @@ export default async function SkillsPage() {
         <h1 className="plexus-display mb-2">{copy.title}</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-plexus-text-2">{copy.description}</p>
       </header>
-      <SkillsView
+      <SkillsEditor
         initial={rows}
         agents={visibleAgents}
         displayNames={AGENT_DISPLAY_NAMES}

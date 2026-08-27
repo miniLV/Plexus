@@ -266,9 +266,8 @@ repo, then be completed or overridden from the user's local
 
 ## Skills Market
 
-Open **Skills -> Market** to browse community skills ranked by GitHub stars
-(default topic `claude-skills`, plus `agent-skills`, `claude-skill`, `ai-skills`,
-and free-text search). Click **Install** on a skill and Plexus will:
+Open **Market** to browse community agent skills from GitHub, ranked
+by stars, with free-text search. Click **Install** on a skill and Plexus will:
 
 1. Download the repo tarball and extract it to a temp directory.
 2. Locate `SKILL.md` (preferring the repo root) and read its frontmatter.

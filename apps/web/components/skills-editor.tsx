@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Search, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Row = {
   id: string;
@@ -38,13 +38,11 @@ export function SkillsEditor({
   agents,
   displayNames,
   installed,
-  reloadToken,
 }: {
   initial: Row[];
   agents: string[];
   displayNames: Record<string, string>;
   installed: Record<string, boolean>;
-  reloadToken?: number;
 }) {
   const [rows, setRows] = useState<Row[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
@@ -65,10 +63,6 @@ export function SkillsEditor({
     const data = await res.json();
     setRows(data.rows ?? []);
   }
-
-  useEffect(() => {
-    if (reloadToken) void reload();
-  }, [reloadToken]);
 
   async function toggle(row: Row, agent: string, enabled: boolean) {
     if (row.authority === "team") return;

@@ -25,9 +25,6 @@ interface MarketSkill {
   installed: boolean;
 }
 
-const TOPICS = ["claude-skills", "agent-skills", "claude-skill", "ai-skills"];
-const DEFAULT_TOPIC = TOPICS[0];
-
 const COPY = {
   en: {
     searchPlaceholder: "Search skills…",
@@ -41,7 +38,7 @@ const COPY = {
     viewRepo: "View repo",
     installFailed: "Install failed",
     installedToast: (name: string) => `${name} installed and synced`,
-    ranking: "Ranked by GitHub stars",
+    ranking: "Community agent skills from GitHub, ranked by stars",
     retry: "Retry",
   },
   zh: {
@@ -56,7 +53,7 @@ const COPY = {
     viewRepo: "查看仓库",
     installFailed: "安装失败",
     installedToast: (name: string) => `${name} 已安装并同步`,
-    ranking: "按 GitHub 星标排行",
+    ranking: "来自 GitHub 社区的 Agent Skills，按星标排行",
     retry: "重试",
   },
 };
@@ -69,11 +66,10 @@ function formatStars(value: number): string {
   return String(value);
 }
 
-export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
+export function SkillsMarket() {
   const { locale } = useLanguage();
   const copy = COPY[locale];
 
-  const [topic, setTopic] = useState(DEFAULT_TOPIC);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [nonce, setNonce] = useState(0);
@@ -87,7 +83,7 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams({ topic });
+    const params = new URLSearchParams();
     if (submitted) params.set("query", submitted);
     fetch(`/api/market?${params.toString()}`)
       .then((res) => res.json())
@@ -109,7 +105,7 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [topic, submitted, nonce, copy.error]);
+  }, [submitted, nonce, copy.error]);
 
   async function install(skill: MarketSkill) {
     setInstalling(skill.id);
@@ -131,7 +127,6 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
       }
       setSkills((prev) => prev.map((s) => (s.id === skill.id ? { ...s, installed: true } : s)));
       setMsg(copy.installedToast(data.name ?? skill.name));
-      onInstalled?.();
     } catch (err) {
       setMsg(`${copy.installFailed}: ${String(err)}`);
     } finally {
@@ -142,29 +137,9 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            {TOPICS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => {
-                  setTopic(t);
-                  setQuery("");
-                  setSubmitted("");
-                }}
-                className={
-                  topic === t
-                    ? "h-7 rounded-sm border border-plexus-accent/45 bg-plexus-accent/15 px-2.5 font-mono text-xs text-plexus-text"
-                    : "h-7 rounded-sm border border-plexus-border bg-plexus-surface px-2.5 font-mono text-xs text-plexus-text-2 hover:border-plexus-border-strong hover:text-plexus-text"
-                }
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
           <form
-            className="relative ml-auto"
+            className="relative"
             onSubmit={(e) => {
               e.preventDefault();
               setSubmitted(query.trim());
@@ -175,17 +150,17 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
               strokeWidth={1.5}
             />
             <input
-              className="h-8 w-56 rounded border border-plexus-border bg-plexus-surface-2 pr-3 pl-8 text-xs placeholder:text-plexus-text-mute focus:border-plexus-accent focus:outline-none"
+              className="h-8 w-64 rounded border border-plexus-border bg-plexus-surface-2 pr-3 pl-8 text-xs placeholder:text-plexus-text-mute focus:border-plexus-accent focus:outline-none"
               placeholder={copy.searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </form>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-plexus-text-3">
-          <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
-          {copy.ranking}
-          {msg && <span className="text-plexus-accent">{msg}</span>}
+          <div className="flex items-center gap-1.5 text-xs text-plexus-text-3">
+            <Star className="h-3.5 w-3.5" strokeWidth={1.5} />
+            {copy.ranking}
+          </div>
+          {msg && <span className="text-xs text-plexus-accent">{msg}</span>}
         </div>
       </div>
 

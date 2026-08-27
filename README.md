@@ -240,7 +240,7 @@ local machine
 
 ## Skills 市场
 
-打开 **Skills -> Market**，可以按 GitHub 星标排行浏览社区技能（默认 `claude-skills` 主题，也支持 `agent-skills`、`claude-skill`、`ai-skills` 和自由搜索）。点一个技能的 **Install**，Plexus 会：
+打开 **Market**，可以浏览来自 GitHub 社区的 Agent Skills，按星标排行，并支持自由搜索。点一个技能的 **Install**，Plexus 会：
 
 1. 下载该 repo 的 tarball 并解压到临时目录；
 2. 找到 `SKILL.md`（优先根目录），读取 frontmatter 作为技能名称和描述；
