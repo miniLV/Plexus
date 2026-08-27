@@ -111,6 +111,8 @@ Plexus/
 │       │   ├── rules-panel.tsx
 │       │   ├── settings-panel.tsx
 │       │   ├── skills-editor.tsx
+│       │   ├── skills-market.tsx
+│       │   ├── skills-view.tsx
 │       │   ├── sync-button.tsx
 │       │   ├── team-panel.tsx
 │       │   └── ui/
@@ -131,6 +133,7 @@ Plexus/
 │   │   │   ├── spread/
 │   │   │   ├── backup/
 │   │   │   ├── team/
+│   │   │   ├── market/             # GitHub skills market: search + one-click install
 │   │   │   ├── debug/
 │   │   │   └── index.ts
 │   │   ├── test/                  # vitest safety tests
@@ -697,7 +700,9 @@ Current behavior:
 
 ### Skills `/skills`
 
-Component: `apps/web/components/skills-editor.tsx`.
+Component: `apps/web/components/skills-view.tsx` (tabs), backed by
+`apps/web/components/skills-editor.tsx` (Installed) and
+`apps/web/components/skills-market.tsx` (Market).
 
 Current behavior mirrors MCP:
 
@@ -706,6 +711,12 @@ Current behavior mirrors MCP:
 - personal rows can be created/deleted
 - team rows are read-only in the UI
 - created skills generate `SKILL.md` frontmatter automatically
+
+The **Market** tab (see `packages/core/src/market/`) browses community skill
+repos ranked by GitHub star count (`GET /api/market`) and installs one repo as
+one skill into the personal store (`POST /api/market/install`, then a normal
+sync). Install prefers a root `SKILL.md` or the only `SKILL.md` in the tree,
+and rejects multi-skill collections with a clear message.
 
 ### Mirror `/mirror`
 
@@ -1002,6 +1013,7 @@ Recently important fixes that must not regress:
 | Mirror/spread | `packages/core/src/spread/index.ts` |
 | Backups, restore, quarantine | `packages/core/src/backup/index.ts` |
 | Team Git subscription | `packages/core/src/team/git.ts` |
+| Skills market search/install | `packages/core/src/market/` |
 | Debug snapshot | `packages/core/src/debug/index.ts` |
 | CLI | `packages/cli/src/bin.ts` |
 | Sidebar nav and version badge | `apps/web/components/app-sidebar.tsx` |

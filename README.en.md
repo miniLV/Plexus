@@ -90,6 +90,7 @@ Plexus treats `~/.config/plexus/` as the local canonical store, scans each agent
 | Global Rules | One baseline in `~/.config/plexus/personal/rules/global.md`, projected to `CLAUDE.md` and `AGENTS.md` |
 | MCP Servers | Team + personal MCP servers synced into each agent's native format |
 | Skills | Markdown skill bundles linked or copied into each agent's skill directory |
+| Skills Market | Browse community skills ranked by GitHub stars and install them with one click |
 | Mirror | Copy effective config from one agent to other agents with a preview |
 | Backups | Snapshot native files before writes, then restore from the dashboard |
 | Team Layer | Subscribe to a Git repo for team-approved MCPs and skills |
@@ -262,6 +263,26 @@ Note: MCP servers that depend on personal tokens, local paths, or database
 connection strings should stay as placeholders / optional entries in the team
 repo, then be completed or overridden from the user's local
 `~/.config/plexus/personal/` layer.
+
+## Skills Market
+
+Open **Skills -> Market** to browse community skills ranked by GitHub stars
+(default topic `claude-skills`, plus `agent-skills`, `ai-skills`, `cursor-rules`,
+and free-text search). Click **Install** on a skill and Plexus will:
+
+1. Download the repo tarball and extract it to a temp directory.
+2. Locate `SKILL.md` (preferring the repo root) and read its frontmatter.
+3. Write `SKILL.md` plus sibling resources (`scripts/`, `references/`, `assets/`,
+   …) into `~/.config/plexus/personal/skills/<repo>/`.
+4. Snapshot native files, then sync to all enabled agents.
+
+Already-installed skills show **Installed**. Repos that are not single-skill
+(no `SKILL.md`, or multiple skills) are rejected with a clear message rather
+than writing broken config.
+
+Market data comes from the GitHub Search API, sorted by stars descending. It is
+rate-limited without a token; set `GITHUB_TOKEN` (or keep `gh` signed in) to
+raise the limit automatically.
 
 ## CLI
 

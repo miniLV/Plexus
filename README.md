@@ -92,6 +92,7 @@ Plexus 的目标很简单：给这些工具一个本地的 single source of trut
 | 全局规则 | 在 `~/.config/plexus/personal/rules/global.md` 维护一份基线，投射到 `CLAUDE.md` 和 `AGENTS.md` |
 | MCP Servers | 把团队层和个人层的 MCP 同步到每个 agent 的原生格式 |
 | Skills | 把 Markdown skill bundle 链接或复制到各 agent 的 skill 目录 |
+| Skills 市场 | 按 GitHub 星标排行浏览社区技能，一键下载安装到 personal store 并同步 |
 | Mirror | 从一个 agent 选择有效配置，预览差异后同步到其他 agent |
 | Backups | 每次写入原生文件前自动 snapshot，并支持从 dashboard 恢复 |
 | Team Layer | 订阅一个 Git repo，分发团队认可的 MCP 和 skills |
@@ -236,6 +237,19 @@ local machine
 举个例子：团队把 `code-review` skill 加进 `agent-primer`，所有成员只需要执行 `plexus pull && plexus sync`，这个 skill 就会进入 Claude Code、Cursor、Codex 等已启用 agent 的 skill 目录。团队把 `github` MCP 留成 optional placeholder；个人需要时，在 Plexus 的 MCP 页面启用它，并在 personal layer 里补自己的 token。
 
 注意：team repo 里的 MCP 如果依赖个人 token、本机路径或数据库连接，应该先保持 placeholder / optional，再由个人在 `~/.config/plexus/personal/` 里覆盖或补全。
+
+## Skills 市场
+
+打开 **Skills -> Market**，可以按 GitHub 星标排行浏览社区技能（默认 `claude-skills` 主题，也支持 `agent-skills`、`ai-skills`、`cursor-rules` 和自由搜索）。点一个技能的 **Install**，Plexus 会：
+
+1. 下载该 repo 的 tarball 并解压到临时目录；
+2. 找到 `SKILL.md`（优先根目录），读取 frontmatter 作为技能名称和描述；
+3. 把 `SKILL.md` 以及同目录的 `scripts/`、`references/`、`assets/` 等资源写进 `~/.config/plexus/personal/skills/<repo>/`；
+4. 在写入原生文件前创建 snapshot，然后同步到所有已启用 agent。
+
+已经安装过的技能会显示 **Installed**。如果某个 repo 不是单技能仓库（没有 `SKILL.md`，或包含多个技能），安装会返回清晰的提示而不会写坏配置。
+
+市场数据来自 GitHub Search API，按 star 数降序排列。未配置 token 时有速率限制；设置 `GITHUB_TOKEN`（或让本机 `gh` 已登录）即可自动提高限额。
 
 ## CLI
 
