@@ -76,6 +76,7 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
   const [topic, setTopic] = useState(DEFAULT_TOPIC);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const [nonce, setNonce] = useState(0);
   const [skills, setSkills] = useState<MarketSkill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +109,7 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, [topic, submitted, copy.error]);
+  }, [topic, submitted, nonce, copy.error]);
 
   async function install(skill: MarketSkill) {
     setInstalling(skill.id);
@@ -147,7 +148,11 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
               <button
                 key={t}
                 type="button"
-                onClick={() => setTopic(t)}
+                onClick={() => {
+                  setTopic(t);
+                  setQuery("");
+                  setSubmitted("");
+                }}
                 className={
                   topic === t
                     ? "h-7 rounded-sm border border-plexus-accent/45 bg-plexus-accent/15 px-2.5 font-mono text-xs text-plexus-text"
@@ -193,7 +198,7 @@ export function SkillsMarket({ onInstalled }: { onInstalled?: () => void }) {
         <Card className="space-y-3 px-4 py-8 text-center">
           <div className="text-sm text-plexus-err">{copy.error}</div>
           <div className="text-xs text-plexus-text-3">{error}</div>
-          <Button variant="secondary" size="sm" onClick={() => setSubmitted(`${submitted} `)}>
+          <Button variant="secondary" size="sm" onClick={() => setNonce((n) => n + 1)}>
             {copy.retry}
           </Button>
         </Card>
