@@ -40,6 +40,7 @@ const APP_PATH_HINTS: Record<AgentId, string[]> = {
   "qwen-code": [],
   "factory-droid": [],
   deepseek: [],
+  opencode: [],
 };
 
 const COMMAND_HINTS: Record<AgentId, string[]> = {
@@ -50,6 +51,7 @@ const COMMAND_HINTS: Record<AgentId, string[]> = {
   "qwen-code": ["qwen"],
   "factory-droid": ["factory-droid", "droid"],
   deepseek: ["dsh"],
+  opencode: ["opencode"],
 };
 
 function metadataPathHints(id: AgentId): string[] {

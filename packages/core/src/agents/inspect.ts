@@ -207,6 +207,14 @@ export function instructionsForAgent(
           abs: path.join(root, "AGENTS.md"),
         },
       ];
+    case "opencode":
+      return [
+        {
+          label: "AGENTS.md (user-level)",
+          filename: "AGENTS.md",
+          abs: path.join(root, "AGENTS.md"),
+        },
+      ];
   }
 }
 

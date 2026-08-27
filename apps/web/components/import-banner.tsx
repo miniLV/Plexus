@@ -36,6 +36,7 @@ const AGENT_LABELS: Record<string, string> = {
   "qwen-code": "Qwen",
   "factory-droid": "Droid",
   deepseek: "DeepSeek",
+  opencode: "OpenCode",
 };
 
 function fmtAgents(ids: string[]): string {

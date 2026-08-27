@@ -182,6 +182,7 @@ const AGENT_PRIORITY: AgentId[] = [
   "qwen-code",
   "factory-droid",
   "deepseek",
+  "opencode",
 ];
 
 interface Variant<T> {

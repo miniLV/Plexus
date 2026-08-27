@@ -29,6 +29,7 @@ const FILE_MODE_LABEL: Record<string, string> = {
   "qwen-code": "partial-write",
   "factory-droid": "symlink",
   deepseek: "partial-write",
+  opencode: "partial-write",
 };
 
 export function MirrorPanel({

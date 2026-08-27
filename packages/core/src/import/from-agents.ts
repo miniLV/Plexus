@@ -68,7 +68,14 @@ export async function readNativeMcpFromAgent(agentId: AgentId): Promise<
   try {
     const raw = await fs.readFile(caps.mcpPath, "utf8");
     if (caps.mcpFormat === "json") {
-      const data = JSON.parse(raw) as { mcpServers?: Record<string, any> };
+      const data = JSON.parse(raw) as {
+        mcpServers?: Record<string, any>;
+        mcp?: Record<string, any>;
+      };
+      if (agentId === "opencode") {
+        const m = data.mcp ?? {};
+        return Object.entries(m).map(([id, cfg]) => readOpenCodeMcpEntry(id, cfg));
+      }
       const m = data.mcpServers ?? {};
       return Object.entries(m).map(([id, cfg]) => readJsonMcpEntry(id, cfg));
     }
@@ -117,6 +124,41 @@ function readJsonMcpEntry(
     url: typeof cfg?.url === "string" ? cfg.url : undefined,
     httpUrl: typeof cfg?.httpUrl === "string" ? cfg.httpUrl : undefined,
     headers: readJsonRecord(cfg?.headers),
+  };
+}
+
+/** OpenCode stores MCP servers under `mcp` with a `local`/`remote` shape. */
+function readOpenCodeMcpEntry(
+  id: string,
+  cfg: any,
+): {
+  id: string;
+  type?: string;
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  httpUrl?: string;
+  headers?: Record<string, string>;
+} {
+  const transport = typeof cfg?.type === "string" ? cfg.type : undefined;
+  if (transport === "remote") {
+    return {
+      id,
+      type: "http",
+      command: "",
+      url: typeof cfg?.url === "string" ? cfg.url : undefined,
+      headers: readJsonRecord(cfg?.headers),
+    };
+  }
+  const command = Array.isArray(cfg?.command) ? cfg.command.map(String) : [];
+  const [head, ...rest] = command;
+  return {
+    id,
+    type: "stdio",
+    command: head ?? "",
+    args: rest.length > 0 ? rest : undefined,
+    env: readJsonRecord(cfg?.environment),
   };
 }
 

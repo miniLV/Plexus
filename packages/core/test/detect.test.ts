@@ -64,6 +64,23 @@ describe("detectAgents", () => {
     expect(instruction?.abs).toBe(path.join(home, ".dsh", "AGENTS.md"));
     expect(instruction?.filename).toBe("AGENTS.md");
   });
+
+  it("detects OpenCode from the opencode CLI before config files exist", async () => {
+    const opencodeBin = path.join(bin, "opencode");
+    await fs.writeFile(opencodeBin, "#!/bin/sh\n", "utf8");
+    await fs.chmod(opencodeBin, 0o755);
+
+    const opencode = detectAgents().find((agent) => agent.id === "opencode");
+
+    expect(opencode?.installed).toBe(true);
+  });
+
+  it("uses ~/.config/opencode as the OpenCode config root", () => {
+    expect(AGENT_PATHS.opencode.skillsDir).toBe(path.join(home, ".config", "opencode", "skills"));
+    expect(AGENT_PATHS.opencode.mcpPath).toBe(
+      path.join(home, ".config", "opencode", "opencode.json"),
+    );
+  });
 });
 
 describe("listAgentCatalog", () => {

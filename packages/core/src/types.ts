@@ -17,7 +17,8 @@ export type AgentId =
   | "gemini-cli"
   | "qwen-code"
   | "factory-droid"
-  | "deepseek";
+  | "deepseek"
+  | "opencode";
 
 export interface AgentDescriptor {
   id: AgentId;

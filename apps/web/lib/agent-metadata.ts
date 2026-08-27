@@ -6,6 +6,7 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
   deepseek: "DeepSeek Harness",
+  opencode: "OpenCode",
 };
 
 export const AGENT_SHORT_NAMES: Record<string, string> = {
@@ -16,6 +17,7 @@ export const AGENT_SHORT_NAMES: Record<string, string> = {
   "qwen-code": "Qwen",
   "factory-droid": "Droid",
   deepseek: "DeepSeek",
+  opencode: "OpenCode",
 };
 
 export function agentDisplayName(agentId: string): string {

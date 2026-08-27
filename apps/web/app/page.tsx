@@ -131,6 +131,11 @@ const AGENT_DISPLAY: Record<
     instructionFile: "~/.dsh/AGENTS.md",
     mcpFile: "~/.dsh/mcp.json",
   },
+  opencode: {
+    mode: "shared",
+    instructionFile: "~/.config/opencode/AGENTS.md",
+    mcpFile: "~/.config/opencode/opencode.json",
+  },
 };
 
 type RulesCore = typeof core & {

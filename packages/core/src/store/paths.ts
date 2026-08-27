@@ -94,6 +94,18 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     skillsDir: path.join(home, ".dsh", "skills"),
     mcpFileMode: "shared",
   },
+  opencode: {
+    mcp: true,
+    skills: true,
+    mcpFormat: "json",
+    // OpenCode keeps its global config at ~/.config/opencode/opencode.json.
+    // MCP servers live under the `mcp` key there (not `mcpServers`), so it
+    // needs a dedicated adapter; the file also holds model/permission/etc.
+    // keys, so it is partial-write.
+    mcpPath: path.join(home, ".config", "opencode", "opencode.json"),
+    skillsDir: path.join(home, ".config", "opencode", "skills"),
+    mcpFileMode: "shared",
+  },
 };
 
 export const AGENT_DISPLAY_NAMES: Record<AgentId, string> = {
@@ -104,6 +116,7 @@ export const AGENT_DISPLAY_NAMES: Record<AgentId, string> = {
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
   deepseek: "DeepSeek Harness",
+  opencode: "OpenCode",
 };
 
 /** Root directory we use to "detect" each agent. */
@@ -115,6 +128,7 @@ export const AGENT_ROOTS: Record<AgentId, string> = {
   "qwen-code": path.join(home, ".qwen"),
   "factory-droid": path.join(home, ".factory"),
   deepseek: path.join(home, ".dsh"),
+  opencode: path.join(home, ".config", "opencode"),
 };
 
 export const ALL_AGENTS: AgentId[] = [
@@ -125,4 +139,5 @@ export const ALL_AGENTS: AgentId[] = [
   "qwen-code",
   "factory-droid",
   "deepseek",
+  "opencode",
 ];

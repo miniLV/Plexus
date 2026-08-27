@@ -27,6 +27,7 @@ Supported built-in agents:
 | Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
 | DeepSeek Harness | `~/.dsh/mcp.json` | `~/.dsh/skills/` | `shared` |
+| OpenCode | `~/.config/opencode/opencode.json` | `~/.config/opencode/skills/` | `shared` |
 
 The current package version is tracked in the root `package.json`. All
 workspace `package.json` files must stay on the same version:
@@ -226,7 +227,7 @@ Important nuance: exclusive mode still preserves native MCP IDs that Plexus
 does not manage by reading the current file first and carrying those entries
 forward.
 
-#### Shared Mode: Claude Code, Codex, Gemini CLI, Qwen Code
+#### Shared Mode: Claude Code, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, OpenCode
 
 These files contain auth, history, profiles, and other agent-owned state.
 Plexus must never replace the whole file.
@@ -234,6 +235,8 @@ Plexus must never replace the whole file.
 - Claude Code / Gemini CLI / Qwen Code / DeepSeek Harness JSON: rewrite only
   `mcpServers`.
 - Codex TOML: rewrite only `mcp_servers`.
+- OpenCode JSON: rewrite only `mcp` (its `mcpServers`-less shape needs the
+  dedicated adapter below).
 - Managed IDs disabled for the agent are removed from that MCP section.
 - Unmanaged native MCP IDs are preserved.
 
@@ -241,11 +244,13 @@ Implementation:
 
 - JSON: `packages/core/src/agents/adapters/json-mcp.ts` `writeShared()`
 - TOML: `packages/core/src/agents/adapters/codex.ts`
+- OpenCode: `packages/core/src/agents/adapters/opencode.ts`
 
 Tests:
 
 - `packages/core/test/partial-write-json.test.ts`
 - `packages/core/test/partial-write-toml.test.ts`
+- `packages/core/test/opencode.test.ts`
 
 ### 3.3 Skills Sync
 
@@ -261,6 +266,7 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - Qwen Code target: `~/.qwen/skills/<id>`
 - Factory Droid target: `~/.factory/skills/<id>`
 - DeepSeek Harness target: `~/.dsh/skills/<id>`
+- OpenCode target: `~/.config/opencode/skills/<id>`
 
 The Plexus store is part of the skill union, not just a sync output. A skill
 created directly under `~/.config/plexus/personal/skills/<id>` is already a
@@ -292,6 +298,7 @@ Rules are the product answer to "one instruction file for every AI tool."
 - Qwen Code target: `~/.qwen/QWEN.md`
 - Factory Droid target: `~/.factory/AGENTS.md`
 - DeepSeek Harness target: `~/.dsh/AGENTS.md`
+- OpenCode target: `~/.config/opencode/AGENTS.md`
 
 Implementation:
 
@@ -367,7 +374,7 @@ for same-ID native-native conflicts. If the user does not pick one, the native
 priority order is:
 
 ```text
-codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid → deepseek
+codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid → deepseek → opencode
 ```
 
 If Plexus already has an item with the same ID, the Plexus version is the
@@ -979,6 +986,7 @@ Recently important fixes that must not regress:
 | Agent inspection | `packages/core/src/agents/inspect.ts` |
 | JSON MCP adapters | `packages/core/src/agents/adapters/json-mcp.ts` |
 | Codex TOML adapter | `packages/core/src/agents/adapters/codex.ts` |
+| OpenCode adapter | `packages/core/src/agents/adapters/opencode.ts` |
 | Adapter file/link helpers | `packages/core/src/agents/adapters/base.ts` |
 | Full sync | `packages/core/src/sync/index.ts` |
 | Rules status/apply/import | `packages/core/src/rules/index.ts` |

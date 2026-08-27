@@ -24,6 +24,7 @@ const AGENT_LABELS: Record<string, string> = {
   "qwen-code": "Qwen",
   "factory-droid": "Droid",
   deepseek: "DeepSeek",
+  opencode: "OpenCode",
 };
 
 function authorityVariant(a: Row["authority"]): "personal" | "team" | "native" {

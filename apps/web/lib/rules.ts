@@ -34,6 +34,7 @@ const AGENT_LABELS: Record<string, string> = {
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
   deepseek: "DeepSeek Harness",
+  opencode: "OpenCode",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
