@@ -69,8 +69,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
-    "plexus-agent-config-core": "0.0.12",
-    "plexus-agent-config-web": "0.0.12",
+    "plexus-agent-config-core": "0.0.13",
+    "plexus-agent-config-web": "0.0.13",
     "typescript": "^5.4.5"
   }
 }
