@@ -1,7 +1,7 @@
 <h1 align="center">Plexus</h1>
 
 <p align="center">
-  <strong>Plexus Agent Config - local Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code config sync.</strong>
+  <strong>Plexus Agent Config - local Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode config sync.</strong>
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  先导入你已经配置好的 Claude Code、Cursor、Codex、Gemini CLI、Qwen Code 等工具，再用一次点击同步到其他 Agent。
+  先导入你已经配置好的 Claude Code、Cursor、Codex、Gemini CLI、Qwen Code、DeepSeek Harness、OpenCode 等工具，再用一次点击同步到其他 Agent。
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@
 </p>
 
 <p align="center">
-  适合已经同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，并且已经开始被配置漂移折腾的人。
+  适合已经同时使用 Claude Code、Cursor、Codex、Gemini CLI、Qwen Code、DeepSeek Harness 或 OpenCode，并且已经开始被配置漂移折腾的人。
 </p>
 
 <p align="center">
@@ -67,7 +67,7 @@
 
 ## 为什么需要 Plexus？
 
-现在的 AI 编程工作很少只用一个工具。你可能用 Claude Code 做规划，用 Cursor 写代码，用 Codex 跑自动化，再偶尔切到 Gemini CLI、Qwen Code、Windsurf 或 Kiro。问题是，每个工具都有自己的配置文件、MCP 格式、Skill 目录和指令文件。
+现在的 AI 编程工作很少只用一个工具。你可能用 Claude Code 做规划，用 Cursor 写代码，用 Codex 跑自动化，再偶尔切到 Gemini CLI、Qwen Code、DeepSeek Harness、OpenCode、Windsurf 或 Kiro。问题是，每个工具都有自己的配置文件、MCP 格式、Skill 目录和指令文件。
 
 于是每次有一个好用配置，都要重复做几遍：
 
@@ -81,7 +81,7 @@ Plexus 的目标很简单：给这些工具一个本地的 single source of trut
 
 ## 30 秒看懂
 
-如果你同时使用 Claude Code、Cursor、Codex、Gemini CLI 或 Qwen Code，并且已经厌倦了在五六个地方手动维护同一份配置，Plexus 就是为这个场景做的。
+如果你同时使用 Claude Code、Cursor、Codex、Gemini CLI、Qwen Code、DeepSeek Harness 或 OpenCode，并且已经厌倦了在五六个地方手动维护同一份配置，Plexus 就是为这个场景做的。
 
 它会把 `~/.config/plexus/` 作为本机 canonical store，同时扫描各个 agent 的原生配置，把 Plexus store 和 native-only 配置取并集合并。同 ID 内容不同才需要你选择保留哪个版本；普通同步不需要选择 source。每次写入原生文件前都会创建 snapshot，后悔了可以从 Backups 页面恢复。
 
@@ -175,6 +175,8 @@ npm run unlink
 | Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/settings.json` | `~/.gemini/skills/` | partial write |
 | Qwen Code | `~/.qwen/QWEN.md` | `~/.qwen/settings.json` | `~/.qwen/skills/` | partial write |
 | Factory Droid | `~/.factory/AGENTS.md` | `~/.factory/mcp.json` | `~/.factory/skills/` | symlink or copy |
+| DeepSeek Harness | `~/.dsh/AGENTS.md` | `~/.dsh/mcp.json` | `~/.dsh/skills/` | partial write |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/opencode.json` | `~/.config/opencode/skills/` | partial write |
 
 Partial write 表示 Plexus 只重写 MCP section，保留同一个文件里由 agent 自己管理的 auth、history、profile 和 settings。
 
@@ -200,7 +202,7 @@ Plexus 把 canonical config 放在 `~/.config/plexus/`：
 
 `team/` 层设计为来自共享 Git repo。`personal/` 层属于本机用户，并且会覆盖同 ID 的 team entry。
 
-对于 Cursor、Factory Droid 这类单用途 MCP 文件，Plexus 会优先使用 symlink。对于 `~/.claude.json`、`~/.codex/config.toml`、`~/.gemini/settings.json` 和 `~/.qwen/settings.json` 这种共享原生文件，Plexus 只 partial-write MCP section。
+对于 Cursor、Factory Droid 这类单用途 MCP 文件，Plexus 会优先使用 symlink。对于 `~/.claude.json`、`~/.codex/config.toml`、`~/.gemini/settings.json`、`~/.qwen/settings.json`、`~/.dsh/mcp.json` 和 `~/.config/opencode/opencode.json` 这种共享原生文件，Plexus 只 partial-write MCP section。
 
 ## Team Starter Repo
 

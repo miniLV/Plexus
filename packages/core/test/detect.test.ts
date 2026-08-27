@@ -44,6 +44,14 @@ describe("detectAgents", () => {
     expect(AGENT_PATHS.codex.skillsDir).toBe(path.join(home, ".codex", "skills"));
   });
 
+  it("detects DeepSeek Harness from its ~/.dsh harness home even without the dsh CLI", async () => {
+    await fs.mkdir(path.join(home, ".dsh"), { recursive: true });
+
+    const deepseek = detectAgents().find((agent) => agent.id === "deepseek");
+
+    expect(deepseek?.installed).toBe(true);
+  });
+
   it("detects DeepSeek Harness from the dsh CLI before config files exist", async () => {
     const dshBin = path.join(bin, "dsh");
     await fs.writeFile(dshBin, "#!/bin/sh\n", "utf8");

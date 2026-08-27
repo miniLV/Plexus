@@ -39,7 +39,10 @@ const APP_PATH_HINTS: Record<AgentId, string[]> = {
   "gemini-cli": [],
   "qwen-code": [],
   "factory-droid": [],
-  deepseek: [],
+  // dsh (DeepSeek Harness) is usually run via `npx @deepseek-ai/dsh` and may
+  // not install a `dsh` binary on PATH. Its harness home ~/.dsh is created on
+  // first run, so treat it as a durable install signal.
+  deepseek: [path.join(home, ".dsh")],
   opencode: [],
 };
 

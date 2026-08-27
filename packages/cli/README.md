@@ -1,7 +1,7 @@
 # Plexus Agent Config
 
 Local dashboard for syncing rules, MCP servers, and skills across Claude Code,
-Cursor, Codex, Gemini CLI, and Qwen Code.
+Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode.
 
 ## Quick start
 
@@ -31,6 +31,8 @@ Plexus does not execute MCP servers.
 - Gemini CLI
 - Qwen Code
 - Factory Droid
+- DeepSeek Harness
+- OpenCode
 
 ## Links
 

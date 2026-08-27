@@ -1,11 +1,11 @@
 <h1 align="center">Plexus</h1>
 
 <p align="center">
-  <strong>Plexus Agent Config - one local dashboard for sharing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code.</strong>
+  <strong>Plexus Agent Config - one local dashboard for sharing rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode.</strong>
 </p>
 
 <p align="center">
-  Import what you already have in Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, and then share it with the other agents on your machine.
+  Import what you already have in Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, OpenCode, and then share it with the other agents on your machine.
 </p>
 
 <p align="center">
@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  Best fit for developers already using Claude Code plus Cursor, Codex, Gemini CLI, or Qwen Code and feeling config drift.
+  Best fit for developers already using Claude Code plus Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, or OpenCode and feeling config drift.
 </p>
 
 <p align="center">
@@ -64,7 +64,7 @@
 
 Modern AI coding work is multi-agent. One person might use Claude Code for
 planning, Cursor for editing, Codex for automation, then jump into Gemini CLI,
-Qwen Code, Windsurf, or Kiro for specific workflows. Each tool has its own
+Qwen Code, DeepSeek Harness, OpenCode, Windsurf, or Kiro for specific workflows. Each tool has its own
 config files, MCP format, skills folder, and instruction file.
 
 That means every useful update turns into busywork:
@@ -79,7 +79,7 @@ Plexus gives those tools one local source of truth.
 
 ## 30-Second Pitch
 
-Use Plexus if you run Claude Code plus Cursor, Codex, Gemini CLI, or Qwen Code and are tired of hand-editing the same config in five places.
+Use Plexus if you run Claude Code plus Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, or OpenCode and are tired of hand-editing the same config in five places.
 
 Plexus treats `~/.config/plexus/` as the local canonical store, scans each agent's native config, and merges the Plexus store plus native-only entries as a union. You only choose a version when the same ID has different content; normal sync no longer asks you to choose a source. Native files are snapshotted before writes, so you can undo from the Backups page.
 
@@ -181,6 +181,8 @@ npm run unlink
 | Gemini CLI | `~/.gemini/GEMINI.md` | `~/.gemini/settings.json` | `~/.gemini/skills/` | partial write |
 | Qwen Code | `~/.qwen/QWEN.md` | `~/.qwen/settings.json` | `~/.qwen/skills/` | partial write |
 | Factory Droid | `~/.factory/AGENTS.md` | `~/.factory/mcp.json` | `~/.factory/skills/` | symlink or copy |
+| DeepSeek Harness | `~/.dsh/AGENTS.md` | `~/.dsh/mcp.json` | `~/.dsh/skills/` | partial write |
+| OpenCode | `~/.config/opencode/AGENTS.md` | `~/.config/opencode/opencode.json` | `~/.config/opencode/skills/` | partial write |
 
 Partial write means Plexus rewrites only the MCP section and preserves the
 agent-owned auth, history, profile, and settings data in the same file.
@@ -213,7 +215,8 @@ layer belongs to the local user and overrides team entries with the same ID.
 
 For single-purpose native MCP files such as Cursor and Factory Droid, Plexus
 uses symlinks when possible. For shared native files such as `~/.claude.json`,
-`~/.codex/config.toml`, `~/.gemini/settings.json`, and `~/.qwen/settings.json`,
+`~/.codex/config.toml`, `~/.gemini/settings.json`, `~/.qwen/settings.json`,
+`~/.dsh/mcp.json`, and `~/.config/opencode/opencode.json`,
 Plexus partial-writes only the MCP section.
 
 ## Team Starter Repo
