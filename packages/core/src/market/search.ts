@@ -27,7 +27,17 @@ export interface SearchMarketOptions {
   /** Optional single topic to restrict to. Omit to search all default topics. */
   topic?: string;
   query?: string;
-  limit?: number;
+  /** 1-based page number. */
+  page?: number;
+  perPage?: number;
+}
+
+export interface MarketSearchResult {
+  skills: MarketSkill[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
 }
 
 /**
@@ -36,6 +46,12 @@ export interface SearchMarketOptions {
  * list instead of exposing raw GitHub topic labels to the user.
  */
 export const DEFAULT_MARKET_TOPICS = ["claude-skills", "claude-skill", "agent-skills", "ai-skills"];
+
+const DEFAULT_PER_PAGE = 30;
+/** Cap the merged list at 150 so the marketplace shows at most 5 pages. */
+const MAX_RESULTS = 150;
+/** GitHub's search API caps per_page at 100. */
+const TOPIC_PAGE_SIZE = 100;
 
 interface SearchRepoItem {
   full_name: string;
@@ -78,38 +94,21 @@ function mapItem(item: SearchRepoItem): MarketSkill {
   };
 }
 
-async function searchTopic(topic: string, query: string, limit: number): Promise<MarketSkill[]> {
+async function searchTopic(topic: string, query: string): Promise<MarketSkill[]> {
   const q = `topic:${topic}${query ? ` ${query} in:name,description,readme` : ""}`;
   const params = new URLSearchParams({
     q,
     sort: "stars",
     order: "desc",
-    per_page: String(limit),
+    per_page: String(TOPIC_PAGE_SIZE),
   });
   const data = await githubGet<SearchResponse>(`/search/repositories?${params.toString()}`);
   return data.items.map(mapItem);
 }
 
-/**
- * Search GitHub for community skill repos, ranked by star count (descending).
- *
- * GitHub's `OR` operator only applies to text terms, not `topic:` qualifiers,
- * so we query each topic in parallel, dedupe by repo, then sort the union by
- * stars. Results are cached in-memory for a short window to stay friendly to
- * the search API's rate limit.
- */
-export async function searchMarketSkills(
-  options: SearchMarketOptions = {},
-): Promise<MarketSkill[]> {
-  const topics = options.topic?.trim() ? [options.topic.trim()] : DEFAULT_MARKET_TOPICS;
-  const query = options.query?.trim() || "";
-  const limit = Math.min(Math.max(options.limit ?? 30, 1), 100);
-
-  const cacheKey = `${topics.join(",")}\u0000${query}\u0000${limit}`;
-  const hit = cache.get(cacheKey);
-  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.skills;
-
-  const settled = await Promise.allSettled(topics.map((topic) => searchTopic(topic, query, limit)));
+/** Fetch + merge the full ranked list (deduped, capped) for a query. */
+async function loadRankedSkills(topics: string[], query: string): Promise<MarketSkill[]> {
+  const settled = await Promise.allSettled(topics.map((topic) => searchTopic(topic, query)));
 
   const fulfilled = settled.filter(
     (result): result is PromiseFulfilledResult<MarketSkill[]> => result.status === "fulfilled",
@@ -127,11 +126,49 @@ export async function searchMarketSkills(
   }
 
   const personalIds = new Set((await readSkills("personal")).map((s) => s.id));
-  const skills = [...byId.values()]
+  return [...byId.values()]
     .map((skill) => ({ ...skill, installed: personalIds.has(repoToSkillId(skill.repo)) }))
     .sort((a, b) => b.stars - a.stars)
-    .slice(0, limit);
+    .slice(0, MAX_RESULTS);
+}
 
-  cache.set(cacheKey, { at: Date.now(), skills });
-  return skills;
+/**
+ * Search GitHub for community skill repos, ranked by star count (descending),
+ * with pagination (at most 5 pages).
+ *
+ * GitHub's `OR` operator only applies to text terms, not `topic:` qualifiers,
+ * so we query each topic in parallel, dedupe by repo, then sort the union by
+ * stars. The full ranked list is cached in-memory for a short window to stay
+ * friendly to the search API's rate limit; pagination happens in memory.
+ */
+export async function searchMarketSkills(
+  options: SearchMarketOptions = {},
+): Promise<MarketSearchResult> {
+  const topics = options.topic?.trim() ? [options.topic.trim()] : DEFAULT_MARKET_TOPICS;
+  const query = options.query?.trim() || "";
+  const perPage = Math.min(Math.max(options.perPage ?? DEFAULT_PER_PAGE, 1), MAX_RESULTS);
+  const page = Math.max(options.page ?? 1, 1);
+
+  const cacheKey = `${topics.join(",")}\u0000${query}`;
+  const hit = cache.get(cacheKey);
+  let ranked: MarketSkill[];
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    ranked = hit.skills;
+  } else {
+    ranked = await loadRankedSkills(topics, query);
+    cache.set(cacheKey, { at: Date.now(), skills: ranked });
+  }
+
+  const total = ranked.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * perPage;
+
+  return {
+    skills: ranked.slice(start, start + perPage),
+    total,
+    page: safePage,
+    perPage,
+    totalPages,
+  };
 }

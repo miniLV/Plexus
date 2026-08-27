@@ -92,7 +92,7 @@ Plexus 的目标很简单：给这些工具一个本地的 single source of trut
 | 全局规则 | 在 `~/.config/plexus/personal/rules/global.md` 维护一份基线，投射到 `CLAUDE.md` 和 `AGENTS.md` |
 | MCP Servers | 把团队层和个人层的 MCP 同步到每个 agent 的原生格式 |
 | Skills | 把 Markdown skill bundle 链接或复制到各 agent 的 skill 目录 |
-| Skills 市场 | 按 GitHub 星标排行浏览社区技能，一键下载安装到 personal store 并同步 |
+| Skill Market | 按 GitHub 星标排行浏览社区技能，一键下载安装到 personal store 并同步 |
 | Mirror | 从一个 agent 选择有效配置，预览差异后同步到其他 agent |
 | Backups | 每次写入原生文件前自动 snapshot，并支持从 dashboard 恢复 |
 | Team Layer | 订阅一个 Git repo，分发团队认可的 MCP 和 skills |
@@ -238,14 +238,20 @@ local machine
 
 注意：team repo 里的 MCP 如果依赖个人 token、本机路径或数据库连接，应该先保持 placeholder / optional，再由个人在 `~/.config/plexus/personal/` 里覆盖或补全。
 
-## Skills 市场
+## Skill Market
 
-打开 **Market**，可以浏览来自 GitHub 社区的 Agent Skills，按星标排行，并支持自由搜索。点一个技能的 **Install**，Plexus 会：
+打开 **Skill Market**，可以浏览来自 GitHub 社区的 Agent Skills，按星标排行，并支持自由搜索和翻页（最多 5 页）。点一个技能的 **Install**，Plexus 会：
 
 1. 下载该 repo 的 tarball 并解压到临时目录；
 2. 找到 `SKILL.md`（优先根目录），读取 frontmatter 作为技能名称和描述；
 3. 把 `SKILL.md` 以及同目录的 `scripts/`、`references/`、`assets/` 等资源写进 `~/.config/plexus/personal/skills/<repo>/`；
 4. 在写入原生文件前创建 snapshot，然后同步到所有已启用 agent。
+
+一次安装即可在所有支持的 agent（Claude Code、Cursor、Codex、Gemini CLI、Qwen Code、Factory Droid、DeepSeek Harness、OpenCode）里通用。
+
+<p align="center">
+  <img src="docs/assets/readme/market.png" alt="Plexus skill market" width="860" />
+</p>
 
 已经安装过的技能会显示 **Installed**。如果某个 repo 不是单技能仓库（没有 `SKILL.md`，或包含多个技能），安装会返回清晰的提示而不会写坏配置。
 

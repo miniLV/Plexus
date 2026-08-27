@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 const COPY = {
   en: {
-    title: "Skills Market",
+    title: "Skill Market",
     description:
       "Community agent skills from GitHub, ranked by stars. Install one into your personal store with a click, and Plexus syncs it to your enabled agents.",
   },

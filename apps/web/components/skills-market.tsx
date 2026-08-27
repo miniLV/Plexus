@@ -34,12 +34,13 @@ const COPY = {
     install: "Install",
     installed: "Installed",
     installing: "Installing…",
-    stars: "stars",
-    viewRepo: "View repo",
     installFailed: "Install failed",
     installedToast: (name: string) => `${name} installed and synced`,
     ranking: "Community agent skills from GitHub, ranked by stars",
     retry: "Retry",
+    prev: "Prev",
+    next: "Next",
+    results: (total: number) => `${total} skills`,
   },
   zh: {
     searchPlaceholder: "搜索技能…",
@@ -49,12 +50,13 @@ const COPY = {
     install: "安装",
     installed: "已安装",
     installing: "安装中…",
-    stars: "星标",
-    viewRepo: "查看仓库",
     installFailed: "安装失败",
     installedToast: (name: string) => `${name} 已安装并同步`,
     ranking: "来自 GitHub 社区的 Agent Skills，按星标排行",
     retry: "重试",
+    prev: "上一页",
+    next: "下一页",
+    results: (total: number) => `${total} 个技能`,
   },
 };
 
@@ -72,8 +74,11 @@ export function SkillsMarket() {
 
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const [page, setPage] = useState(1);
   const [nonce, setNonce] = useState(0);
   const [skills, setSkills] = useState<MarketSkill[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [installing, setInstalling] = useState<string | null>(null);
@@ -83,19 +88,28 @@ export function SkillsMarket() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const params = new URLSearchParams();
+    const params = new URLSearchParams({ page: String(page) });
     if (submitted) params.set("query", submitted);
     fetch(`/api/market?${params.toString()}`)
       .then((res) => res.json())
-      .then((data: { skills?: MarketSkill[]; error?: string }) => {
-        if (cancelled) return;
-        if (data.error) {
-          setError(data.error);
-          setSkills([]);
-        } else {
-          setSkills(data.skills ?? []);
-        }
-      })
+      .then(
+        (data: {
+          skills?: MarketSkill[];
+          total?: number;
+          totalPages?: number;
+          error?: string;
+        }) => {
+          if (cancelled) return;
+          if (data.error) {
+            setError(data.error);
+            setSkills([]);
+          } else {
+            setSkills(data.skills ?? []);
+            setTotal(data.total ?? 0);
+            setTotalPages(data.totalPages ?? 1);
+          }
+        },
+      )
       .catch(() => {
         if (!cancelled) setError(copy.error);
       })
@@ -105,7 +119,7 @@ export function SkillsMarket() {
     return () => {
       cancelled = true;
     };
-  }, [submitted, nonce, copy.error]);
+  }, [submitted, page, nonce, copy.error]);
 
   async function install(skill: MarketSkill) {
     setInstalling(skill.id);
@@ -142,6 +156,7 @@ export function SkillsMarket() {
             className="relative"
             onSubmit={(e) => {
               e.preventDefault();
+              setPage(1);
               setSubmitted(query.trim());
             }}
           >
@@ -259,6 +274,44 @@ export function SkillsMarket() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {!loading && !error && skills.length > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t border-plexus-border pt-4">
+          <span className="text-xs text-plexus-text-3">{copy.results(total)}</span>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              {copy.prev}
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setPage(n)}
+                className={
+                  page === n
+                    ? "h-7 w-7 rounded-sm bg-plexus-accent/15 text-xs font-medium text-plexus-text shadow-[inset_0_0_0_1px_var(--plexus-accent)]"
+                    : "h-7 w-7 rounded-sm text-xs text-plexus-text-2 hover:bg-plexus-surface-2 hover:text-plexus-text"
+                }
+              >
+                {n}
+              </button>
+            ))}
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              {copy.next}
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -629,7 +629,7 @@ Workspace:
   Rules
   MCP Servers
   Skills
-  Market
+  Skill Market
   Mirror
 
 Configuration:
@@ -721,8 +721,9 @@ Browses community skill repos ranked by GitHub star count (`GET /api/market`)
 and installs one repo as one skill into the personal store
 (`POST /api/market/install`, then a normal sync). Backed by
 `packages/core/src/market/` — it queries several agent-skill GitHub topics in
-parallel, dedupes, and sorts the union by stars (GitHub's `OR` operator cannot
-combine `topic:` qualifiers). Install prefers a root `SKILL.md` or the only
+parallel, dedupes, sorts the union by stars (GitHub's `OR` operator cannot
+combine `topic:` qualifiers), caps the list at 150, and paginates it in memory
+(30 per page, up to 5 pages). Install prefers a root `SKILL.md` or the only
 `SKILL.md` in the tree, and rejects multi-skill collections with a clear
 message.
 
