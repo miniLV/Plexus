@@ -61,12 +61,11 @@ jobs:
             }
           "
 
-          npm install --package-lock-only 2>/dev/null || true
         env:
           TARGET_VERSION: ${{ env.VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Publish to npm
         run: npm run release:npm
