@@ -25,7 +25,7 @@ interface MarketSkill {
   installed: boolean;
 }
 
-const TOPICS = ["claude-skills", "agent-skills", "ai-skills", "cursor-rules"];
+const TOPICS = ["claude-skills", "agent-skills", "claude-skill", "ai-skills"];
 const DEFAULT_TOPIC = TOPICS[0];
 
 const COPY = {
