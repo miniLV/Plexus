@@ -30,17 +30,43 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Validate tag matches package version
+      - name: Sync package versions from tag
         shell: bash
         run: |
-          version="$(node -p "require('./package.json').version")"
-          if [[ "${GITHUB_REF_NAME}" != "v${version}" ]]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match package version v${version}" >&2
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version extracted from tag: $VERSION" >&2
             exit 1
           fi
+
+          echo "Syncing all packages to version $VERSION (from $TAG)"
+
+          node -e "
+            const fs = require('fs');
+            const pkg = process.env.TARGET_VERSION;
+            const files = [
+              'package.json',
+              'apps/web/package.json',
+              'packages/core/package.json',
+              'packages/cli/package.json'
+            ];
+            for (const f of files) {
+              let txt = fs.readFileSync(f, 'utf8');
+              txt = txt.replace(/\"version\":\\s*\"\\d+\\.\\d+\\.\\d+\"/, '\"version\": \"' + pkg + '\"');
+              fs.writeFileSync(f, txt);
+              console.log('  updated', f);
+            }
+          "
+
+          npm install --package-lock-only 2>/dev/null || true
+        env:
+          TARGET_VERSION: ${{ env.VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Publish to npm
         run: npm run release:npm
