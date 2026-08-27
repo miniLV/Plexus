@@ -82,6 +82,18 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     // Plexus can fully own this file.
     mcpFileMode: "exclusive",
   },
+  deepseek: {
+    mcp: true,
+    skills: true,
+    mcpFormat: "json",
+    // DeepSeek Harness (dsh) keeps its harness home at ~/.dsh. Its MCP is
+    // currently configured via cordis plugin layers, but the ecosystem
+    // persists server definitions at ~/.dsh/mcp.json — partial-write to be
+    // safe while dsh is still in developer preview.
+    mcpPath: path.join(home, ".dsh", "mcp.json"),
+    skillsDir: path.join(home, ".dsh", "skills"),
+    mcpFileMode: "shared",
+  },
 };
 
 export const AGENT_DISPLAY_NAMES: Record<AgentId, string> = {
@@ -91,6 +103,7 @@ export const AGENT_DISPLAY_NAMES: Record<AgentId, string> = {
   "gemini-cli": "Gemini CLI",
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
+  deepseek: "DeepSeek Harness",
 };
 
 /** Root directory we use to "detect" each agent. */
@@ -101,6 +114,7 @@ export const AGENT_ROOTS: Record<AgentId, string> = {
   "gemini-cli": path.join(home, ".gemini"),
   "qwen-code": path.join(home, ".qwen"),
   "factory-droid": path.join(home, ".factory"),
+  deepseek: path.join(home, ".dsh"),
 };
 
 export const ALL_AGENTS: AgentId[] = [
@@ -110,4 +124,5 @@ export const ALL_AGENTS: AgentId[] = [
   "gemini-cli",
   "qwen-code",
   "factory-droid",
+  "deepseek",
 ];

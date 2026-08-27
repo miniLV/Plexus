@@ -5,6 +5,7 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "gemini-cli": "Gemini CLI",
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
+  deepseek: "DeepSeek Harness",
 };
 
 export const AGENT_SHORT_NAMES: Record<string, string> = {
@@ -14,6 +15,7 @@ export const AGENT_SHORT_NAMES: Record<string, string> = {
   "gemini-cli": "Gemini",
   "qwen-code": "Qwen",
   "factory-droid": "Droid",
+  deepseek: "DeepSeek",
 };
 
 export function agentDisplayName(agentId: string): string {

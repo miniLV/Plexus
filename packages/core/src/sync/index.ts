@@ -181,6 +181,7 @@ const AGENT_PRIORITY: AgentId[] = [
   "gemini-cli",
   "qwen-code",
   "factory-droid",
+  "deepseek",
 ];
 
 interface Variant<T> {

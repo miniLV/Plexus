@@ -126,6 +126,11 @@ const AGENT_DISPLAY: Record<
     instructionFile: "~/.factory/AGENTS.md",
     mcpFile: "~/.factory/mcp.json",
   },
+  deepseek: {
+    mode: "shared",
+    instructionFile: "~/.dsh/AGENTS.md",
+    mcpFile: "~/.dsh/mcp.json",
+  },
 };
 
 type RulesCore = typeof core & {

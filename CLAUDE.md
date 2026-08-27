@@ -26,6 +26,7 @@ Supported built-in agents:
 | Gemini CLI | `~/.gemini/settings.json` | `~/.gemini/skills/` | `shared` |
 | Qwen Code | `~/.qwen/settings.json` | `~/.qwen/skills/` | `shared` |
 | Factory Droid | `~/.factory/mcp.json` | `~/.factory/skills/` | `exclusive` |
+| DeepSeek Harness | `~/.dsh/mcp.json` | `~/.dsh/skills/` | `shared` |
 
 The current package version is tracked in the root `package.json`. All
 workspace `package.json` files must stay on the same version:
@@ -230,7 +231,8 @@ forward.
 These files contain auth, history, profiles, and other agent-owned state.
 Plexus must never replace the whole file.
 
-- Claude Code / Gemini CLI / Qwen Code JSON: rewrite only `mcpServers`.
+- Claude Code / Gemini CLI / Qwen Code / DeepSeek Harness JSON: rewrite only
+  `mcpServers`.
 - Codex TOML: rewrite only `mcp_servers`.
 - Managed IDs disabled for the agent are removed from that MCP section.
 - Unmanaged native MCP IDs are preserved.
@@ -258,6 +260,7 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - Gemini CLI target: `~/.gemini/skills/<id>`
 - Qwen Code target: `~/.qwen/skills/<id>`
 - Factory Droid target: `~/.factory/skills/<id>`
+- DeepSeek Harness target: `~/.dsh/skills/<id>`
 
 The Plexus store is part of the skill union, not just a sync output. A skill
 created directly under `~/.config/plexus/personal/skills/<id>` is already a
@@ -288,6 +291,7 @@ Rules are the product answer to "one instruction file for every AI tool."
 - Gemini CLI target: `~/.gemini/GEMINI.md`
 - Qwen Code target: `~/.qwen/QWEN.md`
 - Factory Droid target: `~/.factory/AGENTS.md`
+- DeepSeek Harness target: `~/.dsh/AGENTS.md`
 
 Implementation:
 
@@ -363,7 +367,7 @@ for same-ID native-native conflicts. If the user does not pick one, the native
 priority order is:
 
 ```text
-codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid
+codex → claude-code → cursor → gemini-cli → qwen-code → factory-droid → deepseek
 ```
 
 If Plexus already has an item with the same ID, the Plexus version is the

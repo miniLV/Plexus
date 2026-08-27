@@ -39,6 +39,7 @@ const APP_PATH_HINTS: Record<AgentId, string[]> = {
   "gemini-cli": [],
   "qwen-code": [],
   "factory-droid": [],
+  deepseek: [],
 };
 
 const COMMAND_HINTS: Record<AgentId, string[]> = {
@@ -48,6 +49,7 @@ const COMMAND_HINTS: Record<AgentId, string[]> = {
   "gemini-cli": ["gemini"],
   "qwen-code": ["qwen"],
   "factory-droid": ["factory-droid", "droid"],
+  deepseek: ["dsh"],
 };
 
 function metadataPathHints(id: AgentId): string[] {

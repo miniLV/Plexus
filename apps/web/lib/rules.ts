@@ -33,6 +33,7 @@ const AGENT_LABELS: Record<string, string> = {
   "gemini-cli": "Gemini CLI",
   "qwen-code": "Qwen Code",
   "factory-droid": "Factory Droid",
+  deepseek: "DeepSeek Harness",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -28,6 +28,7 @@ const FILE_MODE_LABEL: Record<string, string> = {
   "gemini-cli": "partial-write",
   "qwen-code": "partial-write",
   "factory-droid": "symlink",
+  deepseek: "partial-write",
 };
 
 export function MirrorPanel({

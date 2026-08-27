@@ -35,6 +35,7 @@ const AGENT_LABELS: Record<string, string> = {
   "gemini-cli": "Gemini",
   "qwen-code": "Qwen",
   "factory-droid": "Droid",
+  deepseek: "DeepSeek",
 };
 
 function fmtAgents(ids: string[]): string {

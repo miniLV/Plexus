@@ -12,6 +12,7 @@ process.env.PLEXUS_DETECT_CONFIG_ONLY = undefined;
 
 const { detectAgents } = await import("../src/agents/detect.js");
 const { listAgentCatalog } = await import("../src/agents/catalog.js");
+const { instructionsForAgent } = await import("../src/agents/inspect.js");
 const { AGENT_PATHS } = await import("../src/store/paths.js");
 
 afterAll(async () => {
@@ -41,6 +42,27 @@ describe("detectAgents", () => {
 
   it("uses the Codex skills directory rather than legacy prompts", () => {
     expect(AGENT_PATHS.codex.skillsDir).toBe(path.join(home, ".codex", "skills"));
+  });
+
+  it("detects DeepSeek Harness from the dsh CLI before config files exist", async () => {
+    const dshBin = path.join(bin, "dsh");
+    await fs.writeFile(dshBin, "#!/bin/sh\n", "utf8");
+    await fs.chmod(dshBin, 0o755);
+
+    const deepseek = detectAgents().find((agent) => agent.id === "deepseek");
+
+    expect(deepseek?.installed).toBe(true);
+  });
+
+  it("uses ~/.dsh as the DeepSeek Harness home for skills and MCP", () => {
+    expect(AGENT_PATHS.deepseek.skillsDir).toBe(path.join(home, ".dsh", "skills"));
+    expect(AGENT_PATHS.deepseek.mcpPath).toBe(path.join(home, ".dsh", "mcp.json"));
+  });
+
+  it("maps DeepSeek Harness rules to ~/.dsh/AGENTS.md", () => {
+    const [instruction] = instructionsForAgent("deepseek");
+    expect(instruction?.abs).toBe(path.join(home, ".dsh", "AGENTS.md"));
+    expect(instruction?.filename).toBe("AGENTS.md");
   });
 });
 

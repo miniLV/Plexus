@@ -10,6 +10,7 @@ export const adapters: Record<AgentId, AgentAdapter> = {
   "gemini-cli": makeJsonMcpAdapter("gemini-cli"),
   "qwen-code": makeJsonMcpAdapter("qwen-code"),
   "factory-droid": makeJsonMcpAdapter("factory-droid"),
+  deepseek: makeJsonMcpAdapter("deepseek"),
 };
 
 export { codexAdapter, makeJsonMcpAdapter };
