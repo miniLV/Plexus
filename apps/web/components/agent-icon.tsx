@@ -64,6 +64,11 @@ const BRAND_ICONS: Record<
     className: "border-[#8E75B2]/25 bg-[#8E75B2]/10 text-[#8E75B2]",
     path: "M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81",
   },
+  opencode: {
+    title: "OpenCode",
+    className: "border-black/10 bg-[#131010] text-white",
+    path: "M6 5H18V19H6Z M9 8V16H15V8Z M9 11H15V16H9Z",
+  },
 };
 
 function initialsFor(agentId: string): string {
