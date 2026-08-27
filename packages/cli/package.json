@@ -1,7 +1,7 @@
 {
   "name": "plexus-agent-config",
   "version": "0.0.12",
-  "description": "Local dashboard to sync Claude Code, Cursor, Codex, Gemini CLI, and Qwen Code rules, MCP servers, and skills.",
+  "description": "Local dashboard to sync Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode rules, MCP servers, and skills.",
   "type": "module",
   "license": "Apache-2.0",
   "homepage": "https://minilv.github.io/Plexus/",
