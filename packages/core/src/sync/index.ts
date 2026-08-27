@@ -281,16 +281,11 @@ function mcpFingerprint(
 }
 
 function skillFingerprint(item: SkillDef): string {
-  const frontmatter = Object.fromEntries(
-    Object.entries(item.frontmatter ?? {}).filter(
-      ([key]) => key !== "plexus_enabled_agents" && key !== "plexus_id",
-    ),
-  );
   return fingerprint({
     name: item.name,
     description: item.description ?? "",
     body: item.body,
-    frontmatter,
+    frontmatter: item.frontmatter ?? {},
   });
 }
 

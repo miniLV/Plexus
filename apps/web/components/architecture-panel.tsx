@@ -65,9 +65,9 @@ const COPY = {
         title: "Skills use directory-level symlinks",
         body: "A skill is already a folder with SKILL.md inside, so Plexus can share the same directory across agents without translating the content.",
         bullets: [
-          "Canonical: skills/<id>/SKILL.md with Plexus frontmatter.",
+          "Canonical: skills/<id>/SKILL.md with agent-native frontmatter.",
           "Targets: ~/.claude/skills/<id>, ~/.codex/skills/<id>, ~/.factory/skills/<id>.",
-          "Per-agent enablement lives in plexus_enabled_agents.",
+          "Per-agent enablement lives in a .plexus.json sidecar.",
         ],
       },
       mcp: {
@@ -135,9 +135,9 @@ const COPY = {
         title: "Skills 使用目录级软链接",
         body: "Skill 本身就是一个包含 SKILL.md 的目录，所以最干净的方式是让多个 Agent 的 skill 目录指向同一个 Plexus 目录。",
         bullets: [
-          "统一源：skills/<id>/SKILL.md，带 Plexus frontmatter。",
+          "统一源：skills/<id>/SKILL.md（agent 原生 frontmatter）。",
           "目标：~/.claude/skills/<id>、~/.codex/skills/<id>、~/.factory/skills/<id>。",
-          "是否同步给某个 Agent 由 plexus_enabled_agents 控制。",
+          "是否同步给某个 Agent 由 .plexus.json sidecar 控制。",
         ],
       },
       mcp: {

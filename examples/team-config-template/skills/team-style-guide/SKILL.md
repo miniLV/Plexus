@@ -1,12 +1,6 @@
 ---
 name: team-style-guide
 description: Team coding style baseline shared across every AI agent.
-plexus_id: team-style-guide
-plexus_enabled_agents:
-  - claude-code
-  - cursor
-  - codex
-  - factory-droid
 ---
 
 # Team Style Guide

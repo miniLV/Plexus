@@ -249,7 +249,9 @@ Tests:
 
 Skills are directory-based and are treated as exclusive per skill ID.
 
-- Store format: `~/.config/plexus/<layer>/skills/<id>/SKILL.md`
+- Store format: `~/.config/plexus/<layer>/skills/<id>/SKILL.md` (agent-native
+  frontmatter only; per-skill `enabledAgents` lives in the sibling
+  `.plexus.json` sidecar so `SKILL.md` stays clean for strict agents like Codex)
 - Claude Code target: `~/.claude/skills/<id>`
 - Cursor target: `~/.cursor/commands/<id>`
 - Codex target: `~/.codex/skills/<id>`

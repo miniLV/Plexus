@@ -1,0 +1,3 @@
+{
+  "enabledAgents": ["claude-code", "cursor", "codex", "factory-droid"]
+}

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
-import type { ConfigLayer, SkillDef } from "../types.js";
+import type { AgentId, ConfigLayer, SkillDef } from "../types.js";
 import { ensureDir, pathExists } from "./fs-utils.js";
 import { ALL_AGENTS, PLEXUS_PATHS } from "./paths.js";
 import { ensureStoreScaffolding, layerRoot } from "./scaffolding.js";
@@ -11,6 +11,13 @@ function skillsRoot(layer: ConfigLayer): string {
 }
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
+
+/** Hidden sidecar file Plexus uses to persist per-skill enabledAgents. */
+const SIDECAR_FILE = ".plexus.json";
+
+function stripPlexusKeys(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([key]) => !key.startsWith("plexus_")));
+}
 
 function hasFrontmatter(parsed: { frontmatter: Record<string, unknown>; body: string }): boolean {
   return Object.keys(parsed.frontmatter).length > 0;
@@ -75,11 +82,9 @@ export function serializeSkillMarkdown(skill: SkillDef): string {
     name;
   const fm: Record<string, unknown> = {
     ...nestedFrontmatter,
-    ...(skill.frontmatter ?? {}),
+    ...stripPlexusKeys(skill.frontmatter ?? {}),
     name,
     description,
-    plexus_id: skill.id,
-    plexus_enabled_agents: skill.enabledAgents,
   };
   return `---\n${YAML.stringify(fm).trim()}\n---\n${body.trimStart()}`;
 }
@@ -99,23 +104,46 @@ export async function readSkills(layer: ConfigLayer): Promise<SkillDef[]> {
     const nested = parseSkillMarkdown(body);
     const nestedFrontmatter = hasFrontmatter(nested) ? nested.frontmatter : {};
     const normalizedBody = hasFrontmatter(nested) ? nested.body : body;
-    const enabledFromFm = Array.isArray(frontmatter.plexus_enabled_agents)
-      ? (frontmatter.plexus_enabled_agents as string[])
-      : ALL_AGENTS;
-    const id = stringValue(frontmatter.plexus_id) ?? entry.name;
+    const id = entry.name;
     const name = stringValue(frontmatter.name) ?? stringValue(nestedFrontmatter.name) ?? entry.name;
     const nestedDescription = descriptionValue(nestedFrontmatter.description);
+    const sidecarAgents = await readSkillSidecar(layer, entry.name);
     skills.push({
       id,
       name,
       description: nestedDescription ?? descriptionValue(frontmatter.description),
       body: normalizedBody,
-      frontmatter: { ...nestedFrontmatter, ...frontmatter },
+      frontmatter: stripPlexusKeys({ ...nestedFrontmatter, ...frontmatter }),
       layer,
-      enabledAgents: enabledFromFm.filter((a): a is any => ALL_AGENTS.includes(a as any)),
+      enabledAgents: (sidecarAgents ?? ALL_AGENTS).filter((a) => ALL_AGENTS.includes(a)),
     });
   }
   return skills;
+}
+
+function sidecarPath(layer: ConfigLayer, id: string): string {
+  return path.join(skillsRoot(layer), id, SIDECAR_FILE);
+}
+
+async function readSkillSidecar(layer: ConfigLayer, id: string): Promise<AgentId[] | undefined> {
+  try {
+    const raw = await fs.readFile(sidecarPath(layer, id), "utf8");
+    const parsed = JSON.parse(raw) as { enabledAgents?: unknown };
+    if (!Array.isArray(parsed.enabledAgents)) return undefined;
+    return parsed.enabledAgents.filter(
+      (a): a is AgentId => typeof a === "string" && ALL_AGENTS.includes(a as AgentId),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
+async function writeSkillSidecar(skill: SkillDef): Promise<void> {
+  await fs.writeFile(
+    sidecarPath(skill.layer, skill.id),
+    JSON.stringify({ enabledAgents: skill.enabledAgents }, null, 2),
+    "utf8",
+  );
 }
 
 export async function writeSkill(skill: SkillDef): Promise<void> {
@@ -124,6 +152,7 @@ export async function writeSkill(skill: SkillDef): Promise<void> {
   const dir = path.join(root, skill.id);
   await ensureDir(dir);
   await fs.writeFile(path.join(dir, "SKILL.md"), serializeSkillMarkdown(skill), "utf8");
+  await writeSkillSidecar(skill);
 }
 
 export async function writeSkillBundle(skill: SkillDef, sourceDir?: string): Promise<void> {
@@ -144,7 +173,8 @@ async function copySkillResources(sourceDir: string, destDir: string): Promise<v
 
     const entries = await fs.readdir(sourceDir, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.name === "SKILL.md" || entry.name === ".DS_Store") continue;
+      if (entry.name === "SKILL.md" || entry.name === ".DS_Store" || entry.name === SIDECAR_FILE)
+        continue;
       await fs.cp(path.join(sourceDir, entry.name), path.join(destDir, entry.name), {
         recursive: true,
         force: true,

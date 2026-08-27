@@ -8,7 +8,7 @@ const sandbox = await setupSandbox("skills");
 const { readSkills, writeSkill } = await import("../src/store/skills.js");
 const { removeSkillEverywhere } = await import("../src/effective/index.js");
 const { runSync } = await import("../src/sync/index.js");
-const { AGENT_PATHS, PLEXUS_PATHS } = await import("../src/store/paths.js");
+const { AGENT_PATHS, ALL_AGENTS, PLEXUS_PATHS } = await import("../src/store/paths.js");
 
 afterAll(() => sandbox.cleanup());
 
@@ -34,9 +34,6 @@ describe("Skill store markdown normalization", () => {
         "---",
         "name: plantuml",
         'description: ""',
-        "plexus_id: plantuml",
-        "plexus_enabled_agents:",
-        "  - codex",
         "---",
         "---",
         "name: plantuml",
@@ -59,6 +56,50 @@ describe("Skill store markdown normalization", () => {
 
     expect(fm.description).toBe("**MANDATORY** - Use when creating PlantUML diagrams.");
     expect(raw.slice(raw.indexOf("---\n", 4))).not.toContain("name: plantuml");
+    expect(raw).not.toContain("plexus_");
+  });
+
+  it("persists enabledAgents in a .plexus.json sidecar, not in SKILL.md frontmatter", async () => {
+    await writeSkill({
+      id: "plantuml",
+      name: "plantuml",
+      description: "PlantUML diagrams",
+      body: "# PlantUML\n",
+      layer: "personal",
+      enabledAgents: ["codex"],
+    });
+
+    const raw = await fs.readFile(
+      path.join(PLEXUS_PATHS.personal, "skills", "plantuml", "SKILL.md"),
+      "utf8",
+    );
+    expect(raw).not.toContain("plexus_id");
+    expect(raw).not.toContain("plexus_enabled_agents");
+
+    const sidecar = JSON.parse(
+      await fs.readFile(
+        path.join(PLEXUS_PATHS.personal, "skills", "plantuml", ".plexus.json"),
+        "utf8",
+      ),
+    ) as { enabledAgents: string[] };
+    expect(sidecar.enabledAgents).toEqual(["codex"]);
+
+    const [skill] = await readSkills("personal");
+    expect(skill.enabledAgents).toEqual(["codex"]);
+  });
+
+  it("defaults enabledAgents to ALL_AGENTS when the sidecar is missing", async () => {
+    const skillDir = path.join(PLEXUS_PATHS.personal, "skills", "no-sidecar");
+    await fs.mkdir(skillDir, { recursive: true });
+    await fs.writeFile(
+      path.join(skillDir, "SKILL.md"),
+      ["---", "name: no-sidecar", "description: Local skill", "---", "# Body"].join("\n"),
+      "utf8",
+    );
+
+    const [skill] = await readSkills("personal");
+    expect(skill.id).toBe("no-sidecar");
+    expect(skill.enabledAgents).toEqual(ALL_AGENTS);
   });
 
   it("serializes YAML sequence descriptions as strings", async () => {
