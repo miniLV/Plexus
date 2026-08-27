@@ -43,6 +43,11 @@ export interface AgentCapabilities {
   /** Where the skills directory lives. */
   skillsDir: string;
   /**
+   * Where the commands directory lives (agents that surface slash-command
+   * bundles as files, e.g. OpenCode `~/.config/opencode/commands/`).
+   */
+  commandsDir?: string;
+  /**
    * How exclusively does Plexus own the MCP file?
    *  - "exclusive": the file's only purpose is mcp config (e.g. ~/.cursor/mcp.json,
    *    ~/.factory/mcp.json). Plexus generates a canonical cache file and

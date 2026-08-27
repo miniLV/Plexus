@@ -141,7 +141,7 @@ async function safeRemoveDir(p: string): Promise<void> {
   }
 }
 
-function isPlexusStoreSkillPath(target: string): boolean {
+export function isPlexusStoreSkillPath(target: string): boolean {
   const roots = [
     path.join(PLEXUS_PATHS.personal, PLEXUS_PATHS.skillsDirRel),
     path.join(PLEXUS_PATHS.team, PLEXUS_PATHS.skillsDirRel),

@@ -105,6 +105,89 @@ describe("OpenCode adapter", () => {
   });
 });
 
+describe("OpenCode skill projection", () => {
+  it("projects disable-model-invocation skills as commands, not skills", async () => {
+    const skillsDir = AGENT_PATHS.opencode.skillsDir;
+    const commandsDir = AGENT_PATHS.opencode.commandsDir ?? "";
+
+    const sourceDir = path.join(sandbox.home, "store", "normal-skill");
+    await fs.mkdir(sourceDir, { recursive: true });
+    await fs.writeFile(
+      path.join(sourceDir, "SKILL.md"),
+      "---\nname: normal-skill\ndescription: auto skill\n---\nbody",
+      "utf8",
+    );
+
+    const result = await opencodeAdapter.apply({
+      agentId: "opencode",
+      mcp: [],
+      skills: [
+        {
+          id: "normal-skill",
+          name: "normal-skill",
+          description: "auto skill",
+          body: "body",
+          frontmatter: {},
+          layer: "personal",
+          enabledAgents: ["opencode"],
+        },
+        {
+          id: "grill-me",
+          name: "grill-me",
+          description: "interview to sharpen a plan",
+          body: "# Grill Me\n\nInterview.",
+          frontmatter: { "disable-model-invocation": true },
+          layer: "personal",
+          enabledAgents: ["opencode"],
+        },
+      ],
+      skillSourcePaths: new Map([["normal-skill", sourceDir]]),
+      syncStrategy: "symlink",
+    });
+
+    expect(result.errors).toEqual([]);
+
+    const skillLink = path.join(skillsDir, "normal-skill");
+    expect((await fs.lstat(skillLink)).isSymbolicLink()).toBe(true);
+    await expect(fs.access(path.join(skillsDir, "grill-me"))).rejects.toThrow();
+
+    const commandPath = path.join(commandsDir, "grill-me.md");
+    expect((await fs.lstat(commandPath)).isSymbolicLink()).toBe(true);
+    const content = await fs.readFile(commandPath, "utf8");
+    expect(content).toContain("description: interview to sharpen a plan");
+    expect(content).toContain("# Grill Me");
+  });
+
+  it("removes a managed command when its skill is disabled", async () => {
+    const commandsDir = AGENT_PATHS.opencode.commandsDir ?? "";
+
+    const apply = (enabledAgents: string[]) =>
+      opencodeAdapter.apply({
+        agentId: "opencode",
+        mcp: [],
+        skills: [
+          {
+            id: "to-spec",
+            name: "to-spec",
+            description: "turn thread into a spec",
+            body: "# To Spec\n\nbody",
+            frontmatter: { "disable-model-invocation": true },
+            layer: "personal",
+            enabledAgents,
+          },
+        ],
+        skillSourcePaths: new Map(),
+        syncStrategy: "symlink",
+      });
+
+    await apply(["opencode"]);
+    expect(await fs.readFile(path.join(commandsDir, "to-spec.md"), "utf8")).toContain("# To Spec");
+
+    await apply(["cursor"]);
+    await expect(fs.access(path.join(commandsDir, "to-spec.md"))).rejects.toThrow();
+  });
+});
+
 describe("OpenCode import", () => {
   it("reads OpenCode mcp servers in both local and remote shapes", async () => {
     await fs.writeFile(

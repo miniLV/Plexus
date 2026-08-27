@@ -268,6 +268,13 @@ Skills are directory-based and are treated as exclusive per skill ID.
 - DeepSeek Harness target: `~/.dsh/skills/<id>`
 - OpenCode target: `~/.config/opencode/skills/<id>`
 
+Codex-native slash-command skills carry `disable-model-invocation: true` in
+their frontmatter. OpenCode has no such field, so the OpenCode adapter projects
+them as **commands** (`~/.config/opencode/commands/<id>.md`) instead of
+auto-invoked skills. The command file keeps only a `description` frontmatter
+field and the skill body; it is written to
+`~/.config/plexus/.cache/commands/<id>.md` and symlinked into the commands dir.
+
 The Plexus store is part of the skill union, not just a sync output. A skill
 created directly under `~/.config/plexus/personal/skills/<id>` is already a
 canonical source item. `runShareAll()` unions:

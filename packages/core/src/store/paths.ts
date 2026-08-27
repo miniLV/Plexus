@@ -17,6 +17,8 @@ export const PLEXUS_PATHS = {
   skillsDirRel: "skills",
   /** Plexus-owned canonical generated MCP files, symlinked from agent paths. */
   mcpCache: path.join(PLEXUS_ROOT, ".cache", "mcp"),
+  /** Plexus-owned canonical generated command files, symlinked from agent paths. */
+  commandsCache: path.join(PLEXUS_ROOT, ".cache", "commands"),
   /** Timestamped snapshots of agent native configs taken before each sync. */
   backups: path.join(PLEXUS_ROOT, "backups"),
 };
@@ -104,6 +106,9 @@ export const AGENT_PATHS: Record<AgentId, AgentCapabilities> = {
     // keys, so it is partial-write.
     mcpPath: path.join(home, ".config", "opencode", "opencode.json"),
     skillsDir: path.join(home, ".config", "opencode", "skills"),
+    // Codex-style slash-command skills (disable-model-invocation) are
+    // projected here as `/commands` instead of auto-invoked skills.
+    commandsDir: path.join(home, ".config", "opencode", "commands"),
     mcpFileMode: "shared",
   },
 };
