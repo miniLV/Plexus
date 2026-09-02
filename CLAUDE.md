@@ -142,6 +142,8 @@ Plexus/
 │   │   └── package.json
 │   └── cli/
 │       ├── src/bin.ts             # `plexus` command
+│       ├── src/start.ts           # dashboard bootstrap: web dir lookup, port parsing, next spawn
+│       ├── test/                  # vitest tests for the start bootstrap
 │       └── package.json
 ├── docs/refactor/                 # PRD, design, architecture, mockups
 ├── examples/team-config-template/
@@ -775,19 +777,29 @@ Commands:
 
 ```text
 plexus
-plexus start [-p <port>]
+plexus start [port] [-p <port>]
 plexus detect
 plexus join <git-url>
 plexus pull
-plexus sync
+plexus sync [--prefer <agent>]
 plexus status
 plexus help
 ```
 
-`plexus` / `plexus start` locates `apps/web` and runs:
+`plexus` / `plexus start` locates `apps/web`, resolves the Next.js CLI from
+that directory, and runs it with the current Node binary:
 
-- `npm run start` if `.next/` exists
-- otherwise `npm run dev`
+- `next start` if `.next/` exists
+- otherwise `next dev`
+
+It deliberately does not spawn `npm`: on Windows `npm` is an `npm.cmd` shim
+that `spawn()` cannot execute (issue #9 ENOENT). Keep it that way. Both a
+positional port (`plexus start 7778`) and `-p <port>` are honored.
+
+The bootstrap logic is unit-tested in `packages/cli/test/start.test.ts`
+(`npm run test:cli`, part of `npm run verify`). The tests pin the two issue #9
+regressions: the spawn command must be `process.execPath` (never `npm`), and
+positional ports must be honored.
 
 This is convenient for the monorepo and `npm link`. A fully packaged
 zero-install `npx plexus` distribution is still a release-hardening item;

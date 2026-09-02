@@ -1,6 +1,6 @@
 {
   "name": "plexus-agent-config",
-  "version": "0.0.14",
+  "version": "0.0.16",
   "description": "Local dashboard to sync Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode rules, MCP servers, and skills.",
   "type": "module",
   "license": "Apache-2.0",
@@ -40,7 +40,9 @@
     "postpack": "node ../../scripts/bundle-npm-deps.mjs --clean",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "dev": "tsc -p tsconfig.json --watch"
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
@@ -69,8 +71,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
-    "plexus-agent-config-core": "0.0.14",
-    "plexus-agent-config-web": "0.0.14",
-    "typescript": "^5.4.5"
+    "plexus-agent-config-core": "0.0.16",
+    "plexus-agent-config-web": "0.0.16",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.5"
   }
 }

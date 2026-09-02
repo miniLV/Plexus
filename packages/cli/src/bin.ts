@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import kleur from "kleur";
@@ -15,10 +12,10 @@ import {
   runShareAll,
   teamStatus,
 } from "plexus-agent-config-core";
+import { findWebDir, parsePortArg, resolveDashboardCommand, startDashboard } from "./start.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
 
 function help(): void {
   console.log(`
@@ -26,7 +23,7 @@ ${kleur.bold("Plexus")} – team-shared AI agent config
 
 ${kleur.bold("Usage:")}
   plexus              start the local dashboard (default)
-  plexus start [-p <port>]
+  plexus start [port] [-p <port>]
   plexus detect       list detected AI agents on this machine
   plexus join <git-url>   subscribe to a team config repo
   plexus pull         refresh the team layer from upstream
@@ -112,33 +109,9 @@ async function cmdStatus(): Promise<void> {
   await cmdDetect();
 }
 
-function findWebDir(): string | null {
-  const installedWebDir = (() => {
-    try {
-      return path.dirname(require.resolve("plexus-agent-config-web/package.json"));
-    } catch {
-      return null;
-    }
-  })();
-
-  const candidates = [
-    installedWebDir,
-    path.resolve(__dirname, "../vendor/plexus-agent-config-web"),
-    // Monorepo development / npm link paths.
-    path.resolve(__dirname, "../../../apps/web"),
-    path.resolve(__dirname, "../../apps/web"),
-    path.resolve(process.cwd(), "apps/web"),
-  ].filter((candidate): candidate is string => Boolean(candidate));
-
-  for (const c of candidates) {
-    if (existsSync(path.join(c, "package.json"))) return c;
-  }
-  return null;
-}
-
 async function cmdStart(port: number): Promise<void> {
   await ensureStoreScaffolding();
-  const webDir = findWebDir();
+  const webDir = findWebDir({ dirname: __dirname, cwd: process.cwd() });
   if (!webDir) {
     console.error(
       kleur.red("Could not locate apps/web. If you cloned the monorepo, run from the repo root."),
@@ -146,19 +119,24 @@ async function cmdStart(port: number): Promise<void> {
     process.exit(1);
   }
 
-  const env = { ...process.env, PORT: String(port), PLEXUS_PORT: String(port) };
-  const isProdBuild = existsSync(path.join(webDir, ".next"));
-  const args = isProdBuild ? ["run", "start"] : ["run", "dev"];
+  const spec = resolveDashboardCommand(webDir, port);
+  if (!spec) {
+    console.error(
+      kleur.red(
+        `Could not resolve the Next.js CLI under ${webDir}. Run "npm install" there (or at the package root) and try again.`,
+      ),
+    );
+    process.exit(1);
+  }
 
   console.log(kleur.cyan(`→ Starting Plexus dashboard on http://localhost:${port}`));
-  console.log(kleur.dim(`  (mode: ${isProdBuild ? "production" : "development"})`));
+  console.log(kleur.dim(`  (mode: ${spec.args[1] === "start" ? "production" : "development"})`));
 
-  const child = spawn("npm", [...args, "--", "-p", String(port)], {
+  startDashboard({
+    ...spec,
     cwd: webDir,
-    env,
-    stdio: "inherit",
+    env: { ...process.env, PORT: String(port), PLEXUS_PORT: String(port) },
   });
-  child.on("exit", (code) => process.exit(code ?? 0));
 }
 
 async function main(): Promise<void> {
@@ -195,10 +173,12 @@ async function main(): Promise<void> {
       process.exit(r.ok ? 0 : 1);
       return;
     }
+    case "start": {
+      await cmdStart(parsePortArg(rest));
+      return;
+    }
     default: {
-      const portFlagIdx = rest.findIndex((a) => a === "-p" || a === "--port");
-      const port = portFlagIdx >= 0 ? Number.parseInt(rest[portFlagIdx + 1] ?? "7777", 10) : 7777;
-      await cmdStart(port);
+      await cmdStart(parsePortArg(rest));
       return;
     }
   }
