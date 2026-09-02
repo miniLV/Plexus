@@ -19,7 +19,8 @@
     "test": "npm run test --workspaces --if-present",
     "test:core": "npm run test -w plexus-agent-config-core",
     "test:cli": "npm run test -w plexus-agent-config",
-    "verify": "npm run check && npm run test:core && npm run test:cli && npm run build",
+    "test:scripts": "vitest run",
+    "verify": "npm run check && npm run test:core && npm run test:cli && npm run test:scripts && npm run build",
     "bump": "node scripts/bump.mjs",
     "bump:patch": "node scripts/bump.mjs",
     "bump:dry": "node scripts/bump.mjs --dry",
@@ -33,7 +34,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.5"
   },
   "engines": {
     "node": ">=18.17"

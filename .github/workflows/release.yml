@@ -66,3 +66,11 @@ jobs:
               --generate-notes \
               --latest
           fi
+
+      - name: Verify release timestamp
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: node scripts/verify-release.mjs "$TAG"
