@@ -18,6 +18,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { installAttempts, registrySmokeSpec, shouldRetryInstall } from "./release-npm-lib.mjs";
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGE_NAME = "plexus-agent-config";
 const WORKSPACE = "plexus-agent-config";
@@ -353,19 +355,36 @@ async function startDashboard(bin, projectDir, label) {
 async function smokeInstall(spec, projectDir, label) {
   log(`smoke testing ${label}: ${spec}`);
   npmInit(projectDir);
-  run(["npm", "install", spec, "--registry", REGISTRY, "--prefer-online", "--loglevel", "warn"], {
-    cwd: projectDir,
-  });
+
+  const version = readJson("package.json").version;
+  const maxAttempts = installAttempts(spec);
+  let installedVersion;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    run(["npm", "install", spec, "--registry", REGISTRY, "--prefer-online", "--loglevel", "warn"], {
+      cwd: projectDir,
+    });
+    const manifestPath = join(projectDir, "node_modules", PACKAGE_NAME, "package.json");
+    assert(existsSync(manifestPath), `${label} install did not create ${PACKAGE_NAME}`);
+    installedVersion = JSON.parse(readFileSync(manifestPath, "utf8")).version;
+
+    if (!shouldRetryInstall(installedVersion, version, attempt, maxAttempts)) break;
+
+    log(
+      `${label} installed ${PACKAGE_NAME}@${installedVersion}, expected ${version}; retrying (${attempt}/${maxAttempts})`,
+    );
+    rmSync(join(projectDir, "node_modules"), { recursive: true, force: true });
+    rmSync(join(projectDir, "package-lock.json"), { force: true });
+    await sleep(5_000);
+  }
+
+  assert(
+    installedVersion === version,
+    `${label} installed ${PACKAGE_NAME}@${installedVersion}, expected ${version}`,
+  );
+
   const bin = binPath(projectDir);
   assert(existsSync(bin), `${label} install did not create plexus binary`);
-  const installedManifest = JSON.parse(
-    readFileSync(join(projectDir, "node_modules", PACKAGE_NAME, "package.json"), "utf8"),
-  );
-  const version = readJson("package.json").version;
-  assert(
-    installedManifest.version === version,
-    `${label} installed ${PACKAGE_NAME}@${installedManifest.version}, expected ${version}`,
-  );
   run([bin, "help"], { cwd: projectDir });
   run([bin, "detect"], { cwd: projectDir });
   await startDashboard(bin, projectDir, label);
@@ -446,7 +465,11 @@ async function main() {
       publishTarball(tarball);
       await verifyRegistry(version);
       if (!skipRegistrySmoke) {
-        await smokeInstall(`${PACKAGE_NAME}@latest`, registryProject, "npm registry");
+        await smokeInstall(
+          registrySmokeSpec(PACKAGE_NAME, version),
+          registryProject,
+          "npm registry",
+        );
       }
       log(`${PACKAGE_NAME}@${version} published and verified`);
     } else {
