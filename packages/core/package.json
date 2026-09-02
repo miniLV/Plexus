@@ -1,6 +1,6 @@
 {
   "name": "plexus-agent-config-core",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Core library for syncing AI agent rules, MCP servers, and skills across Claude Code, Cursor, Codex, Gemini CLI, Qwen Code, DeepSeek Harness, and OpenCode.",
   "type": "module",
   "license": "Apache-2.0",
