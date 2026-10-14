@@ -4,24 +4,60 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish/verify, for example v0.0.19"
+        required: true
+        type: string
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: publish-npm-${{ github.ref_name }}
+  group: publish-npm-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   publish:
     name: publish plexus-agent-config
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must look like vX.Y.Z: $tag" >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ steps.release.outputs.tag }}
+
+      - name: Overlay release scripts from default branch
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          default_branch="${{ github.event.repository.default_branch }}"
+          git fetch origin "$default_branch"
+          git checkout "origin/$default_branch" -- \
+            scripts/release-npm.mjs \
+            scripts/release-npm-lib.mjs
+          echo "PLEXUS_ALLOW_DIRTY_PUBLISH=1" >> "$GITHUB_ENV"
 
       - name: Setup Node for npm trusted publishing
         uses: actions/setup-node@v4
@@ -33,19 +69,14 @@ jobs:
       - name: Sync versions from tag
         shell: bash
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version extracted from tag: ${GITHUB_REF_NAME}" >&2
-            exit 1
-          fi
-
+          VERSION="${{ steps.release.outputs.version }}"
           echo "Syncing all packages to version $VERSION"
-
           node scripts/bump.mjs "$VERSION"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Publish to npm
+        env:
+          GITHUB_REF_NAME: ${{ steps.release.outputs.tag }}
         run: npm run release:npm
