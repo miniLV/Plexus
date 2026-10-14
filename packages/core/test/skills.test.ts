@@ -59,6 +59,33 @@ describe("Skill store markdown normalization", () => {
     expect(raw).not.toContain("plexus_");
   });
 
+  const CRLF_SKILL = [
+    "---",
+    "name: crlf-demo",
+    "description: Use when testing CRLF frontmatter.",
+    "---",
+    "# CRLF demo",
+    "",
+  ].join("\r\n");
+  const NAME_ONLY_STUB = "---\nname: crlf-demo\ndescription: crlf-demo\n---\n";
+
+  it.each([
+    ["parses CRLF frontmatter instead of prepending a name-only stub", CRLF_SKILL],
+    ["repairs a CRLF skill that already has the name-only stub", NAME_ONLY_STUB + CRLF_SKILL],
+  ])("%s", async (_title, content) => {
+    const skillDir = path.join(PLEXUS_PATHS.personal, "skills", "crlf-demo");
+    await fs.mkdir(skillDir, { recursive: true });
+    await fs.writeFile(path.join(skillDir, "SKILL.md"), content, "utf8");
+
+    const [skill] = await readSkills("personal");
+    expect(skill.description).toBe("Use when testing CRLF frontmatter.");
+
+    await writeSkill(skill);
+    const raw = await fs.readFile(path.join(skillDir, "SKILL.md"), "utf8");
+    expect(frontmatter(raw).description).toBe("Use when testing CRLF frontmatter.");
+    expect(raw.match(/^---\r?$/gm)).toHaveLength(2);
+  });
+
   it("persists enabledAgents in a .plexus.json sidecar, not in SKILL.md frontmatter", async () => {
     await writeSkill({
       id: "plantuml",

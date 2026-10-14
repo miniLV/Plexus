@@ -10,7 +10,7 @@ function skillsRoot(layer: ConfigLayer): string {
   return path.join(layerRoot(layer), PLEXUS_PATHS.skillsDirRel);
 }
 
-const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
+const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 /** Hidden sidecar file Plexus uses to persist per-skill enabledAgents. */
 const SIDECAR_FILE = ".plexus.json";
