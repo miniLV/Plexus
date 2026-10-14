@@ -18,7 +18,18 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { installAttempts, registrySmokeSpec, shouldRetryInstall } from "./release-npm-lib.mjs";
+import {
+  REGISTRY_READY_TIMEOUT_MS,
+  describeRegistryStatus,
+  installAttempts,
+  isLatestDistTag,
+  isRegistryVersionReady,
+  nextRegistryPollDelay,
+  registryPackageUrl,
+  registrySmokeSpec,
+  shouldRetryInstall,
+  shouldSkipPublish,
+} from "./release-npm-lib.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGE_NAME = "plexus-agent-config";
@@ -29,7 +40,9 @@ const DASHBOARD_TIMEOUT_MS = 45_000;
 const args = new Set(process.argv.slice(2));
 const publish = args.has("--publish");
 const dry = args.has("--dry") || !publish;
-const requireClean = args.has("--require-clean") || publish;
+const allowDirty =
+  args.has("--allow-dirty") || process.env.PLEXUS_ALLOW_DIRTY_PUBLISH === "1";
+const requireClean = (args.has("--require-clean") || publish) && !allowDirty;
 const skipVerify = args.has("--skip-verify");
 const skipRegistrySmoke = args.has("--skip-registry-smoke");
 const keepArtifacts = args.has("--keep-artifacts");
@@ -149,12 +162,16 @@ function checkPreflight(version) {
     ["npm", "view", `${PACKAGE_NAME}@${version}`, "version", "--registry", REGISTRY],
     { allowFail: true },
   );
-  if (remoteVersion === version && publish) {
-    fail(`${PACKAGE_NAME}@${version} is already published`);
-  }
-  if (remoteVersion === version && dry) {
+  const alreadyPublished = shouldSkipPublish(remoteVersion, version);
+  if (alreadyPublished && dry) {
     log(`${PACKAGE_NAME}@${version} already exists on npm; continuing dry-run only`);
   }
+  if (alreadyPublished && publish) {
+    log(
+      `${PACKAGE_NAME}@${version} already on npm; will skip publish and continue verify/smoke`,
+    );
+  }
+  return alreadyPublished;
 }
 
 function cleanBundleState() {
@@ -405,39 +422,55 @@ function publishTarball(tarball) {
   ]);
 }
 
+async function fetchRegistryManifest(packageName) {
+  const url = `${registryPackageUrl(packageName, REGISTRY)}?cacheBust=${Date.now()}`;
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    });
+    if (response.status === 404) return null;
+    if (!response.ok) {
+      log(`registry packument HTTP ${response.status} for ${url}`);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    log(`registry packument fetch failed: ${error.message}`);
+    return null;
+  }
+}
+
 async function verifyRegistry(version) {
-  log("checking npm registry metadata");
-  const deadline = Date.now() + 120_000;
+  log("checking npm registry metadata via packument (cache-busted)");
+  const deadline = Date.now() + REGISTRY_READY_TIMEOUT_MS;
+  let attempt = 0;
   let last = "";
 
   while (Date.now() < deadline) {
-    const latest = output(
-      ["npm", "view", PACKAGE_NAME, "dist-tags.latest", "--registry", REGISTRY, "--prefer-online"],
-      { allowFail: true },
-    );
-    const details = output(
-      [
-        "npm",
-        "view",
-        `${PACKAGE_NAME}@${version}`,
-        "version",
-        "dist.unpackedSize",
-        "dist.fileCount",
-        "--registry",
-        REGISTRY,
-        "--prefer-online",
-      ],
-      { allowFail: true },
-    );
+    attempt += 1;
+    const manifest = await fetchRegistryManifest(PACKAGE_NAME);
+    last = describeRegistryStatus(manifest, version);
 
-    if (latest === version && details) {
-      console.log(details);
+    if (isRegistryVersionReady(manifest, version)) {
+      const meta = manifest.versions[version];
+      const unpacked = meta?.dist?.unpackedSize ?? "?";
+      const files = meta?.dist?.fileCount ?? "?";
+      console.log(`${version} unpackedSize=${unpacked} fileCount=${files}`);
+      if (!isLatestDistTag(manifest, version)) {
+        log(
+          `dist-tags.latest is still ${manifest["dist-tags"]?.latest ?? "<missing>"} (CDN lag); exact version is visible, continuing`,
+        );
+      }
       return;
     }
 
-    last = `latest=${latest ?? "<missing>"}, details=${details ? "ok" : "missing"}`;
-    log(`registry not ready yet (${last}); retrying`);
-    await sleep(5_000);
+    const delay = nextRegistryPollDelay(attempt);
+    log(`registry not ready yet (${last}); retrying in ${delay}ms`);
+    await sleep(delay);
   }
 
   fail(`npm registry did not expose ${PACKAGE_NAME}@${version} in time (${last})`);
@@ -449,7 +482,7 @@ async function main() {
   log(`artifacts: ${tmpRoot}`);
 
   try {
-    checkPreflight(version);
+    const alreadyPublished = checkPreflight(version);
     if (!skipVerify) {
       log("running source verification");
       run(["npm", "run", "verify"]);
@@ -462,7 +495,11 @@ async function main() {
     await smokeInstall(tarball, localProject, "local tarball");
 
     if (publish) {
-      publishTarball(tarball);
+      if (alreadyPublished) {
+        log(`skipping npm publish; ${PACKAGE_NAME}@${version} is already on the registry`);
+      } else {
+        publishTarball(tarball);
+      }
       await verifyRegistry(version);
       if (!skipRegistrySmoke) {
         await smokeInstall(
@@ -471,7 +508,11 @@ async function main() {
           "npm registry",
         );
       }
-      log(`${PACKAGE_NAME}@${version} published and verified`);
+      log(
+        alreadyPublished
+          ? `${PACKAGE_NAME}@${version} already published; verified`
+          : `${PACKAGE_NAME}@${version} published and verified`,
+      );
     } else {
       log("dry-run complete; no package was published");
     }
