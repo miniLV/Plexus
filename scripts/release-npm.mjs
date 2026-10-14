@@ -40,8 +40,7 @@ const DASHBOARD_TIMEOUT_MS = 45_000;
 const args = new Set(process.argv.slice(2));
 const publish = args.has("--publish");
 const dry = args.has("--dry") || !publish;
-const allowDirty =
-  args.has("--allow-dirty") || process.env.PLEXUS_ALLOW_DIRTY_PUBLISH === "1";
+const allowDirty = args.has("--allow-dirty") || process.env.PLEXUS_ALLOW_DIRTY_PUBLISH === "1";
 const requireClean = (args.has("--require-clean") || publish) && !allowDirty;
 const skipVerify = args.has("--skip-verify");
 const skipRegistrySmoke = args.has("--skip-registry-smoke");
@@ -167,9 +166,7 @@ function checkPreflight(version) {
     log(`${PACKAGE_NAME}@${version} already exists on npm; continuing dry-run only`);
   }
   if (alreadyPublished && publish) {
-    log(
-      `${PACKAGE_NAME}@${version} already on npm; will skip publish and continue verify/smoke`,
-    );
+    log(`${PACKAGE_NAME}@${version} already on npm; will skip publish and continue verify/smoke`);
   }
   return alreadyPublished;
 }
