@@ -50,6 +50,15 @@ export function shouldSkipPublish(remoteVersion, targetVersion) {
   return remoteVersion === targetVersion;
 }
 
+/**
+ * `npm publish --dry-run` still talks to the registry and exits non-zero when
+ * the version already exists ("cannot publish over ..."). Skip that gate when
+ * we already know the version is published; pack/inspect/smoke still run.
+ */
+export function shouldRunPublishDryRun(alreadyPublished) {
+  return !alreadyPublished;
+}
+
 export function registryPackageUrl(packageName, registry = "https://registry.npmjs.org/") {
   const base = registry.endsWith("/") ? registry.slice(0, -1) : registry;
   // Scoped packages: /@scope%2Fname ; unscoped: /name

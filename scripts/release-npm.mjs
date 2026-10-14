@@ -28,6 +28,7 @@ import {
   registryPackageUrl,
   registrySmokeSpec,
   shouldRetryInstall,
+  shouldRunPublishDryRun,
   shouldSkipPublish,
 } from "./release-npm-lib.mjs";
 
@@ -488,7 +489,11 @@ async function main() {
     const tarball = packTarball();
     cleanBundleState();
     inspectTarball(tarball, version);
-    runPublishDryRun(tarball);
+    if (shouldRunPublishDryRun(alreadyPublished)) {
+      runPublishDryRun(tarball);
+    } else {
+      log(`skipping npm publish --dry-run; ${PACKAGE_NAME}@${version} is already on the registry`);
+    }
     await smokeInstall(tarball, localProject, "local tarball");
 
     if (publish) {

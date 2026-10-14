@@ -11,6 +11,7 @@ import {
   registryPackageUrl,
   registrySmokeSpec,
   shouldRetryInstall,
+  shouldRunPublishDryRun,
   shouldSkipPublish,
 } from "./release-npm-lib.mjs";
 
@@ -48,6 +49,13 @@ describe("shouldSkipPublish", () => {
     expect(shouldSkipPublish("0.0.19", "0.0.19")).toBe(true);
     expect(shouldSkipPublish("0.0.18", "0.0.19")).toBe(false);
     expect(shouldSkipPublish(null, "0.0.19")).toBe(false);
+  });
+});
+
+describe("shouldRunPublishDryRun", () => {
+  it("skips npm publish --dry-run when the version is already published", () => {
+    expect(shouldRunPublishDryRun(true)).toBe(false);
+    expect(shouldRunPublishDryRun(false)).toBe(true);
   });
 });
 
